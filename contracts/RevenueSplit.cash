@@ -1,0 +1,29 @@
+// DRAFT FOR REVIEW - fixed-percentage revenue split.
+// Anyone may trigger the payout, but funds can only go to the three
+// hard-coded recipients at the hard-coded percentages.
+// Compiles with cashc 0.14.0. NOT yet tested on chipnet.
+contract RevenueSplit(
+    bytes20 artistPkh,
+    bytes20 collabPkh,
+    bytes20 platformPkh,
+    int artistBps,
+    int collabBps
+) {
+    function payout() {
+        int minerFee = 1000;
+        int total = tx.inputs[this.activeInputIndex].value;
+        int distributable = total - minerFee;
+
+        int artistAmt = distributable * artistBps / 10000;
+        int collabAmt = distributable * collabBps / 10000;
+        int platformAmt = distributable - artistAmt - collabAmt;
+
+        require(tx.outputs.length == 3);
+        require(tx.outputs[0].lockingBytecode == new LockingBytecodeP2PKH(artistPkh));
+        require(tx.outputs[0].value == artistAmt);
+        require(tx.outputs[1].lockingBytecode == new LockingBytecodeP2PKH(collabPkh));
+        require(tx.outputs[1].value == collabAmt);
+        require(tx.outputs[2].lockingBytecode == new LockingBytecodeP2PKH(platformPkh));
+        require(tx.outputs[2].value == platformAmt);
+    }
+}
