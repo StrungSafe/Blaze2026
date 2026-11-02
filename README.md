@@ -10,3 +10,7 @@
     1. create an efficient oracle that broadcasts CT prices
 1. Library Lending
     1. load out digital assets using NFTs and smart contracts
+1. XO Template Marketplace
+   1. a hosted marketplace to find XO templates
+1. Flash Loans
+   1. user created and managed flash loans for BCH and CashTokens 
