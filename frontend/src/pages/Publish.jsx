@@ -8,14 +8,18 @@ import {
   CheckCircle2,
   Clipboard,
   FileJson,
+  Fingerprint,
   Layers3,
   Loader2,
   ShieldAlert,
   UploadCloud,
   X,
   AlertCircle,
-  Fingerprint,
   Sparkles,
+  Code2,
+  FileCheck2,
+  Zap,
+  RotateCcw,
 } from "lucide-react";
 
 import { publishTemplate } from "../api";
@@ -25,23 +29,20 @@ const MAX_FILE_SIZE = 256 * 1024;
 const publishingSteps = [
   {
     number: "01",
-    title: "Validate template",
-    description:
-      "Your JSON is checked for valid structure before it reaches the registry.",
-    icon: CheckCircle2,
+    title: "Validate your JSON",
+    description: "Check the structure and confirm your template is valid.",
+    icon: FileCheck2,
   },
   {
     number: "02",
-    title: "Generate identity",
-    description:
-      "XOGrid canonicalizes the template and generates its unique content-based identifier.",
+    title: "Generate an identity",
+    description: "Create a content-based identifier for your template.",
     icon: Fingerprint,
   },
   {
     number: "03",
-    title: "Register template",
-    description:
-      "Your template is registered, or its existing registry entry is returned.",
+    title: "Register on XOGrid",
+    description: "Submit your template to the registry.",
     icon: Layers3,
   },
 ];
@@ -53,8 +54,12 @@ function Publish() {
   const [error, setError] = useState("");
   const [result, setResult] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [jsonValid, setJsonValid] = useState(false);
 
   const fileInputRef = useRef(null);
+
+  const byteSize = new TextEncoder().encode(jsonText).length;
+  const sizePercentage = Math.min((byteSize / MAX_FILE_SIZE) * 100, 100);
 
   const clearMessages = () => {
     setError("");
@@ -62,10 +67,31 @@ function Publish() {
     setCopied(false);
   };
 
+  const validateJSON = (value) => {
+    if (!value.trim()) {
+      setJsonValid(false);
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(value);
+      setJsonValid(
+        parsed !== null &&
+          typeof parsed === "object" &&
+          !Array.isArray(parsed)
+      );
+    } catch {
+      setJsonValid(false);
+    }
+  };
+
   const handleTextChange = (event) => {
-    setJsonText(event.target.value);
+    const value = event.target.value;
+
+    setJsonText(value);
     setFileName("");
     clearMessages();
+    validateJSON(value);
   };
 
   const handleFileChange = async (event) => {
@@ -76,23 +102,25 @@ function Publish() {
     clearMessages();
 
     if (!file.name.toLowerCase().endsWith(".json")) {
-      setError("Please select a JSON file.");
+      setError("Please select a valid JSON file.");
       event.target.value = "";
       return;
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      setError("Your JSON file exceeds the 256 KB limit.");
+      setError("This file exceeds the 256 KB upload limit.");
       event.target.value = "";
       return;
     }
 
     try {
       const text = await file.text();
+
       setJsonText(text);
       setFileName(file.name);
+      validateJSON(text);
     } catch {
-      setError("We couldn't read that file. Please try another JSON file.");
+      setError("We couldn't read this file. Please try another one.");
     }
 
     event.target.value = "";
@@ -101,6 +129,35 @@ function Publish() {
   const handleRemoveFile = () => {
     setJsonText("");
     setFileName("");
+    setJsonValid(false);
+    clearMessages();
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleFormatJSON = () => {
+    try {
+      const parsed = JSON.parse(jsonText);
+      const formatted = JSON.stringify(parsed, null, 2);
+
+      setJsonText(formatted);
+      setJsonValid(
+        parsed !== null &&
+          typeof parsed === "object" &&
+          !Array.isArray(parsed)
+      );
+      clearMessages();
+    } catch {
+      setError("The JSON cannot be formatted because its syntax is invalid.");
+    }
+  };
+
+  const handleClearEditor = () => {
+    setJsonText("");
+    setFileName("");
+    setJsonValid(false);
     clearMessages();
 
     if (fileInputRef.current) {
@@ -110,7 +167,6 @@ function Publish() {
 
   const handlePublish = async (event) => {
     event.preventDefault();
-
     clearMessages();
 
     if (!jsonText.trim()) {
@@ -118,10 +174,8 @@ function Publish() {
       return;
     }
 
-    const byteSize = new TextEncoder().encode(jsonText).length;
-
     if (byteSize > MAX_FILE_SIZE) {
-      setError("Your template exceeds the 256 KB limit.");
+      setError("Your template exceeds the 256 KB size limit.");
       return;
     }
 
@@ -130,6 +184,7 @@ function Publish() {
     try {
       parsedTemplate = JSON.parse(jsonText);
     } catch {
+      setJsonValid(false);
       setError("Invalid JSON. Check your syntax and try again.");
       return;
     }
@@ -139,10 +194,12 @@ function Publish() {
       typeof parsedTemplate !== "object" ||
       Array.isArray(parsedTemplate)
     ) {
+      setJsonValid(false);
       setError("Your template must be a valid JSON object.");
       return;
     }
 
+    setJsonValid(true);
     setLoading(true);
 
     try {
@@ -169,7 +226,6 @@ function Publish() {
         identifier: data.identifier,
         created: data.created,
         badge: data.badge || "unchecked",
-        status,
       });
     } catch (err) {
       setError(
@@ -199,118 +255,132 @@ function Publish() {
 
   return (
     <main className="publish-page relative min-h-screen overflow-hidden bg-[#05070b] px-4 pb-20 pt-28 text-white sm:px-6">
-      {/* CLEAN ANIMATED BACKGROUND */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="publish-ambient publish-ambient-one absolute -left-48 -top-40 h-[550px] w-[550px] rounded-full bg-violet-600/[0.13] blur-[150px]" />
+      {/* BACKGROUND */}
+      <div className="publish-background pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="publish-glow publish-glow-one absolute -left-48 -top-40 h-[550px] w-[550px] rounded-full bg-violet-600/[0.15] blur-[150px]" />
 
-        <div className="publish-ambient publish-ambient-two absolute -right-48 top-[420px] h-[500px] w-[500px] rounded-full bg-orange-500/[0.07] blur-[150px]" />
+        <div className="publish-glow publish-glow-two absolute -right-48 top-[420px] h-[500px] w-[500px] rounded-full bg-orange-500/[0.08] blur-[150px]" />
 
         <div className="absolute -bottom-72 left-1/2 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-violet-600/[0.07] blur-[160px]" />
 
-        <div
-          className="absolute inset-0 opacity-[0.035]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px)",
-            backgroundSize: "60px 60px",
-            maskImage: "linear-gradient(to bottom, black, transparent 85%)",
-            WebkitMaskImage:
-              "linear-gradient(to bottom, black, transparent 85%)",
-          }}
-        />
+        <div className="publish-grid absolute inset-0 opacity-[0.035]" />
 
-        <div className="absolute left-1/2 top-24 h-px w-[70%] -translate-x-1/2 bg-gradient-to-r from-transparent via-violet-400/20 to-transparent" />
+        <div className="absolute left-1/2 top-24 h-px w-[75%] -translate-x-1/2 bg-gradient-to-r from-transparent via-violet-400/25 to-transparent" />
       </div>
 
-      {/* PAGE CONTENT */}
-      <div className="relative z-10 mx-auto max-w-5xl">
-        {/* Back navigation */}
-        <div className="mb-16">
+      <div className="relative z-10 mx-auto max-w-6xl">
+        {/* BACK NAVIGATION */}
+        <div className="publish-entrance mb-12">
           <Link
             to="/"
-            className="group inline-flex items-center gap-2 text-sm font-medium text-slate-400 transition-colors hover:text-orange-500"
+            className="group inline-flex items-center gap-2 text-sm font-medium text-white/45 transition-colors duration-300 hover:text-orange-400"
           >
             <ArrowLeft
               size={17}
-              className="transition-transform group-hover:-translate-x-1"
+              className="transition-transform duration-300 group-hover:-translate-x-1"
             />
             Back to home
           </Link>
         </div>
 
-        {/* Hero */}
-        <div className="publish-enter relative mb-12 max-w-2xl">
-          <div className="absolute -left-12 -top-16 h-44 w-44 rounded-full bg-violet-500/[0.09] blur-[70px]" />
+        {/* HERO */}
+        <section className="publish-entrance relative mb-12">
+          <div className="absolute -left-12 -top-16 h-44 w-44 rounded-full bg-violet-500/[0.10] blur-[70px]" />
 
-          <div className="relative">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-400/[0.07] px-3.5 py-2 text-xs font-semibold text-violet-300">
-              <Sparkles size={14} />
-              XOGrid Registry
-              <span className="h-1 w-1 rounded-full bg-orange-400" />
-              Open publishing
-            </div>
-
-            <h1 className="text-4xl font-bold leading-[1.12] tracking-tight sm:text-5xl lg:text-6xl">
-              Publish a
-              <br />
-              <span className="bg-gradient-to-r from-orange-400 via-orange-500 to-amber-300 bg-clip-text text-transparent">
-                template.
-              </span>
-            </h1>
-
-            <p className="mt-5 max-w-xl text-sm leading-7 text-white/50 sm:text-base">
-              Add your XO wallet template to the registry. Give your template
-              a unique identity, make its checks transparent, and share it with
-              the XO ecosystem.
-            </p>
-
-            <div className="mt-7 flex flex-wrap gap-3">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-3 py-2 text-xs text-white/50">
-                <Fingerprint size={14} className="text-violet-300" />
-                Content-addressed ID
+          <div className="relative flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
+            <div className="max-w-2xl">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-400/[0.07] px-4 py-2 text-xs font-semibold text-violet-300">
+                <Sparkles size={14} />
+                XOGrid Registry
+                <span className="h-1 w-1 rounded-full bg-orange-400" />
+                Open publishing
               </div>
 
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-3 py-2 text-xs text-white/50">
-                <ShieldAlert size={14} className="text-orange-300" />
-                Transparent checks
+              <h1 className="text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
+                Bring your
+                <br />
+                <span className="publish-gradient-text">
+                  template to life.
+                </span>
+              </h1>
+
+              <p className="mt-6 max-w-xl text-sm leading-7 text-white/45 sm:text-base">
+                Publish your XO wallet template to the registry. Give it a
+                unique identity and make its available checks and community
+                feedback easier to discover.
+              </p>
+            </div>
+
+            <div className="publish-hero-card relative hidden min-w-[210px] overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.025] p-5 lg:block">
+              <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-violet-500/10 blur-2xl" />
+
+              <div className="relative">
+                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-orange-400/20 bg-orange-400/[0.08] text-orange-300">
+                  <Fingerprint size={20} />
+                </div>
+
+                <p className="text-xs text-white/35">Registry identity</p>
+                <p className="mt-1 text-lg font-bold">Unique by design.</p>
+
+                <div className="mt-4 flex items-center gap-2 text-[11px] text-emerald-300/80">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  Content-addressed
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* SUCCESS RESULT */}
+          <div className="mt-8 flex flex-wrap gap-3">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-3.5 py-2 text-xs text-white/50">
+              <Fingerprint size={14} className="text-violet-300" />
+              Content-addressed ID
+            </div>
+
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-3.5 py-2 text-xs text-white/50">
+              <ShieldAlert size={14} className="text-orange-300" />
+              Transparent checks
+            </div>
+
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-3.5 py-2 text-xs text-white/50">
+              <Code2 size={14} className="text-emerald-300" />
+              JSON templates
+            </div>
+          </div>
+        </section>
+
+        {/* SUCCESS STATE */}
         {result ? (
-          <section className="publish-panel overflow-hidden rounded-3xl border border-emerald-400/20 bg-white/[0.025] shadow-[0_20px_80px_rgba(0,0,0,0.2)]">
-            <div className="border-b border-white/10 p-6 sm:p-8">
-              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-400/10 text-emerald-400">
-                <CheckCircle2 size={28} />
+          <section className="publish-card overflow-hidden rounded-3xl border border-emerald-400/20 bg-[#0a0e12]/90 shadow-[0_25px_100px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+            <div className="border-b border-white/[0.07] p-6 sm:p-9">
+              <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-300">
+                <CheckCircle2 size={30} />
               </div>
 
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">
                 {result.created
                   ? "Publication successful"
-                  : "Template already exists"}
+                  : "Existing registry entry"}
               </p>
 
               <h2 className="mt-3 text-2xl font-bold sm:text-3xl">
                 {result.created
                   ? "Your template is registered."
-                  : "This template is already registered."}
+                  : "This template already exists."}
               </h2>
 
-              <p className="mt-3 max-w-xl text-sm leading-7 text-white/50">
+              <p className="mt-3 max-w-xl text-sm leading-7 text-white/45">
                 {result.created
-                  ? "The registry has accepted your template and generated its identifier."
-                  : "XOGrid found an existing entry for this template. Its existing identifier is shown below."}
+                  ? "The registry accepted your template and returned its unique identifier."
+                  : "XOGrid found an existing entry for this template. Its identifier is available below."}
               </p>
             </div>
 
-            <div className="p-6 sm:p-8">
-              <label className="text-xs font-semibold uppercase tracking-wider text-white/40">
+            <div className="p-6 sm:p-9">
+              <label className="text-xs font-semibold uppercase tracking-wider text-white/35">
                 Server-generated template identifier
               </label>
 
-              <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/30 p-4 sm:flex-row sm:items-center">
+              <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-white/[0.09] bg-black/30 p-4 sm:flex-row sm:items-center">
                 <code className="min-w-0 flex-1 break-all text-sm leading-6 text-violet-300">
                   {result.identifier}
                 </code>
@@ -318,46 +388,44 @@ function Publish() {
                 <button
                   type="button"
                   onClick={handleCopy}
-                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold transition duration-300 hover:border-orange-400/40 hover:bg-orange-400/10 hover:text-orange-300"
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold transition duration-300 hover:border-orange-400/40 hover:bg-orange-400/10 hover:text-orange-300"
                 >
                   {copied ? <Check size={16} /> : <Clipboard size={16} />}
                   {copied ? "Copied" : "Copy ID"}
                 </button>
               </div>
 
-              <div className="mt-5 flex flex-wrap items-center gap-3">
+              <div className="mt-6 flex flex-wrap gap-3">
                 <Link
                   to={detailUrl}
-                  className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-black transition duration-300 hover:-translate-y-0.5 hover:bg-orange-400"
+                  className="group inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-black transition duration-300 hover:-translate-y-0.5 hover:bg-orange-400"
                 >
                   View template
-                  <ArrowRight size={16} />
+                  <ArrowRight
+                    size={16}
+                    className="transition-transform group-hover:translate-x-1"
+                  />
                 </Link>
 
                 <button
                   type="button"
-                  onClick={() => {
-                    setResult(null);
-                    setJsonText("");
-                    setFileName("");
-                    setError("");
-                    setCopied(false);
-                  }}
-                  className="rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-white/70 transition duration-300 hover:border-violet-400/30 hover:bg-violet-400/[0.07] hover:text-white"
+                  onClick={handleClearEditor}
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-white/65 transition duration-300 hover:border-violet-400/30 hover:bg-violet-400/[0.07] hover:text-white"
                 >
+                  <RotateCcw size={15} />
                   Publish another
                 </button>
               </div>
 
-              <div className="mt-8 flex gap-3 rounded-2xl border border-amber-400/15 bg-amber-400/[0.05] p-4">
+              <div className="mt-8 flex gap-3 rounded-2xl border border-amber-400/15 bg-amber-400/[0.045] p-4">
                 <ShieldAlert
                   size={19}
                   className="mt-0.5 shrink-0 text-amber-300"
                 />
-                <p className="text-xs leading-6 text-white/50">
-                  Registration does not mean this template is safe or
+                <p className="text-xs leading-6 text-white/45">
+                  Registration does not mean a template is safe or
                   independently verified. Review its audit results, flags,
-                  and community reviews before relying on it.
+                  and community feedback before relying on it.
                 </p>
               </div>
             </div>
@@ -365,25 +433,39 @@ function Publish() {
         ) : (
           <form
             onSubmit={handlePublish}
-            className="grid gap-6 lg:grid-cols-[1fr_310px]"
+            className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]"
           >
-            {/* JSON EDITOR */}
-            <section className="publish-panel min-w-0 rounded-3xl border border-white/10 bg-white/[0.025] p-5 shadow-[0_20px_80px_rgba(0,0,0,0.15)] transition duration-500 hover:border-violet-400/20 sm:p-7">
-              <div className="mb-7 flex items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-bold">Template JSON</h2>
-                  <p className="mt-1 text-xs text-white/40">
-                    Add the template you want to publish.
-                  </p>
+            {/* EDITOR PANEL */}
+            <section className="publish-card min-w-0 overflow-hidden rounded-3xl border border-white/[0.09] bg-[#0a0d13]/85 shadow-[0_25px_100px_rgba(0,0,0,0.25)] backdrop-blur-xl">
+              {/* PANEL HEADER */}
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.07] px-5 py-5 sm:px-7">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-400/20 bg-violet-400/[0.08] text-violet-300">
+                    <FileJson size={21} />
+                  </div>
+
+                  <div>
+                    <h2 className="font-bold">Template editor</h2>
+                    <p className="mt-1 text-xs text-white/35">
+                      Upload or paste your JSON file
+                    </p>
+                  </div>
                 </div>
 
-                <span className="rounded-full border border-violet-400/20 bg-violet-400/[0.06] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-violet-300">
-                  JSON
-                </span>
+                <div className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-3 py-1.5">
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      jsonValid ? "bg-emerald-400" : "bg-white/25"
+                    }`}
+                  />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white/45">
+                    {jsonValid ? "Valid JSON" : "Awaiting JSON"}
+                  </span>
+                </div>
               </div>
 
-              {/* Upload area */}
-              <div className="mb-6">
+              <div className="p-5 sm:p-7">
+                {/* UPLOAD AREA */}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -395,157 +477,218 @@ function Publish() {
 
                 <label
                   htmlFor="template-json-file"
-                  className="group relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-violet-400/25 bg-violet-400/[0.035] px-5 py-10 text-center transition-all duration-300 hover:border-orange-400/50 hover:bg-orange-400/[0.035]"
+                  className="publish-upload group relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-violet-400/25 bg-violet-400/[0.035] px-5 py-9 text-center transition-all duration-300 hover:border-orange-400/45 hover:bg-orange-400/[0.035] sm:py-11"
                 >
-                  <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-violet-500/[0.08] blur-3xl transition duration-500 group-hover:bg-orange-500/[0.10]" />
+                  <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-violet-500/[0.08] blur-3xl transition duration-500 group-hover:bg-orange-500/[0.10]" />
 
-                  <span className="relative mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-400/20 bg-violet-400/10 text-violet-300 transition-all duration-300 group-hover:scale-105 group-hover:border-orange-400/30 group-hover:bg-orange-400/10 group-hover:text-orange-300">
-                    <UploadCloud size={24} />
+                  <span className="publish-upload-icon relative mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-400/20 bg-violet-400/10 text-violet-300 transition-all duration-300 group-hover:scale-110 group-hover:border-orange-400/30 group-hover:bg-orange-400/10 group-hover:text-orange-300">
+                    <UploadCloud size={25} />
                   </span>
 
-                  <span className="relative text-sm font-semibold text-white/80 transition group-hover:text-orange-300">
-                    Click to upload your template
+                  <span className="relative text-sm font-semibold text-white/80 transition-colors group-hover:text-orange-300">
+                    Drop your JSON file here or browse
                   </span>
 
                   <span className="relative mt-2 text-xs text-white/35">
-                    Select a JSON file · Maximum 256 KB
+                    JSON format only · Maximum file size 256 KB
                   </span>
                 </label>
 
+                {/* SELECTED FILE */}
                 {fileName && (
-                  <div className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.035] p-3">
-                    <FileJson
-                      size={18}
-                      className="shrink-0 text-violet-300"
-                    />
+                  <div className="mt-4 flex items-center gap-3 rounded-xl border border-violet-400/15 bg-violet-400/[0.04] p-3.5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-400/10 text-violet-300">
+                      <FileJson size={18} />
+                    </div>
 
-                    <span className="min-w-0 flex-1 truncate text-xs text-white/70">
-                      {fileName}
-                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold text-white/80">
+                        {fileName}
+                      </p>
+                      <p className="mt-1 text-[10px] text-white/35">
+                        {byteSize.toLocaleString()} bytes
+                      </p>
+                    </div>
 
                     <button
                       type="button"
                       onClick={handleRemoveFile}
                       aria-label="Remove selected file"
-                      className="rounded-lg p-1.5 text-white/40 transition hover:bg-white/10 hover:text-orange-400"
+                      className="rounded-lg p-2 text-white/40 transition hover:bg-white/10 hover:text-orange-400"
                     >
                       <X size={16} />
                     </button>
                   </div>
                 )}
-              </div>
 
-              {/* Editor heading */}
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <label
-                  htmlFor="template-json"
-                  className="text-xs font-semibold text-white/60"
-                >
-                  Or paste JSON here
-                </label>
+                {/* EDITOR TOOLBAR */}
+                <div className="mb-3 mt-7 flex flex-wrap items-center justify-between gap-3">
+                  <label
+                    htmlFor="template-json"
+                    className="flex items-center gap-2 text-xs font-semibold text-white/65"
+                  >
+                    <Code2 size={15} className="text-violet-300" />
+                    JSON source
+                  </label>
 
-                <span className="text-[11px] tabular-nums text-white/35">
-                  {new TextEncoder()
-                    .encode(jsonText)
-                    .length.toLocaleString()}{" "}
-                  / {MAX_FILE_SIZE.toLocaleString()} bytes
-                </span>
-              </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleFormatJSON}
+                      disabled={!jsonText.trim()}
+                      className="rounded-lg border border-white/[0.08] px-3 py-1.5 text-[11px] font-medium text-white/45 transition hover:border-violet-400/30 hover:text-violet-300 disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      Format JSON
+                    </button>
 
-              {/* JSON editor */}
-              <div className="relative">
-                <div className="absolute left-0 top-0 h-px w-full bg-gradient-to-r from-transparent via-violet-400/40 to-transparent" />
-
-                <textarea
-                  id="template-json"
-                  value={jsonText}
-                  onChange={handleTextChange}
-                  spellCheck="false"
-                  placeholder={'{\n  "name": "My XO Template",\n  ...\n}'}
-                  className="min-h-[340px] w-full resize-y rounded-2xl border border-white/10 bg-[#080a10] p-4 font-mono text-xs leading-6 text-violet-200 outline-none transition duration-300 placeholder:text-white/20 focus:border-orange-400/40 focus:ring-1 focus:ring-orange-400/10 sm:text-sm"
-                />
-              </div>
-
-              <div className="mt-3 flex items-center justify-between text-[11px] text-white/35">
-                <span>Maximum template size: 256 KB</span>
-                <span>UTF-8 JSON</span>
-              </div>
-
-              {/* Error */}
-              {error && (
-                <div
-                  role="alert"
-                  className="mt-5 flex gap-3 rounded-xl border border-red-400/20 bg-red-400/[0.06] p-4 text-sm text-red-300"
-                >
-                  <AlertCircle size={18} className="mt-0.5 shrink-0" />
-                  <span className="leading-6">{error}</span>
+                    <button
+                      type="button"
+                      onClick={handleClearEditor}
+                      disabled={!jsonText}
+                      className="rounded-lg border border-white/[0.08] px-3 py-1.5 text-[11px] font-medium text-white/45 transition hover:border-red-400/30 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      Clear
+                    </button>
+                  </div>
                 </div>
-              )}
 
-              {/* Submit button */}
-              <button
-                type="submit"
-                disabled={loading || !jsonText.trim()}
-                className="publish-submit group relative mt-7 inline-flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-orange-500 px-6 py-4 text-sm font-bold text-black shadow-[0_8px_30px_rgba(249,115,22,0.12)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-[0_10px_35px_rgba(249,115,22,0.2)] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
-              >
-                <span className="publish-button-shine absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+                {/* EDITOR */}
+                <div className="publish-editor relative overflow-hidden rounded-2xl border border-white/[0.09] bg-[#07090e] transition duration-300 focus-within:border-violet-400/35 focus-within:shadow-[0_0_35px_rgba(139,92,246,0.07)]">
+                  <div className="flex h-11 items-center justify-between border-b border-white/[0.06] px-4">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-red-400/70" />
+                      <span className="h-2 w-2 rounded-full bg-amber-400/70" />
+                      <span className="h-2 w-2 rounded-full bg-emerald-400/70" />
+                    </div>
 
-                <span className="relative inline-flex items-center gap-2">
-                  {loading ? (
-                    <>
-                      <Loader2 size={18} className="animate-spin" />
-                      Publishing template...
-                    </>
-                  ) : (
-                    <>
-                      Publish template
-                      <ArrowRight
-                        size={17}
-                        className="transition-transform duration-300 group-hover:translate-x-1"
-                      />
-                    </>
-                  )}
-                </span>
-              </button>
+                    <span className="text-[10px] font-medium tracking-wider text-white/25">
+                      TEMPLATE.JSON
+                    </span>
+                  </div>
 
-              <p className="mt-4 text-center text-[11px] leading-5 text-white/30">
-                Your template is processed by the XOGrid registry. Your
-                private keys are never requested.
-              </p>
+                  <textarea
+                    id="template-json"
+                    value={jsonText}
+                    onChange={handleTextChange}
+                    spellCheck="false"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    placeholder={`{
+  "name": "My XO Template",
+  "description": "Describe your template",
+  "version": "1.0.0"
+}`}
+                    className="min-h-[350px] w-full resize-y bg-transparent p-5 font-mono text-xs leading-7 text-violet-200 outline-none placeholder:text-white/20 sm:text-sm"
+                  />
+                </div>
+
+                {/* SIZE METER */}
+                <div className="mt-4">
+                  <div className="mb-2 flex items-center justify-between text-[11px]">
+                    <span className="text-white/35">Template size</span>
+
+                    <span
+                      className={`tabular-nums ${
+                        byteSize > MAX_FILE_SIZE
+                          ? "text-red-300"
+                          : "text-white/45"
+                      }`}
+                    >
+                      {byteSize.toLocaleString()} /{" "}
+                      {MAX_FILE_SIZE.toLocaleString()} bytes
+                    </span>
+                  </div>
+
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
+                    <div
+                      className={`publish-size-bar h-full rounded-full transition-all duration-300 ${
+                        byteSize > MAX_FILE_SIZE
+                          ? "bg-red-400"
+                          : "bg-gradient-to-r from-violet-500 to-orange-400"
+                      }`}
+                      style={{ width: `${sizePercentage}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* VALIDATION ERROR */}
+                {error && (
+                  <div
+                    role="alert"
+                    className="publish-error mt-5 flex gap-3 rounded-xl border border-red-400/20 bg-red-400/[0.06] p-4 text-sm text-red-300"
+                  >
+                    <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                    <span className="leading-6">{error}</span>
+                  </div>
+                )}
+
+                {/* SUBMIT */}
+                <button
+                  type="submit"
+                  disabled={loading || !jsonText.trim() || byteSize > MAX_FILE_SIZE}
+                  className="publish-submit group relative mt-7 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-orange-500 px-6 py-4 text-sm font-bold text-black shadow-[0_8px_35px_rgba(249,115,22,0.13)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-[0_12px_40px_rgba(249,115,22,0.22)] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:translate-y-0"
+                >
+                  <span className="publish-button-shine absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+
+                  <span className="relative flex items-center gap-2">
+                    {loading ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Publishing template...
+                      </>
+                    ) : (
+                      <>
+                        Publish to XOGrid
+                        <ArrowRight
+                          size={17}
+                          className="transition-transform duration-300 group-hover:translate-x-1"
+                        />
+                      </>
+                    )}
+                  </span>
+                </button>
+
+                <p className="mt-4 text-center text-[11px] leading-5 text-white/30">
+                  Never share private keys or wallet recovery phrases in a
+                  template.
+                </p>
+              </div>
             </section>
 
-            {/* PUBLISHING FLOW */}
+            {/* RIGHT SIDEBAR */}
             <aside className="space-y-5">
-              <div className="publish-panel relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.025] p-5 transition duration-500 hover:border-violet-400/25 sm:p-6">
+              {/* PUBLISHING STEPS */}
+              <section className="publish-card relative overflow-hidden rounded-3xl border border-white/[0.09] bg-[#0a0d13]/85 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.2)] backdrop-blur-xl sm:p-6">
                 <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-violet-500/[0.08] blur-3xl" />
 
                 <div className="relative">
-                  <div className="mb-7 flex items-center gap-3">
+                  <div className="mb-8 flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-400/20 bg-violet-400/10 text-violet-300">
-                      <Layers3 size={20} />
+                      <Zap size={20} />
                     </div>
 
                     <div>
-                      <h3 className="font-bold">Publishing flow</h3>
+                      <h3 className="font-bold">Publishing process</h3>
                       <p className="mt-1 text-xs text-white/35">
-                        Three steps to the registry
+                        From JSON to registry
                       </p>
                     </div>
                   </div>
 
-                  <div className="relative ml-[13px]">
-                    <div className="absolute bottom-8 left-[9px] top-8 w-px bg-gradient-to-b from-violet-400/40 via-white/10 to-orange-400/30" />
+                  <div className="relative ml-3">
+                    <div className="absolute bottom-8 left-[10px] top-8 w-px bg-gradient-to-b from-violet-400/50 via-white/10 to-orange-400/30" />
 
                     <div className="space-y-8">
-                      {publishingSteps.map((step) => {
+                      {publishingSteps.map((step, index) => {
                         const StepIcon = step.icon;
 
                         return (
                           <div
                             key={step.number}
-                            className="group relative flex gap-4"
+                            className="publish-step group relative flex gap-4"
+                            style={{ animationDelay: `${index * 120}ms` }}
                           >
-                            <div className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-violet-400/30 bg-[#100e1b] text-violet-300 transition-all duration-300 group-hover:scale-110 group-hover:border-orange-400/60 group-hover:bg-orange-400/10 group-hover:text-orange-400">
+                            <div className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-violet-400/30 bg-[#100e1b] text-violet-300 transition-all duration-300 group-hover:scale-110 group-hover:border-orange-400/60 group-hover:bg-orange-400/10 group-hover:text-orange-300">
                               <StepIcon size={13} />
                             </div>
 
@@ -554,11 +697,10 @@ function Publish() {
                                 <span className="text-[10px] font-bold tracking-[0.15em] text-orange-400">
                                   {step.number}
                                 </span>
-
                                 <span className="h-px w-5 bg-white/10 transition-colors group-hover:bg-orange-400/40" />
                               </div>
 
-                              <h4 className="text-sm font-semibold text-white/85 transition-colors duration-300 group-hover:text-orange-300">
+                              <h4 className="text-sm font-semibold text-white/85 transition-colors group-hover:text-orange-300">
                                 {step.title}
                               </h4>
 
@@ -572,112 +714,206 @@ function Publish() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </section>
 
-              {/* Registry identity card */}
-              <div className="group relative overflow-hidden rounded-3xl border border-violet-400/15 bg-violet-400/[0.035] p-5 transition-all duration-300 hover:border-violet-400/30">
+              {/* IDENTITY CARD */}
+              <section className="publish-info-card group relative overflow-hidden rounded-3xl border border-violet-400/15 bg-violet-400/[0.035] p-5 transition-all duration-300 hover:border-violet-400/30 sm:p-6">
                 <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-violet-500/[0.09] blur-3xl transition duration-500 group-hover:bg-orange-500/[0.08]" />
 
                 <div className="relative">
-                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-violet-400/20 bg-violet-400/10 text-violet-300 transition duration-300 group-hover:rotate-6 group-hover:text-orange-300">
-                    <Fingerprint size={19} />
+                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl border border-violet-400/20 bg-violet-400/10 text-violet-300 transition duration-300 group-hover:rotate-6 group-hover:text-orange-300">
+                    <Fingerprint size={20} />
                   </div>
 
                   <h3 className="text-sm font-bold">
-                    Every template has an identity.
+                    One template. One identity.
                   </h3>
 
-                  <p className="mt-2 text-xs leading-6 text-white/45">
-                    XOGrid generates a content-addressed identifier from the
-                    canonical template. If the template changes, its identity
-                    changes too.
+                  <p className="mt-3 text-xs leading-6 text-white/45">
+                    XOGrid uses the canonical template content to generate a
+                    content-addressed identifier. Changes to the content
+                    produce a different identity.
                   </p>
                 </div>
-              </div>
+              </section>
 
-              {/* Important notice */}
-              <div className="relative overflow-hidden rounded-3xl border border-amber-400/15 bg-amber-400/[0.035] p-5">
+              {/* IMPORTANT NOTICE */}
+              <section className="relative overflow-hidden rounded-3xl border border-amber-400/15 bg-amber-400/[0.035] p-5 sm:p-6">
                 <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-amber-400/[0.07] blur-3xl" />
 
                 <div className="relative">
                   <div className="flex items-center gap-2 text-amber-300">
                     <ShieldAlert size={17} />
-                    <h3 className="text-sm font-bold">Important</h3>
+                    <h3 className="text-sm font-bold">A note on trust</h3>
                   </div>
 
-                  <p className="mt-3 text-xs leading-6 text-white/50">
+                  <p className="mt-3 text-xs leading-6 text-white/45">
                     Publishing does not certify a template as safe. Automated
                     checks and community reviews are separate registry
                     features. Always inspect the available information before
                     using a template.
                   </p>
                 </div>
-              </div>
+              </section>
+
+              {/* HELP LINK */}
+              <Link
+                to="/policy"
+                className="group flex items-center justify-between rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition-all duration-300 hover:border-violet-400/20 hover:bg-violet-400/[0.04]"
+              >
+                <div>
+                  <p className="text-xs font-semibold text-white/70">
+                    Need help publishing?
+                  </p>
+                  <p className="mt-1 text-[11px] text-white/35">
+                    Read the XOGrid trust and policy guide.
+                  </p>
+                </div>
+
+                <ArrowRight
+                  size={17}
+                  className="text-white/35 transition-all duration-300 group-hover:translate-x-1 group-hover:text-orange-300"
+                />
+              </Link>
             </aside>
           </form>
         )}
       </div>
 
-      {/* SUBTLE ANIMATIONS */}
+      {/* ANIMATIONS */}
       <style>{`
         .publish-page {
           isolation: isolate;
         }
 
-        .publish-ambient {
+        .publish-grid {
+          background-image:
+            linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px);
+          background-size: 60px 60px;
+          mask-image: linear-gradient(to bottom, black, transparent 85%);
+          -webkit-mask-image: linear-gradient(to bottom, black, transparent 85%);
+        }
+
+        .publish-glow {
           will-change: transform;
         }
 
-        .publish-ambient-one {
-          animation: ambientFloatOne 18s ease-in-out infinite alternate;
+        .publish-glow-one {
+          animation: publishGlowOne 18s ease-in-out infinite alternate;
         }
 
-        .publish-ambient-two {
-          animation: ambientFloatTwo 22s ease-in-out infinite alternate;
+        .publish-glow-two {
+          animation: publishGlowTwo 22s ease-in-out infinite alternate;
         }
 
-        .publish-enter {
-          animation: publishFadeUp 0.7s ease-out both;
+        .publish-gradient-text {
+          background: linear-gradient(
+            100deg,
+            #fb923c 0%,
+            #f97316 45%,
+            #fcd34d 100%
+          );
+          background-clip: text;
+          -webkit-background-clip: text;
+          color: transparent;
+          background-size: 200% auto;
+          animation: gradientShift 6s ease-in-out infinite alternate;
         }
 
-        .publish-panel {
-          animation: publishFadeUp 0.8s ease-out both;
+        .publish-entrance {
+          animation: publishFadeUp 0.75s cubic-bezier(0.2, 0.7, 0.2, 1) both;
         }
 
-        .publish-panel:nth-child(2) {
+        .publish-card {
+          animation: publishFadeUp 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+        }
+
+        .publish-card:nth-of-type(2) {
           animation-delay: 0.12s;
+        }
+
+        .publish-hero-card {
+          animation: publishFloat 5s ease-in-out infinite;
+        }
+
+        .publish-step {
+          animation: publishFadeUp 0.65s ease-out both;
+        }
+
+        .publish-upload-icon {
+          animation: uploadFloat 3.5s ease-in-out infinite;
         }
 
         .publish-submit:not(:disabled):hover .publish-button-shine {
           animation: buttonShine 0.8s ease;
         }
 
-        @keyframes ambientFloatOne {
-          from {
-            transform: translate3d(0, 0, 0);
-          }
-          to {
-            transform: translate3d(35px, 25px, 0);
-          }
+        .publish-info-card:hover {
+          transform: translateY(-3px);
         }
 
-        @keyframes ambientFloatTwo {
-          from {
-            transform: translate3d(0, 0, 0);
-          }
-          to {
-            transform: translate3d(-30px, 35px, 0);
-          }
+        .publish-size-bar {
+          transition: width 0.3s ease, background-color 0.3s ease;
+        }
+
+        .publish-error {
+          animation: publishShake 0.35s ease-out;
         }
 
         @keyframes publishFadeUp {
           from {
             opacity: 0;
-            transform: translateY(18px);
+            transform: translateY(22px);
           }
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+
+        @keyframes publishGlowOne {
+          from {
+            transform: translate3d(0, 0, 0);
+          }
+          to {
+            transform: translate3d(35px, 28px, 0);
+          }
+        }
+
+        @keyframes publishGlowTwo {
+          from {
+            transform: translate3d(0, 0, 0);
+          }
+          to {
+            transform: translate3d(-35px, 30px, 0);
+          }
+        }
+
+        @keyframes publishFloat {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-9px);
+          }
+        }
+
+        @keyframes uploadFloat {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-5px);
+          }
+        }
+
+        @keyframes gradientShift {
+          from {
+            background-position: 0% center;
+          }
+          to {
+            background-position: 100% center;
           }
         }
 
@@ -690,18 +926,26 @@ function Publish() {
           }
         }
 
-        @media (prefers-reduced-motion: reduce) {
-          .publish-ambient,
-          .publish-enter,
-          .publish-panel,
-          .publish-button-shine {
-            animation: none !important;
+        @keyframes publishShake {
+          0%, 100% {
+            transform: translateX(0);
           }
+          25% {
+            transform: translateX(-3px);
+          }
+          75% {
+            transform: translateX(3px);
+          }
+        }
 
-          .publish-panel,
-          .publish-enter {
-            opacity: 1;
-            transform: none;
+        @media (prefers-reduced-motion: reduce) {
+          .publish-page *,
+          .publish-page *::before,
+          .publish-page *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            scroll-behavior: auto !important;
+            transition-duration: 0.01ms !important;
           }
         }
       `}</style>

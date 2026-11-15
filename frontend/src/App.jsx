@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 
 import LandingPage from "./pages/Landing";
+import Dashboard from "./pages/Dashboard";
+import Explore from "./pages/Explore";
 import Publish from "./pages/Publish";
 import Policy from "./pages/Policy";
 
@@ -83,11 +85,10 @@ function App() {
     <>
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/explore" element={<Explore />} />
         <Route path="/publish" element={<Publish />} />
         <Route path="/policy" element={<Policy />} />
-
-        {/* Add the template detail page when it is ready */}
-        {/* <Route path="/t/:identifier" element={<Template />} /> */}
       </Routes>
 
       {isLoading && <LoadingScreen exiting={isExiting} />}
