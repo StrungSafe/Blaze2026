@@ -43,6 +43,18 @@ export interface ReviewsTable {
     created_at: string;
 }
 
+export interface UserReviewsTable {
+    id: Generated<number>;
+    identifier: string;
+    /** Compressed public key (hex) of the wallet that signed the review. */
+    reviewer: string;
+    rating: number;
+    body: string;
+    created_at: string;
+    hidden: number;
+    hidden_reason: string | null;
+}
+
 export interface AdminsTable {
     address_or_pubkey: string;
     label: string;
@@ -70,6 +82,7 @@ export interface DatabaseSchema {
     audit_reports: AuditReportsTable;
     flags: FlagsTable;
     reviews: ReviewsTable;
+    user_reviews: UserReviewsTable;
     admins: AdminsTable;
     spotlight: SpotlightTable;
     moderation_log: ModerationLogTable;
@@ -139,6 +152,20 @@ export async function migrate(db: Db): Promise<void> {
         .addColumn('signature', 'text')
         .addColumn('note', 'text', (c) => c.notNull())
         .addColumn('created_at', 'text', (c) => c.notNull())
+        .execute();
+
+    await db.schema
+        .createTable('user_reviews')
+        .ifNotExists()
+        .addColumn('id', 'integer', (c) => c.primaryKey().autoIncrement())
+        .addColumn('identifier', 'text', (c) => c.notNull().references('templates.identifier'))
+        .addColumn('reviewer', 'text', (c) => c.notNull())
+        .addColumn('rating', 'integer', (c) => c.notNull())
+        .addColumn('body', 'text', (c) => c.notNull())
+        .addColumn('created_at', 'text', (c) => c.notNull())
+        .addColumn('hidden', 'integer', (c) => c.notNull().defaultTo(0))
+        .addColumn('hidden_reason', 'text')
+        .addUniqueConstraint('user_reviews_one_per_wallet', ['identifier', 'reviewer'])
         .execute();
 
     await db.schema
