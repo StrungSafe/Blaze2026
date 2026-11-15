@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 @import "tailwindcss";
 
 :root {
@@ -9,8 +11,18 @@
   -moz-osx-font-smoothing: grayscale;
 
   color: #ffffff;
-  background: #17153C;
+  background: #05070b;
+
+  --bg: #05070b;
+  --bg-secondary: #0c0b16;
+  --primary: #8b5cf6;
+  --primary-light: #a78bfa;
+  --accent: #f97316;
+  --text: #ffffff;
+  --text-muted: #a1a1aa;
+  --border: rgba(167, 139, 250, 0.18);
 }
+
 
 * {
   box-sizing: border-box;
