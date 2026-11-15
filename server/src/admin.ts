@@ -98,7 +98,7 @@ export class AdminAuth {
         const admin = admins.find((candidate) => publicKeyMatchesIdentity(publicKey!, candidate.address_or_pubkey));
 
         if (!admin) {
-            return { failure: `key ${publicKey.slice(0, 12)}... is not on the admin allowlist` };
+            return { failure: `key ${publicKey} is not on the admin allowlist (add it to ADMIN_IDENTITIES as name=${publicKey})` };
         }
 
         const session: AdminSession = {
