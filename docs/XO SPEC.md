@@ -1,11 +1,11 @@
-# Build spec: XO Template Hub
+# Build spec: XOGrid
 
 Audience: Miguel and Nathaniel, and any coding assistant given this file. Companion to `docs/SCOPE.md` (scope and tracks). If the two disagree, SCOPE.md wins until we edit one of them.
 
 Items marked **[UNVERIFIED]** have not been run. Do not build on them without a spike.
 
 ## 1. What we are building
-A registry for XO wallet templates ("Docker Hub for templates"). Anyone can publish a template. The hub gives it a content-addressed ID, runs automated checks, shows community flags and human reviews, and previews how a wallet trust policy would treat it. A demo flow sends a real BCH mainnet transaction using a template from the hub.
+A registry for XO wallet templates ("Docker Hub for templates"). Anyone can publish a template. XOGrid gives it a content-addressed ID, runs automated checks, shows community flags and human reviews, and previews how a wallet trust policy would treat it. A demo flow sends a real BCH mainnet transaction using a template from the hub.
 
 Non-goals: holding user keys or funds, acting as a wallet, claiming a template is "safe", a login system for publishers, publisher reputation scores (deferred).
 
@@ -53,7 +53,7 @@ A changed template has a new identifier, so it starts at Unchecked.
 ## 5b. On-chain moderator identity (phase 2)
 Per the PR review: server operations are authorised by signatures from a known pubkey or xpub, and on-chain operations use a CashToken category from which we mint each moderator a token.
 - Phase 1: signed-challenge login against the `admins` allowlist (section 7). Enough for the demo.
-- Phase 2: create a "Hub Reviewer" CashToken category (genesis from a vout-0 UTXO), mint one token per moderator, and require the reviewer's address to hold one for the "Reviewed" action. Rehearse on chipnet, then mainnet. This is also a legitimate mainnet transaction for the track requirement and a good place for Nathaniel to apply the token practice from the starter guide. **[UNVERIFIED: how the server checks token holdings (an Electrum query through mainnet-js is the likely route); spike before committing.]**
+- Phase 2: create a "XOGrid Reviewer" CashToken category (genesis from a vout-0 UTXO), mint one token per moderator, and require the reviewer's address to hold one for the "Reviewed" action. Rehearse on chipnet, then mainnet. This is also a legitimate mainnet transaction for the track requirement and a good place for Nathaniel to apply the token practice from the starter guide. **[UNVERIFIED: how the server checks token holdings (an Electrum query through mainnet-js is the likely route); spike before committing.]**
 - Keep Phase 2 off the two-minute demo path. It is not needed for the judge walk-through.
 
 ## 6. Audit checks (v1, `checker_version = "1"`)
@@ -97,7 +97,7 @@ The mainnet step must use minimal funds and be recoverable (XO team guidance): f
 
 ## 10. Required banner (every page, top)
 - Link to our Widget Factory slides (URL to be added)
-- Link to the GitHub repo `github.com/StrungSafe/Blaze2026`
+- Link to the GitHub repo `github.com/XOGrid-Cash/Blaze2026_XOGrid`
 - CashTokens address for EMBER2026 donations (address to be added; must be a token-aware address)
 
 ## 11. Docker
