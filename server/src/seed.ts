@@ -7,9 +7,11 @@ import {
 } from '@xo-cash/templates';
 import { serializeTemplate } from '@xo-cash/utils';
 import type { Db } from './db.js';
+import { claimVoucherTemplate } from './templates/claim-voucher.js';
 import { publishTemplate, setSpotlight } from './registry.js';
 
 const SEED_PUBLISHER = 'xo-cash/templates';
+const HUB_PUBLISHER = 'XOGrid';
 
 /** Templates shipped by General Protocols in @xo-cash/templates. Add our own novel templates here as they are written. */
 const SEED_TEMPLATES = [
@@ -18,6 +20,11 @@ const SEED_TEMPLATES = [
     { template: multisigTemplate },
     { template: wrapBCHTemplate },
     { template: wrapBCHChipnetTemplate },
+    {
+        template: claimVoucherTemplate,
+        publisher: HUB_PUBLISHER,
+        spotlight: 'Original to this hub: lock satoshis to the hash of a secret code, and whoever knows the code can claim them.',
+    },
 ] as const;
 
 export interface SeedResult {
@@ -32,7 +39,8 @@ export async function seed(db: Db): Promise<SeedResult> {
 
     for (const entry of SEED_TEMPLATES) {
         // The shipped templates contain bigint values, so pass them as extended JSON text rather than as objects.
-        const published = await publishTemplate(db, serializeTemplate(entry.template), SEED_PUBLISHER);
+        const publisher = 'publisher' in entry ? entry.publisher : SEED_PUBLISHER;
+        const published = await publishTemplate(db, serializeTemplate(entry.template as never), publisher);
 
         if (published.created) {
             result.published += 1;

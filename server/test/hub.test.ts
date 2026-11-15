@@ -27,13 +27,13 @@ const get = async (url: string) => app.inject({ method: 'GET', url });
 const post = async (url: string, payload: unknown) => app.inject({ method: 'POST', url, payload: payload as object });
 
 describe('seed and canonical identifiers', () => {
-    it('publishes the five XO templates once and is idempotent', async () => {
-        expect(await seed(db)).toEqual({ published: 5, alreadyPresent: 0 });
-        expect(await seed(db)).toEqual({ published: 0, alreadyPresent: 5 });
+    it('publishes the five XO templates and the hub-authored one once, idempotently', async () => {
+        expect(await seed(db)).toEqual({ published: 6, alreadyPresent: 0 });
+        expect(await seed(db)).toEqual({ published: 0, alreadyPresent: 6 });
 
         const list = (await get('/api/templates?pageSize=50')).json();
 
-        expect(list.total).toBe(5);
+        expect(list.total).toBe(6);
     });
 
     it('uses the canonical identifier, not the hash of the raw object', async () => {
@@ -176,12 +176,12 @@ describe('browse, search and spotlight', () => {
     });
 
     it('sorts by name and paginates', async () => {
-        const page1 = (await get('/api/templates?sort=name&pageSize=2&page=1')).json();
-        const page3 = (await get('/api/templates?sort=name&pageSize=2&page=3')).json();
+        const page1 = (await get('/api/templates?sort=name&pageSize=4&page=1')).json();
+        const page2 = (await get('/api/templates?sort=name&pageSize=4&page=2')).json();
 
-        expect(page1.items).toHaveLength(2);
-        expect(page3.items).toHaveLength(1);
-        expect(page1.total).toBe(5);
+        expect(page1.items).toHaveLength(4);
+        expect(page2.items).toHaveLength(2);
+        expect(page1.total).toBe(6);
 
         const names = page1.items.map((i: { name: string }) => i.name);
 
@@ -197,7 +197,7 @@ describe('browse, search and spotlight', () => {
     });
 
     it('filters by badge and rejects bad parameters', async () => {
-        expect((await get('/api/templates?badge=auto-checked')).json().total).toBe(5);
+        expect((await get('/api/templates?badge=auto-checked')).json().total).toBe(6);
         expect((await get('/api/templates?badge=reviewed')).json().total).toBe(0);
         expect((await get('/api/templates?badge=nonsense')).statusCode).toBe(400);
         expect((await get('/api/templates?sort=nonsense')).statusCode).toBe(400);
@@ -206,7 +206,7 @@ describe('browse, search and spotlight', () => {
     it('returns the seeded spotlight with blurbs', async () => {
         const { items } = (await get('/api/spotlight')).json();
 
-        expect(items).toHaveLength(2);
+        expect(items).toHaveLength(3);
         expect(items[0].blurb.length).toBeGreaterThan(10);
     });
 
@@ -262,7 +262,72 @@ describe('moderator removal', () => {
         expect(detail.removed).toBe(true);
         expect(detail.removedReason).toBe('Abusive description');
         expect(detail.template).toBeNull();
-        expect((await get('/api/templates?pageSize=50')).json().total).toBe(4);
+        expect((await get('/api/templates?pageSize=50')).json().total).toBe(5);
         expect((await post('/api/policy/evaluate', { policy: {}, identifier: canonicalId })).json().decision).toBe('block');
+    });
+});
+
+describe('static web app', () => {
+    it('serves index.html for client routes but keeps unknown API paths as JSON 404', async () => {
+        const { mkdtempSync, writeFileSync } = await import('node:fs');
+        const { tmpdir } = await import('node:os');
+        const { join } = await import('node:path');
+        const dir = mkdtempSync(join(tmpdir(), 'web-'));
+
+        writeFileSync(join(dir, 'index.html'), '<html>app</html>');
+
+        const web = await buildApp(db, { rateLimit: false, webDir: dir });
+        const page = await web.inject({ method: 'GET', url: '/browse' });
+        const api404 = await web.inject({ method: 'GET', url: '/api/nope' });
+
+        expect(page.statusCode).toBe(200);
+        expect(page.body).toContain('app');
+        expect(api404.statusCode).toBe(404);
+        expect(api404.json()).toEqual({ error: 'Not found.' });
+        await web.close();
+    });
+});
+
+describe('raw template endpoint and CORS', () => {
+    it('serves the stored canonical JSON, immutable, and the identifier verifies against it', async () => {
+        await seed(db);
+
+        const res = await get(`/api/templates/${canonicalId}/raw`);
+
+        expect(res.statusCode).toBe(200);
+        expect(res.headers['content-type']).toContain('application/json');
+        expect(res.headers['cache-control']).toContain('immutable');
+        expect(res.headers.etag).toBe(`"${canonicalId}"`);
+        expect(generateTemplateIdentifier(parseTemplate(res.body))).toBe(canonicalId);
+        expect(res.body).toBe(serializeTemplate(parseTemplate(canonicalJson)));
+        expect(serializeTemplate(parseTemplate(res.body))).toBe(res.body);
+    });
+
+    it('answers 404 for unknown identifiers and 410 for removed ones', async () => {
+        await seed(db);
+
+        expect((await get('/api/templates/nope/raw')).statusCode).toBe(404);
+
+        await db.updateTable('templates').set({ removed: 1, removed_reason: 'test' }).where('identifier', '=', canonicalId).execute();
+
+        expect((await get(`/api/templates/${canonicalId}/raw`)).statusCode).toBe(410);
+    });
+
+    it('allows any origin on public reads but never on admin routes or POSTs', async () => {
+        await seed(db);
+
+        expect((await get('/api/templates')).headers['access-control-allow-origin']).toBe('*');
+        expect((await get(`/api/templates/${canonicalId}/raw`)).headers['access-control-allow-origin']).toBe('*');
+        expect((await get('/api/admin/me')).headers['access-control-allow-origin']).toBeUndefined();
+        expect((await post('/api/admin/challenge', {})).headers['access-control-allow-origin']).toBeUndefined();
+        expect((await post(`/api/templates/${canonicalId}/flags`, { reason: 'testing cors' })).headers['access-control-allow-origin']).toBeUndefined();
+    });
+});
+
+describe('first start', () => {
+    it('seed is safe to run when the database already has templates', async () => {
+        expect((await seed(db)).published).toBe(6);
+        expect((await seed(db)).published).toBe(0);
+        expect((await db.selectFrom('templates').select('identifier').execute()).length).toBe(6);
     });
 });

@@ -36,6 +36,8 @@ export interface ReviewsTable {
     id: Generated<number>;
     identifier: string;
     reviewer_address: string;
+    /** Display name of the moderator who gave the review. Null for rows created before labels existed. */
+    reviewer_label: string | null;
     signature: string | null;
     note: string;
     created_at: string;
@@ -133,6 +135,7 @@ export async function migrate(db: Db): Promise<void> {
         .addColumn('id', 'integer', (c) => c.primaryKey().autoIncrement())
         .addColumn('identifier', 'text', (c) => c.notNull().references('templates.identifier'))
         .addColumn('reviewer_address', 'text', (c) => c.notNull())
+        .addColumn('reviewer_label', 'text')
         .addColumn('signature', 'text')
         .addColumn('note', 'text', (c) => c.notNull())
         .addColumn('created_at', 'text', (c) => c.notNull())
@@ -165,4 +168,19 @@ export async function migrate(db: Db): Promise<void> {
         .addColumn('note', 'text', (c) => c.notNull())
         .addColumn('created_at', 'text', (c) => c.notNull())
         .execute();
+
+    await upgradeSchema(db);
+}
+
+/**
+ * Adds columns introduced after the first release to databases created earlier. Uses Kysely introspection so the same
+ * code works on SQLite and PostgreSQL.
+ */
+export async function upgradeSchema(db: Db): Promise<void> {
+    const tables = await db.introspection.getTables();
+    const reviews = tables.find((table) => table.name === 'reviews');
+
+    if (reviews && !reviews.columns.some((column) => column.name === 'reviewer_label')) {
+        await db.schema.alterTable('reviews').addColumn('reviewer_label', 'text').execute();
+    }
 }

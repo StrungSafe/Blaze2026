@@ -267,6 +267,10 @@ function sampleVariables(template: LooseTemplate): Record<string, unknown> {
             case 'string':
                 values[id] = 'sample';
                 break;
+            case 'bytes':
+                // Hex text, the way invitations carry bytes. Raw Uint8Array values compile to a different script.
+                values[id] = '11'.repeat(32);
+                break;
             default:
                 // private_key, signature and token_* values are skipped on purpose.
                 break;
