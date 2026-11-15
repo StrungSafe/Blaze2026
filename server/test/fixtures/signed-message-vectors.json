@@ -1,0 +1,42 @@
+[
+  {
+    "message": "hub-login:test-nonce-123",
+    "address": "bitcoincash:qqtr9ze5422lx3cv3uzknsmv6vue5lalsv269j7af9",
+    "publicKeyHex": "03d2bb56bf59aef7d501624dda7c985d80dc6106f36470f4c0861a7f80e95f68a6",
+    "signature": "HzyfmbHwPx3CDjm5Arl1qQS4Nbcq4Sjkg3Wp2WD4SAUkJliokD+uU/R2qYwl9eo54s8hyyK86ttKeKJm4RJvdpA=",
+    "messageHashBase64": "F1ls+6Q2f1xQKDkZXqKzexGRpS4OxiE+QRq89AQoaHk=",
+    "recoveryId": 0
+  },
+  {
+    "message": "XO Template Hub admin login\nnonce: 9f2c1a7e44b0d1e85a3b6c7d8e9f0a1b\nexpires: 2026-11-10T12:00:00.000Z",
+    "address": "bchtest:qqh2ycezrfzjc6sgn8rqj2c707ekafmecvzfnjw8g5",
+    "publicKeyHex": "026432d44607b98e359a11c373edcf03b6df36001aa89f20343123aea78dd1ad0b",
+    "signature": "H5k89sLUJvMG4QcUl3tgX9Q6Yt7DoGvPq+O46olFuWt9UJgWoMnVv378Ur67Xf+2WDxNGUAeR6Uazffm7i6q/NA=",
+    "messageHashBase64": "EJ1TIPi9FAeU67Dv0vFMKaa2XmR+J1vl/UGgL2cZ1uE=",
+    "recoveryId": 0
+  },
+  {
+    "message": "unicode: éè ✓ ₿ 🔥",
+    "address": "bitcoincash:qzvch4u26cvjtfqxyxscrq0u7vxajzs06y52atwsy6",
+    "publicKeyHex": "02657568e7f9060a86a1d2138e3c5ba153551af55c3aa88ed22199903c7ae449fe",
+    "signature": "IGUUvADky9d/9SzJvPMnHkQH0m8gRd/o4WKev0r6Uv2CV77hgTPjKi2fNGsIeTRc+bd3pwUGhnNiBGCfvxXUi/0=",
+    "messageHashBase64": "1ymhz9r8s/zMMEz8KBIA6sy3SB6oH8pSNvYXUO53BQ8=",
+    "recoveryId": 1
+  },
+  {
+    "message": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "address": "bchtest:qzjr8asp2fs0rfhgkump6f9yqncnfahlzghjedxz6a",
+    "publicKeyHex": "02bf661c40be96df4063210739760877f4507f4947674039324409c43641b90760",
+    "signature": "H0wMWi8ZqpK1lvDfGyQEm33WSXk4N00mIFZN5jNA9KqNepfUCTtKEGKqGfwkHE9k8yqmf8dC0XtIpvUy7YGCESs=",
+    "messageHashBase64": "z6o3SAESPAdYazLYHGo1W7bCsv48BWTIqRwO28a6/cM=",
+    "recoveryId": 0
+  },
+  {
+    "message": "",
+    "address": "bitcoincash:qrnue4666eempxnqsdrll8sehl8aeuzlqukrnnanw6",
+    "publicKeyHex": "0388dec1f262bb0c3c671522a67f0412f8c59ae8914016f80e1824228d15e45eb0",
+    "signature": "IPJSCEKsRXDVw7o3MO0UC5pIX5e0Cj2N+I3U8xr9LXIuKqbGZq68t69Q5aJ1TGBtrlR55g7OJrkFVu6hVet5Xfk=",
+    "messageHashBase64": "gOeV1KTKrdcEevOJ2ffyIFYv62GWAy4hMeEFYzUsS8w=",
+    "recoveryId": 1
+  }
+]
