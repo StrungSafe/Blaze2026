@@ -63,3 +63,282 @@ img {
   display: block;
   max-width: 100%;
 }
+
+
+
+/* =========================================
+   XOGrid Custom Loading Screen
+========================================= */
+
+.xogrid-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #05070b;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.45s ease,
+    visibility 0.45s ease;
+}
+
+.xogrid-loader-exit {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(90%, 360px);
+  animation: loaderContentIn 0.8s ease both;
+}
+
+.loader-glow {
+  position: absolute;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.loader-glow-one {
+  top: 10%;
+  left: 10%;
+  background: #7138ff;
+  animation: loaderGlow 5s ease-in-out infinite alternate;
+}
+
+.loader-glow-two {
+  right: 5%;
+  bottom: 5%;
+  background: #ff762e;
+  opacity: 0.1;
+  animation: loaderGlow 6s ease-in-out infinite alternate-reverse;
+}
+
+/* Logo */
+
+.loader-logo-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  height: 150px;
+  margin-bottom: 18px;
+}
+
+.loader-logo {
+  position: relative;
+  z-index: 2;
+  width: 115px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 22px rgba(139, 92, 246, 0.2));
+  animation: loaderLogoPulse 2.5s ease-in-out infinite;
+}
+
+.loader-orbit {
+  position: absolute;
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 50%;
+}
+
+.loader-orbit-one {
+  inset: 5px;
+  animation: loaderOrbit 9s linear infinite;
+}
+
+.loader-orbit-two {
+  inset: 17px;
+  border-color: rgba(255, 132, 64, 0.2);
+  animation: loaderOrbitReverse 12s linear infinite;
+}
+
+.loader-tagline {
+  margin: 5px 0 30px;
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 4px;
+}
+
+/* Animated grid */
+
+.loader-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 9px);
+  gap: 7px;
+  margin-bottom: 22px;
+}
+
+.loader-grid span {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: #8b5cf6;
+  opacity: 0.2;
+  animation: loaderGridPulse 1.1s ease-in-out infinite;
+}
+
+.loader-grid span:nth-child(2),
+.loader-grid span:nth-child(4),
+.loader-grid span:nth-child(8) {
+  background: #ff873f;
+}
+
+.loader-message {
+  margin: 0 0 17px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.loader-dots {
+  display: inline-block;
+  width: 18px;
+  overflow: hidden;
+  vertical-align: bottom;
+  animation: loaderDots 1.2s steps(4, end) infinite;
+}
+
+/* Progress bar */
+
+.loader-progress {
+  width: 190px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.loader-progress span {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8b5cf6, #ff873f);
+  box-shadow: 0 0 12px rgba(255, 135, 63, 0.6);
+  animation: loaderProgress 1.6s ease-in-out forwards;
+}
+
+.loader-version {
+  margin-top: 25px;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 2.5px;
+}
+
+/* Animations */
+
+@keyframes loaderContentIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes loaderLogoPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
+}
+
+@keyframes loaderOrbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loaderOrbitReverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes loaderGridPulse {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes loaderProgress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes loaderDots {
+  from {
+    width: 0;
+  }
+  to {
+    width: 18px;
+  }
+}
+
+@keyframes loaderGlow {
+  from {
+    transform: scale(0.85);
+  }
+  to {
+    transform: scale(1.15);
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 480px) {
+  .loader-logo-wrap {
+    width: 130px;
+    height: 130px;
+  }
+
+  .loader-logo {
+    width: 100px;
+  }
+
+  .loader-tagline {
+    font-size: 9px;
+    letter-spacing: 3px;
+  }
+}
+
+/* Accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+  .xogrid-loader *,
+  .xogrid-loader *::before,
+  .xogrid-loader *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
