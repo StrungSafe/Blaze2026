@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Selene login probe</title>
+<style>
+ body{font:15px/1.5 system-ui,sans-serif;max-width:640px;margin:2rem auto;padding:0 1rem}
+ button{font:inherit;padding:.5rem 1rem;margin:.25rem .25rem .25rem 0}
+ pre{background:#f4f4f4;padding:.75rem;overflow:auto;white-space:pre-wrap;word-break:break-all;font-size:12px}
+ .ok{color:#0a7a2f}.bad{color:#b00020}
+ #qr{display:block;margin:1rem 0}
+</style></head><body>
+<h1>Selene login probe</h1>
+<p>Checks whether your wallet will sign the hub's moderator-login challenge: a message-only transaction that spends a made-up output and is <b>never broadcast</b>. It moves no funds.</p>
+<ol>
+ <li>Press <b>Connect</b>, then scan the QR code in Selene (WizardConnect).</li>
+ <li>Press <b>Sign login challenge</b> and approve in Selene.</li>
+ <li>Copy the result log back to Nathaniel.</li>
+</ol>
+<button id="connect">Connect</button>
+<button id="sign" disabled>Sign login challenge</button>
+<canvas id="qr" width="0" height="0"></canvas>
+<p id="uri" style="font-size:12px;word-break:break-all"></p>
+<h3>Result</h3>
+<pre id="log">Waiting.</pre>
+<script type="module" src="probe.js"></script>
+</body></html>

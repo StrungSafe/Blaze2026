@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>XOGrid mainnet spend probe</title>
+<style>
+ body{font:15px/1.5 system-ui,sans-serif;max-width:680px;margin:2rem auto;padding:0 1rem}
+ button{font:inherit;padding:.5rem 1rem;margin:.25rem .25rem .25rem 0}
+ pre{background:#f4f4f4;padding:.75rem;overflow:auto;white-space:pre-wrap;word-break:break-all;font-size:12px}
+ .ok{color:#0a7a2f}.bad{color:#b00020}
+ #coins button{display:block}
+ .warn{background:#fff4d6;border:1px solid #e0b84a;padding:.6rem .8rem;border-radius:6px}
+</style></head><body>
+<h1>XOGrid mainnet spend probe</h1>
+<p class="warn"><b>Real mainnet BCH.</b> This moves one of your plain coins back to <b>the same address</b>. Only the 250 sat network fee (about $0.001) leaves your wallet. Coins carrying CashTokens are never touched. Selene shows the exact transaction for approval, and nothing is sent until you press Broadcast.</p>
+<ol>
+ <li><b>Connect</b>, then scan the QR code in Selene.</li>
+ <li><b>Find coins</b>, then click the coin to use (needs at least 796 sats).</li>
+ <li><b>Sign</b> and approve in Selene. The page checks the signed transaction itself.</li>
+ <li><b>Broadcast</b>, then copy the result log back to Nathaniel.</li>
+</ol>
+<button id="connect">Connect</button>
+<button id="find" disabled>Find coins</button>
+<button id="sign" disabled>Sign</button>
+<button id="broadcast" disabled>Broadcast</button>
+<canvas id="qr" width="0" height="0" style="display:block;margin:1rem 0"></canvas>
+<p id="uri" style="font-size:12px;word-break:break-all"></p>
+<h3>Coins</h3>
+<div id="coins"></div>
+<h3>Plan</h3>
+<pre id="plan">Choose a coin.</pre>
+<h3>Result</h3>
+<pre id="log">Waiting.</pre>
+<script type="module" src="spend.js"></script>
+</body></html>

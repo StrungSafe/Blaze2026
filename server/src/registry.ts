@@ -397,3 +397,18 @@ function safeStringify(value: unknown): string {
         throw new RegistryError('Template could not be read as JSON.', 400);
     }
 }
+
+
+/**
+ * The canonical JSON exactly as stored, for tools that fetch a template by identifier.
+ * Returns 'removed' for a tombstoned template so callers can answer 410 instead of 404.
+ */
+export async function getRawTemplate(db: Db, identifier: string): Promise<string | 'removed' | undefined> {
+    const row = await db.selectFrom('templates').select(['json', 'removed']).where('identifier', '=', identifier).executeTakeFirst();
+
+    if (!row) {
+        return undefined;
+    }
+
+    return row.removed === 1 ? 'removed' : row.json;
+}
