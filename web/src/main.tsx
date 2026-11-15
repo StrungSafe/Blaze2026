@@ -5,6 +5,7 @@ import { Banner } from './components';
 import './index.css';
 import { Admin } from './pages/Admin';
 import { Browse } from './pages/Browse';
+import { Demo } from './pages/Demo';
 import { Home } from './pages/Home';
 import { TemplatePage } from './pages/Template';
 
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')!).render(
                         <Route path="/browse" element={<Browse />} />
                         <Route path="/t/:identifier" element={<TemplatePage />} />
                         <Route path="/admin" element={<Admin />} />
+                        <Route path="/demo" element={<Demo />} />
                     </Routes>
                 </main>
             </div>

@@ -20,6 +20,7 @@ export function Home() {
             </p>
             <div className="mt-4 flex gap-3">
                 <Link to="/browse" className="rounded bg-slate-900 text-white px-4 py-2">Browse templates</Link>
+                <Link to="/demo" className="rounded border border-slate-400 px-4 py-2">Try the demo</Link>
             </div>
             <h2 className="text-xl font-semibold mt-8 mb-3">Featured</h2>
             {error ? <p className="text-red-700">{error}</p> : null}
