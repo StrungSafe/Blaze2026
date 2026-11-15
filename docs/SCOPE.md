@@ -1,4 +1,4 @@
-# Scope proposal: XO Template Hub (registry + audit + test runner)
+# Scope proposal: XOGrid (registry + audit + test runner)
 
 Status: PROPOSAL - Nothing here is decided. Belongs on a proposal branch, not main.
 
@@ -68,7 +68,7 @@ Judges give "a couple of minutes" per project and punish confusion. The home pag
 - Mainnet Track (1st $3,500 PUSD plus BLISS tickets, 2nd $1,500, 3rd $750): scored by 3 judges on innovation, design and usability, technical strength, business potential.
 - Community Choice ($750 PUSD): automatic for eligible Mainnet projects that list an EMBER2026-capable CashTokens address.
 - Build with XO (0.3 BCH, up to 10 winners): novel template, executed invitation inspectable in the debug tool, follow-up actions, ~500-word feedback written personally by us.
-- NOT targeted: Migrate to XO (1 BCH). The XO team said the hub does not qualify (new project, no original to migrate). Identity and stablecoin bounties are out of scope.
+- NOT targeted: Migrate to XO (1 BCH). The XO team said XOGrid does not qualify (new project, no original to migrate). Identity and stablecoin bounties are out of scope.
 
 ## Eligibility checklist (Mainnet Track)
 

@@ -1,11 +1,17 @@
 import rateLimit from '@fastify/rate-limit';
+import fastifyStatic from '@fastify/static';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import Fastify, { type FastifyInstance } from 'fastify';
+import { AdminAuth } from './admin.js';
+import { registerAdminRoutes } from './admin-routes.js';
 import type { Db } from './db.js';
 import { BADGE_RANK, type Badge } from './badges.js';
 import { validatePolicy, type Policy } from './policy.js';
 import {
     addFlag,
     evaluateForTemplate,
+    getRawTemplate,
     getSpotlight,
     getTemplateDetail,
     listTemplates,
@@ -18,6 +24,10 @@ export interface AppOptions {
     /** Disable rate limiting (tests). */
     rateLimit?: boolean;
     logger?: boolean;
+    /** Clock for login challenges and sessions (tests). */
+    clock?: () => number;
+    /** Directory holding the built web app. When it exists it is served, with index.html for unknown non-API paths. */
+    webDir?: string;
 }
 
 const SORTS = new Set(['newest', 'name', 'flagged']);
@@ -54,7 +64,36 @@ export async function buildApp(db: Db, options: AppOptions = {}): Promise<Fastif
         return reply.status(500).send({ error: 'Internal server error.' });
     });
 
+    // Public read endpoints are open to any origin so other XO apps and wallets can fetch templates from the browser.
+    // Admin routes never get this header, and no request with credentials is accepted anywhere.
+    app.addHook('onSend', async (request, reply) => {
+        if ((request.method === 'GET' || request.method === 'HEAD') && request.url.startsWith('/api/') && !request.url.startsWith('/api/admin')) {
+            reply.header('access-control-allow-origin', '*');
+        }
+    });
+
     app.get('/api/health', async () => ({ ok: true }));
+
+    // The template exactly as an XO tool expects it. The identifier is a hash of the content, so the response can
+    // never change and may be cached forever.
+    app.get('/api/templates/:identifier/raw', async (request, reply) => {
+        const { identifier } = request.params as { identifier: string };
+        const raw = await getRawTemplate(db, identifier);
+
+        if (raw === undefined) {
+            return reply.status(404).send({ error: 'Template not found.' });
+        }
+
+        if (raw === 'removed') {
+            return reply.status(410).send({ error: 'This template was removed by a moderator.' });
+        }
+
+        return reply
+            .header('content-type', 'application/json; charset=utf-8')
+            .header('etag', `"${identifier}"`)
+            .header('cache-control', 'public, max-age=31536000, immutable')
+            .send(raw);
+    });
 
     app.get('/api/templates', async (request, reply) => {
         const q = request.query as Record<string, unknown>;
@@ -126,6 +165,7 @@ export async function buildApp(db: Db, options: AppOptions = {}): Promise<Fastif
         },
     );
 
+
     app.get('/api/spotlight', async () => ({ items: await getSpotlight(db) }));
 
     app.post('/api/policy/evaluate', async (request, reply) => {
@@ -148,6 +188,19 @@ export async function buildApp(db: Db, options: AppOptions = {}): Promise<Fastif
 
         return decision;
     });
+
+    registerAdminRoutes(app, db, new AdminAuth(db, options.clock), { rateLimit: options.rateLimit !== false });
+
+    if (options.webDir && existsSync(resolve(options.webDir, 'index.html'))) {
+        await app.register(fastifyStatic, { root: resolve(options.webDir) });
+        app.setNotFoundHandler((request, reply) => {
+            if (request.method === 'GET' && !request.url.startsWith('/api/')) {
+                return reply.sendFile('index.html');
+            }
+
+            return reply.status(404).send({ error: 'Not found.' });
+        });
+    }
 
     return app;
 }

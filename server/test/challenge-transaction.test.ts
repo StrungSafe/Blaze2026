@@ -194,3 +194,26 @@ describe('allowlist identity matching', () => {
         expect(publicKeyMatchesIdentity(keyAt(0), 'xpub-not-valid')).toBe(false);
     });
 });
+
+describe('buildWalletSignRequest', () => {
+    it('is relay-safe JSON: serialises without BigInt errors and round-trips to the challenge transaction', async () => {
+        const { buildWalletSignRequest, buildChallengeTransaction } = await import('../src/auth/challenge-transaction.js');
+        const { decodeTransaction, hexToBin } = await import('@bitauth/libauth');
+        const publicKey = secp256k1.derivePublicKeyCompressed(new Uint8Array(32).fill(5)) as Uint8Array;
+        const request = buildWalletSignRequest('abc123', publicKey);
+
+        // This is what the relay does to the request. It threw "Do not know how to serialize a BigInt" before.
+        const wire = JSON.parse(JSON.stringify(request));
+        const source = wire.sourceOutputs[0];
+        const expected = buildChallengeTransaction('abc123', publicKey);
+        const decoded = decodeTransaction(hexToBin(wire.transaction));
+
+        expect(wire.broadcast).toBe(false);
+        expect(source.valueSatoshis).toBe('<bigint: 1000n>');
+        expect(source.outpointTransactionHash).toMatch(/^[0-9a-f]{64}$/);
+        expect(source.outpointIndex).toBe(0);
+        expect(source.sequenceNumber).toBe(0);
+        expect(typeof decoded).not.toBe('string');
+        expect(decoded).toEqual(expected.transaction);
+    });
+});

@@ -33,7 +33,7 @@ import {
  * signing key belongs to an allowlisted moderator.
  */
 
-export const LOGIN_DOMAIN = 'XO Template Hub login';
+export const LOGIN_DOMAIN = 'XOGrid login';
 
 /** Value of the made-up input. It exists only so the wallet has a source output to sign against. */
 export const CHALLENGE_SOURCE_SATOSHIS = 1000n;
@@ -69,6 +69,32 @@ export function buildChallengeTransaction(nonce: string, publicKey: Uint8Array):
             outputs: [challengeOutput(nonce)],
         },
         sourceOutputs: [{ lockingBytecode: encodeLockingBytecodeP2pkh(hash160(publicKey)), valueSatoshis: CHALLENGE_SOURCE_SATOSHIS }],
+    };
+}
+
+/**
+ * The request body for WizardConnect's signTransaction, in the relay-safe JSON form the protocol sends over the wire:
+ * the transaction as hex, and each source output with bytes as hex and the satoshi value as "<bigint: 1000n>".
+ * (The library's own sourceOutputToRelay does the same but is not exported.) The wallet's sourceOutputs type is
+ * libauth's Input & Output, so each entry carries the outpoint fields as well as the locking bytecode and value.
+ * Always sent with broadcast false: the login transaction spends a made-up outpoint and must never reach the network.
+ */
+export function buildWalletSignRequest(nonce: string, publicKey: Uint8Array, userPrompt = 'Log in to the XOGrid moderator portal. This signs a message-only transaction that is never broadcast and moves no funds.') {
+    const { transaction, sourceOutputs } = buildChallengeTransaction(nonce, publicKey);
+    const input = transaction.inputs[0]!;
+
+    return {
+        transaction: binToHex(encodeTransaction(transaction)),
+        sourceOutputs: sourceOutputs.map((output) => ({
+            outpointTransactionHash: binToHex(input.outpointTransactionHash),
+            outpointIndex: input.outpointIndex,
+            unlockingBytecode: binToHex(input.unlockingBytecode),
+            sequenceNumber: input.sequenceNumber,
+            valueSatoshis: `<bigint: ${output.valueSatoshis}n>`,
+            lockingBytecode: binToHex(output.lockingBytecode),
+        })),
+        broadcast: false,
+        userPrompt,
     };
 }
 
