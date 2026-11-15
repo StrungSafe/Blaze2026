@@ -22,16 +22,17 @@ function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Main navigation
   const navLinks = [
-    {
-      name: "Browse Templates",
-      href: "/FeaturedTemplates",
-      section: "featured-templates",
-    },
     {
       name: "How It Works",
       href: "/#how-it-works",
       section: "how-it-works",
+    },
+    {
+      name: "Featured Templates",
+      href: "/#browse",
+      section: "browse",
     },
     {
       name: "Publish",
@@ -43,7 +44,7 @@ function Navbar() {
     },
   ];
 
-  // Track navbar background on scroll
+  // Navbar scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 30);
@@ -60,64 +61,64 @@ function Navbar() {
     };
   }, []);
 
-  // Close menu on route change
+  // Close mobile menu when route changes
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
 
-  // Track the active landing page section
+  // Automatically detect the homepage section currently in view
   useEffect(() => {
     if (location.pathname !== "/") return;
 
     const sectionIds = [
       "home",
       "how-it-works",
-      "featuredtemplates",
+      "browse",
     ];
 
-    const sections = sectionIds
-      .map((id) => document.getElementById(id))
-      .filter(Boolean);
+    const updateActiveSection = () => {
+      const marker = window.scrollY + window.innerHeight * 0.35;
 
-    if (!sections.length) return;
+      let currentSection = "home";
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleSections = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort(
-            (a, b) =>
-              b.intersectionRatio - a.intersectionRatio
-          );
+      sectionIds.forEach((id) => {
+        const section = document.getElementById(id);
 
-        if (visibleSections.length > 0) {
-          setActiveSection(visibleSections[0].target.id);
+        if (!section) return;
+
+        const sectionTop =
+          section.getBoundingClientRect().top + window.scrollY;
+
+        if (marker >= sectionTop) {
+          currentSection = id;
         }
-      },
-      {
-        root: null,
-        rootMargin: "-25% 0px -55% 0px",
-        threshold: [0, 0.1, 0.25, 0.5, 0.75],
-      }
-    );
+      });
 
-    sections.forEach((section) => observer.observe(section));
+      setActiveSection(currentSection);
+    };
 
-    return () => observer.disconnect();
+    updateActiveSection();
+
+    window.addEventListener("scroll", updateActiveSection, {
+      passive: true,
+    });
+
+    window.addEventListener("resize", updateActiveSection);
+
+    return () => {
+      window.removeEventListener("scroll", updateActiveSection);
+      window.removeEventListener("resize", updateActiveSection);
+    };
   }, [location.pathname]);
 
-  // Set active navigation item for other pages
+  // Track active routes outside the homepage
   useEffect(() => {
     if (location.pathname === "/") return;
 
-    const currentPage = navLinks.find(
-      (link) => link.href === location.pathname
-    );
-
-    setActiveSection(currentPage?.href || "");
+    setActiveSection(location.pathname);
   }, [location.pathname]);
 
-  // Handle Escape key
+  // Escape key closes mobile navigation
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key === "Escape") {
@@ -132,7 +133,7 @@ function Navbar() {
     };
   }, []);
 
-  // Handle navigation to Home
+  // Navigate home
   const handleHomeClick = () => {
     setMenuOpen(false);
 
@@ -145,14 +146,19 @@ function Navbar() {
       setActiveSection("home");
     } else {
       navigate("/", {
-        state: { scrollToSection: "home" },
+        state: {
+          scrollToSection: "home",
+        },
       });
     }
   };
 
-  // Handle section navigation
+  // Navigate to homepage sections
   const handleSectionClick = (event, link) => {
-    if (!link.section) return;
+    if (!link.section) {
+      setMenuOpen(false);
+      return;
+    }
 
     event.preventDefault();
     setMenuOpen(false);
@@ -173,7 +179,7 @@ function Navbar() {
     }
   };
 
-  // Scroll to a requested section after navigating home
+  // Scroll after returning to homepage
   useEffect(() => {
     const target = location.state?.scrollToSection;
 
@@ -196,6 +202,7 @@ function Navbar() {
     return () => cancelAnimationFrame(frame);
   }, [location.pathname, location.state, navigate]);
 
+  // Check active navigation link
   const isLinkActive = (link) => {
     if (link.section) {
       return (
@@ -214,7 +221,7 @@ function Navbar() {
       <nav
         className={`mx-auto flex h-[76px] max-w-[1440px] items-center justify-between rounded-2xl px-4 transition-all duration-500 sm:px-7 ${
           scrolled
-            ? "border border-white/[0.09] bg-[#090A13]/45 shadow-[0_12px_50px_rgba(0,0,0,0.3)] backdrop-blur-2xl"
+            ? "border border-white/[0.09] bg-[#090A13]/75 shadow-[0_12px_50px_rgba(0,0,0,0.3)] backdrop-blur-2xl"
             : "border border-transparent bg-transparent shadow-none backdrop-blur-none"
         }`}
       >
@@ -240,7 +247,7 @@ function Navbar() {
             onClick={handleHomeClick}
             className={`group relative rounded-xl px-4 py-3 text-[13px] font-medium tracking-wide transition-all duration-300 hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 ${
               location.pathname === "/" && activeSection === "home"
-                ? "text-white"
+                ? "text-orange-400"
                 : "text-white/75 hover:text-white"
             }`}
           >
@@ -263,9 +270,7 @@ function Navbar() {
               <Link
                 key={link.name}
                 to={link.href}
-                onClick={(event) =>
-                  handleSectionClick(event, link)
-                }
+                onClick={(event) => handleSectionClick(event, link)}
                 aria-current={active ? "page" : undefined}
                 className={`group relative rounded-xl px-4 py-3 text-[13px] font-medium tracking-wide transition-all duration-300 hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 ${
                   active
@@ -287,14 +292,14 @@ function Navbar() {
           })}
         </div>
 
-        {/* Desktop Connect Wallet */}
+        {/* Desktop Demo CTA */}
         <div className="hidden lg:flex">
           <Link
             to="/demo"
             className="group relative flex items-center gap-3 overflow-hidden rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-500/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-orange-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
           >
             <span className="relative z-10">
-              Connect Wallet
+              Try Demo
             </span>
 
             <ArrowUpRight
@@ -323,9 +328,9 @@ function Navbar() {
       <div
         id="mobile-navigation"
         aria-hidden={!menuOpen}
-        className={`mx-auto mt-3 max-w-[1440px] overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0B0C16]/40 shadow-2xl shadow-black/40 backdrop-blur-2xl transition-all duration-300 lg:hidden ${
+        className={`mx-auto mt-3 max-w-[1440px] overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0B0C16]/90 shadow-2xl shadow-black/40 backdrop-blur-2xl transition-all duration-300 lg:hidden ${
           menuOpen
-            ? "max-h-[480px] translate-y-0 p-4 opacity-100"
+            ? "max-h-135 translate-y-0 p-4 opacity-100"
             : "pointer-events-none max-h-0 -translate-y-2 border-transparent p-0 opacity-0"
         }`}
       >
@@ -337,7 +342,7 @@ function Navbar() {
             tabIndex={menuOpen ? 0 : -1}
             className={`group flex w-full items-center justify-between rounded-xl border px-4 py-3.5 text-left text-sm font-medium transition-all duration-300 ${
               location.pathname === "/" && activeSection === "home"
-                ? "border-orange-400/20 bg-orange-500/10 text-white"
+                ? "border-orange-400/20 bg-orange-500/10 text-orange-400"
                 : "border-transparent text-white/70 hover:border-orange-400/20 hover:bg-orange-500/10 hover:text-white"
             }`}
           >
@@ -357,9 +362,7 @@ function Navbar() {
               <Link
                 key={link.name}
                 to={link.href}
-                onClick={(event) =>
-                  handleSectionClick(event, link)
-                }
+                onClick={(event) => handleSectionClick(event, link)}
                 tabIndex={menuOpen ? 0 : -1}
                 aria-current={active ? "page" : undefined}
                 className={`group flex items-center justify-between rounded-xl border px-4 py-3.5 text-sm font-medium transition-all duration-300 ${
@@ -380,14 +383,14 @@ function Navbar() {
 
           <div className="my-2 border-t border-white/[0.08]" />
 
-          {/* Mobile Connect Wallet */}
+          {/* Mobile Demo CTA */}
           <Link
             to="/demo"
             onClick={closeMenu}
             tabIndex={menuOpen ? 0 : -1}
             className="flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/15 transition-all duration-300 hover:bg-orange-400"
           >
-            Connect Wallet
+            Try Demo
 
             <ArrowUpRight size={17} />
           </Link>

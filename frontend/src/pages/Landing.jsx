@@ -1,7 +1,10 @@
+
 import Navbar from "../layout/Navbar";
 import Hero from "../components/Hero";
 import HowItWorks from "../components/HowItWorks";
 import FeaturedTemplates from "../components/FeaturedTemplates";
+import Footer from "../components/Footer";
+import ScrollToTop from "../components/ScrollToTop";
 
 function LandingPage() {
   return (
@@ -13,6 +16,10 @@ function LandingPage() {
         <HowItWorks />
         <FeaturedTemplates />
       </main>
+
+      <Footer />
+
+      <ScrollToTop />
     </>
   );
 }
