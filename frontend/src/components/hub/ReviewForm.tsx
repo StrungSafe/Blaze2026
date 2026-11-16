@@ -29,7 +29,8 @@ export function ReviewForm({ identifier, onPosted }: { identifier: string; onPos
   async function postWith(current: WalletSession) {
     setPhase("signing");
 
-    const challenge = await startReview(identifier, rating, body.trim(), publicKeyHex(current));
+    const publicKey = await publicKeyHex(current);
+    const challenge = await startReview(identifier, rating, body.trim(), publicKey);
 
     if (!challenge.walletSignRequest) {
       throw new Error("The server did not return a signing request.");
