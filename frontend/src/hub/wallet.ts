@@ -32,15 +32,32 @@ export function startWalletSession(
   return { manager, cleanup: relay.cleanup, uri: relay.uri, qrUri: relay.qrUri };
 }
 
-/** The wallet's first receive key as compressed-public-key hex. */
-export function publicKeyHex(session: WalletSession): string {
-  const key = session.manager.getPubkey(0, 0n);
+const hex = (key: Uint8Array): string => Array.from(key, (byte) => byte.toString(16).padStart(2, "0")).join("");
 
-  if (!key) {
-    throw new Error("The wallet did not share a receive key.");
+/**
+ * The wallet's first receive key as compressed-public-key hex. Wallets announce "ready" slightly before their keys
+ * arrive, so this waits for the key instead of failing on the first look.
+ */
+export async function publicKeyHex(
+  session: Pick<WalletSession, "manager">,
+  timeoutMs = 10_000,
+  intervalMs = 250,
+): Promise<string> {
+  const deadline = Date.now() + timeoutMs;
+
+  for (;;) {
+    const key = session.manager.getPubkey(0, 0n);
+
+    if (key) {
+      return hex(key);
+    }
+
+    if (Date.now() >= deadline) {
+      throw new Error("The wallet did not share a receive key. Keep the wallet open on its home screen and try again.");
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
   }
-
-  return Array.from(key, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 /** Asks the wallet to sign a request from the server. Nothing is broadcast and no funds move. */
