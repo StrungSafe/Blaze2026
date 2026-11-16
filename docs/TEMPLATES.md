@@ -2,6 +2,10 @@
 
 For anyone writing templates (Miguel) and for whoever integrates them into the registry. A template lives in the registry by its content-addressed identifier; the same content always gets the same id.
 
+## Converting a CashScript contract
+
+Contract conversions live in [`contracts/`](../contracts/README.md), one folder per contract system. Each folder holds the `.cash` source, its cashc artifact, the template, tests that prove the template builds exactly the contract, a chipnet script, and a Credits section for the original authors. Start from `contracts/_skeleton/`. `contracts/revenue-split/` is the worked example. Once a converted template is chipnet-verified, register it in the hub as described below.
+
 ## The fast path
 
 1. Write the template as a TypeScript file in `server/src/templates/<name>.ts` that exports a plain object. `claim-voucher.ts` is the working example to copy.

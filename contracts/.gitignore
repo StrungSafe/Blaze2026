@@ -1,0 +1,3 @@
+node_modules/
+# Chipnet test wallets and engine databases: test money only, but never commit a mnemonic.
+.xo-demo/

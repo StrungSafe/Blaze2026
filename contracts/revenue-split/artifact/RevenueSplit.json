@@ -1,0 +1,73 @@
+{
+  "contractName": "RevenueSplit",
+  "constructorInputs": [
+    {
+      "name": "artistPublicKeyHash",
+      "type": "bytes20"
+    },
+    {
+      "name": "collaboratorPublicKeyHash",
+      "type": "bytes20"
+    },
+    {
+      "name": "platformPublicKeyHash",
+      "type": "bytes20"
+    },
+    {
+      "name": "artistBasisPoints",
+      "type": "int"
+    },
+    {
+      "name": "collaboratorBasisPoints",
+      "type": "int"
+    }
+  ],
+  "abi": [
+    {
+      "name": "Payout",
+      "inputs": []
+    }
+  ],
+  "bytecode": "OP_INPUTINDEX OP_DUP OP_UTXOVALUE OP_DUP OP_6 OP_ROLL OP_MUL 1027 OP_DIV OP_OVER OP_7 OP_ROLL OP_MUL 1027 OP_DIV OP_ROT OP_2 OP_PICK OP_SUB OP_OVER OP_SUB OP_3 OP_PICK OP_OUTPUTBYTECODE 76a914 OP_6 OP_ROLL OP_CAT 88ac OP_CAT OP_EQUALVERIFY OP_3 OP_PICK OP_OUTPUTVALUE OP_3 OP_ROLL OP_NUMEQUALVERIFY OP_2 OP_PICK OP_1ADD OP_OUTPUTBYTECODE 76a914 OP_5 OP_ROLL OP_CAT 88ac OP_CAT OP_EQUALVERIFY OP_2 OP_PICK OP_1ADD OP_OUTPUTVALUE OP_ROT OP_NUMEQUALVERIFY OP_OVER OP_2 OP_ADD OP_OUTPUTBYTECODE 76a914 OP_4 OP_ROLL OP_CAT 88ac OP_CAT OP_EQUALVERIFY OP_SWAP OP_2 OP_ADD OP_OUTPUTVALUE OP_NUMEQUAL",
+  "source": "pragma cashscript ^0.14.0;\n\n// Fixed-percentage revenue split.\n//\n// Each coin locked to this contract is paid out in full to three P2PKH recipients at fixed basis points.\n// Anyone may trigger the payout, but the value can only go to the three recipients, in the amounts below.\n// The triggerer pays the miner fee from an input of their own, so the split itself never loses value to fees.\n//\n// Transaction layout, relative to this contract's input index i:\n//   output i      artist share        P2PKH(artistPublicKeyHash)\n//   output i + 1  collaborator share  P2PKH(collaboratorPublicKeyHash)\n//   output i + 2  platform share      P2PKH(platformPublicKeyHash), which also receives the rounding remainder\n// Every other input and output (fee input, change, other contracts) is unconstrained.\n//\n// Deploy only with 0 <= artistBasisPoints, 0 <= collaboratorBasisPoints and their sum <= 10000. Other values lock\n// coins that can never be spent, and a check here could not rescue them, so the XO template checks before funding.\n//\n// Based on the RevenueSplit draft by angelnath (XOGrid commit 8267aec). See README.md for the changes.\ncontract RevenueSplit(\n    bytes20 artistPublicKeyHash,\n    bytes20 collaboratorPublicKeyHash,\n    bytes20 platformPublicKeyHash,\n    int artistBasisPoints,\n    int collaboratorBasisPoints\n) {\n    function Payout() {\n        int inputIndex = this.activeInputIndex;\n        int total = tx.inputs[inputIndex].value;\n\n        int artistAmount = total * artistBasisPoints / 10000;\n        int collaboratorAmount = total * collaboratorBasisPoints / 10000;\n        int platformAmount = total - artistAmount - collaboratorAmount;\n\n        require(tx.outputs[inputIndex].lockingBytecode == new LockingBytecodeP2PKH(artistPublicKeyHash));\n        require(tx.outputs[inputIndex].value == artistAmount);\n\n        require(tx.outputs[inputIndex + 1].lockingBytecode == new LockingBytecodeP2PKH(collaboratorPublicKeyHash));\n        require(tx.outputs[inputIndex + 1].value == collaboratorAmount);\n\n        require(tx.outputs[inputIndex + 2].lockingBytecode == new LockingBytecodeP2PKH(platformPublicKeyHash));\n        require(tx.outputs[inputIndex + 2].value == platformAmount);\n    }\n}\n",
+  "fingerprint": "8d06f0911b1fd27c940e3c083ed283d81201b8aafbf1699140240effb6629584",
+  "debug": {
+    "bytecode": "c076c676567a950210279678577a95021027967b52799478945379cd0376a914567a7e0288ac7e885379cc537a9d52798bcd0376a914557a7e0288ac7e8852798bcc7b9d785293cd0376a914547a7e0288ac7e887c5293cc9c",
+    "sourceMap": "27:25:27:46;28:30:28:40;:20::47:1;30:27:30:32:0;:35::52;;:27:::1;:55::60:0;:27:::1;31:33:31:38:0;:41::64;;:33:::1;:67::72:0;:33:::1;32:29:32:34:0;:37::49;;:29:::1;:52::70:0;:29:::1;34:27:34:37:0;;:16::54:1;:58::103:0;:83::102;;:58::103:1;;;:8::105;35:27:35:37:0;;:16::44:1;:48::60:0;;:8::62:1;37:27:37:37:0;;:::41:1;:16::58;:62::113:0;:87::112;;:62::113:1;;;:8::115;38:27:38:37:0;;:::41:1;:16::48;:52::70:0;:8::72:1;40:27:40:37:0;:40::41;:27:::1;:16::58;:62::109:0;:87::108;;:62::109:1;;;:8::111;41:27:41:37:0;:40::41;:27:::1;:16::48;:8::68",
+    "logs": [],
+    "requires": [
+      {
+        "ip": 35,
+        "line": 34
+      },
+      {
+        "ip": 41,
+        "line": 35
+      },
+      {
+        "ip": 52,
+        "line": 37
+      },
+      {
+        "ip": 58,
+        "line": 38
+      },
+      {
+        "ip": 69,
+        "line": 40
+      },
+      {
+        "ip": 75,
+        "line": 41
+      }
+    ]
+  },
+  "compiler": {
+    "name": "cashc",
+    "version": "0.14.0",
+    "options": {
+      "enforceFunctionParameterTypes": true,
+      "enforceLocktimeGuard": true
+    }
+  }
+}
