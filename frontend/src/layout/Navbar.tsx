@@ -299,7 +299,7 @@ function Navbar() {
             className="group relative flex items-center gap-3 overflow-hidden rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-500/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-orange-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
           >
             <span className="relative z-10">
-              Try Demo
+              Get Started
             </span>
 
             <ArrowUpRight
