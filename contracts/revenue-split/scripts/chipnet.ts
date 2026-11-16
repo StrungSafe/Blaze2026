@@ -13,11 +13,11 @@
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { binToHex, hexToBin, lockingBytecodeToCashAddress } from '@bitauth/libauth';
-import { DUST_LIMIT_SATOSHIS, getTemplateLockingScriptOrThrow, type Engine } from '@xo-cash/engine';
+import { hexToBin, lockingBytecodeToCashAddress } from '@bitauth/libauth';
+import { getTemplateLockingScriptOrThrow } from '@xo-cash/engine';
 import { p2pkhTemplate } from '@xo-cash/templates';
-import { generateTemplateIdentifier, parseTemplate, serializeInvitation, serializeTemplate } from '@xo-cash/utils';
-import { createChipnetEngine, loadOrCreateMnemonic } from '../../shared/chipnet-engine.js';
+import { generateTemplateIdentifier, parseTemplate, serializeTemplate } from '@xo-cash/utils';
+import { createChipnetEngine, loadOrCreateMnemonic, signAndBroadcast } from '../../shared/chipnet-engine.js';
 
 const mode = process.argv[2];
 const FOLDER = join(import.meta.dirname, '..', '..', '.xo-demo');
@@ -46,7 +46,6 @@ if (mode !== 'fund' && mode !== 'payout') {
     process.exit(1);
 }
 
-const safe = (_key: string, value: unknown): unknown => (typeof value === 'bigint' ? `${value}n` : value instanceof Uint8Array ? binToHex(value) : value);
 const step = (text: string): void => console.log(`\n[${new Date().toISOString().slice(11, 19)}] ${text}`);
 const total = (outputs: { valueSatoshis: bigint | number | string }[]): bigint => outputs.reduce((sum, output) => sum + BigInt(output.valueSatoshis), 0n);
 
@@ -90,58 +89,6 @@ async function waitForFunds(needed: bigint): Promise<void> {
 
     process.exitCode = 2;
     throw new Error('No funds arrived. Fund the address above and run the command again (the wallet is kept).');
-}
-
-/** Adds change, signs this wallet's inputs, broadcasts, and saves the executed invitation. */
-async function finish(activeEngine: Engine, invitationIdentifier: string, label: string): Promise<string> {
-    const leftover = await activeEngine.calculateChange(invitationIdentifier);
-    const fee = BigInt(await activeEngine.estimateTransactionFee(invitationIdentifier));
-    const change = BigInt(leftover.valueSatoshis) - fee;
-
-    console.log(`  leftover ${leftover.valueSatoshis} sats, estimated fee ${fee}, change ${change}`);
-
-    if (change >= BigInt(DUST_LIMIT_SATOSHIS) || leftover.tokens.length > 0) {
-        await activeEngine.addChangeToInvitation(invitationIdentifier);
-    }
-
-    for (const inputIndex of await activeEngine.listOwnInputIndexes(invitationIdentifier)) {
-        await activeEngine.signInvitation(invitationIdentifier, inputIndex);
-    }
-
-    console.log(`  missing: ${JSON.stringify(await activeEngine.listMissingRequirements(invitationIdentifier), safe)}`);
-
-    let transactionHash: string;
-    let executed: Parameters<typeof serializeInvitation>[0];
-
-    try {
-        const result = await activeEngine.executeAction(invitationIdentifier, { broadcastTransaction: true });
-
-        transactionHash = result.builtTransaction.transactionHash;
-        executed = result.storedInvitation.invitation;
-    } catch (error) {
-        // The engine broadcasts first, then releases reserved coins; Electrum may already have dropped the spent coin,
-        // so that clean-up can throw after a successful broadcast (see server/scripts/chipnet-voucher.ts).
-        if (!(error instanceof Error) || error.name !== 'UnspentOutputNotFoundInStoreError') {
-            throw error;
-        }
-
-        const stored = await activeEngine.getInvitation(invitationIdentifier);
-        const recorded = Object.values(stored?.invitation.result?.transactions ?? {})[0] as { transactionHash?: string } | undefined;
-
-        if (!stored || !recorded?.transactionHash) {
-            throw new Error(`Clean-up failed after broadcast and no transaction hash was recorded: ${error.message}`);
-        }
-
-        transactionHash = recorded.transactionHash;
-        executed = stored.invitation;
-    }
-
-    const file = join(FOLDER, `invitation-revenue-split-${label}-${invitationIdentifier}.json`);
-
-    writeFileSync(file, serializeInvitation(executed));
-    console.log(`  BROADCAST ${transactionHash}\n  invitation saved: ${file}`);
-
-    return transactionHash;
 }
 
 try {
@@ -217,7 +164,7 @@ try {
 
         step('Change, sign, broadcast');
 
-        const fundTransactionHash = await finish(engine, invitationIdentifier, 'fundSplit');
+        const fundTransactionHash = (await signAndBroadcast(engine, invitationIdentifier, { folder: FOLDER, label: 'revenue-split-fundSplit' })).transactionHash;
         const state: SplitState = { fundTransactionHash, outputIndex: 0, splitSatoshis: SPLIT_SATS.toString(), ...recipients };
 
         writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
@@ -282,7 +229,7 @@ try {
 
         step('Change, sign, broadcast');
 
-        state.payoutTransactionHash = await finish(engine, invitationIdentifier, 'payout');
+        state.payoutTransactionHash = (await signAndBroadcast(engine, invitationIdentifier, { folder: FOLDER, label: 'revenue-split-payout' })).transactionHash;
         writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
         console.log(`\nSPLIT PAID OUT: ${state.payoutTransactionHash}`);
     }

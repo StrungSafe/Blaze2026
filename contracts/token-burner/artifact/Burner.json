@@ -1,0 +1,16 @@
+{
+  "contractName": "Burner",
+  "constructorInputs": [],
+  "abi": [
+    {
+      "name": "burn",
+      "inputs": []
+    }
+  ],
+  "bytecode": "OP_TXOUTPUTCOUNT OP_1 OP_NUMEQUALVERIFY OP_0 OP_OUTPUTTOKENCATEGORY OP_0 OP_EQUALVERIFY 6a OP_0 OP_OUTPUTBYTECODE OP_1 OP_SPLIT OP_DROP OP_EQUAL",
+  "source": "pragma cashscript ^0.9.0;\n\n// Burner - where tokens enter the void\n//\n// vi: ft=solidity\n\ncontract Burner() {\n    function burn() {\n        require(tx.outputs.length == 1);\n        require(tx.outputs[0].tokenCategory == 0x);\n        bytes requiredPrefix = 0x6a /* op_return */;\n        bytes prefix = tx.outputs[0].lockingBytecode.split(1)[0];\n        require(prefix == requiredPrefix);\n    }\n}\n",
+  "compiler": {
+    "name": "cashc",
+    "version": "0.9.3"
+  }
+}

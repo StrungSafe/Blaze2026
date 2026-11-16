@@ -8,7 +8,8 @@ The method follows the guide [Building a BCH XO Template for a Smart Contract](h
 
 | System | Status | Template identifier | Based on | Credits |
 | --- | --- | --- | --- | --- |
-| [revenue-split](revenue-split/) | Chipnet verified (fund + payout); 22 offline tests | `9674cee2464188e897ec8a48c132edfe34e8f0183b8e9e437194a4997c974b2e` | Draft [`RevenueSplit.cash`](https://github.com/XOGrid-Cash/Blaze2026_XOGrid/blob/8267aec7042fac07662ec5b2e765643d834fa127/contracts/RevenueSplit.cash) (XOGrid commit `8267aec`) | angelnath |
+| [revenue-split](revenue-split/) | Chipnet verified (fund + payout, earlier identifier `9674cee2…`); 23 offline tests | `c2f2492c2ef122b33262525efadb249d1664175968d0b86bc85214b193d3d987` | Draft [`RevenueSplit.cash`](https://github.com/XOGrid-Cash/Blaze2026_XOGrid/blob/8267aec7042fac07662ec5b2e765643d834fa127/contracts/RevenueSplit.cash) (XOGrid commit `8267aec`) | angelnath |
+| [token-burner](token-burner/) | Chipnet verified (mint, deposit, burn); 18 offline tests | `2fb462ac7c3e545d7055c68d8b47a935379e40f330919ed99b822885360acb1d` | [`burner.cash`](https://gitlab.com/dagurval/contract-burner/-/blob/f20240756800e07c091f35e0227967e7db8727d3/burner.cash) (dagurval/contract-burner `f2024075`, MIT per its README), used unchanged; live at [tokenburner.cash](https://www.tokenburner.cash/) | Dagur Valberg Johannsson |
 
 **Status levels**: Draft → Tested offline → Chipnet verified → Reviewed. Update the row in the same change that moves a system forward.
 
@@ -31,7 +32,7 @@ Start a new system by copying [`_skeleton/`](_skeleton/).
 
 ```bash
 npm install                          # once
-npm run compile                      # .cash -> artifact/*.json, prints bytecode size and opcount
+npm run compile                      # .cash -> artifact/*.json with the cashc version its pragma asks for (0.9.3 or 0.14.0)
 npm run template:json                # template.ts -> template.json, prints the identifier
 npm test                             # every system's tests
 npm run typecheck
@@ -57,6 +58,8 @@ Before adapting third-party code, check that its licence allows it, and keep any
 
 ## Notes
 
-- Tooling versions are pinned to match `server/` (XO engine, utils, templates and Libauth) and to cashc and CashScript 0.14.0.
+- Tooling versions are pinned to match `server/` (XO engine, utils, templates and Libauth) and to cashc and CashScript 0.14.0. Contracts adopted from other projects are rebuilt with their original compiler, so their deployed bytecode and address stay the same: `cashc-0.9` is cashc 0.9.3, and an npm override points its Libauth at our pinned 3.1, because its own Libauth 2 no longer loads in Node 22+. TokenBurner’s test proves the rebuilt bytecode matches upstream.
+- Templates are passed to `parseTemplate` as objects, never through our own `JSON.stringify`: XO’s extended JSON writes bigints as `<bigint: 0n>`, and a plain `"0n"` string is not read as a number. Each system’s tests check that the committed `template.json` is current.
+- `shared/chipnet-tokens.ts` mints test CashTokens on chipnet for systems that need them.
 - npm only runs install scripts that `allowScripts` in `package.json` lists. `sqlite3` is allowed because the XO engine's state package loads it.
 - The tests import the registry audit from `../server/src/audit`. `vitest.config.ts` resolves its packages from this workspace, so `server/` needs no install of its own.

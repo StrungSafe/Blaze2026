@@ -4,11 +4,11 @@ Lock satoshis so they can only be paid out to three fixed recipients (artist, co
 
 | | |
 | --- | --- |
-| Status | Chipnet verified (fund and payout broadcast 2026-11-16). 22 offline tests. Blaze Tool check pending. |
+| Status | Chipnet verified (fund and payout, 2026-11-16, with the earlier identifier `9674cee2…`; see below). 23 offline tests. Blaze Tool check pending. |
 | Contract | [`RevenueSplit.cash`](RevenueSplit.cash), cashc 0.14.0, 89 bytes of contract code, 62 opcodes |
 | Template | [`template.ts`](template.ts) → [`template.json`](template.json) |
-| Template identifier | `9674cee2464188e897ec8a48c132edfe34e8f0183b8e9e437194a4997c974b2e` |
-| Chipnet | fund: `d155dec1716cc44305891fdaa9bf17ec39d3501b4c37cccc1f25b4a37ecd2329` · payout: `d44ca959a6cd8e6d9e4cfd450a08257df8d0e173dc7dc04f0c9040bb99d56fab` |
+| Template identifier | `c2f2492c2ef122b33262525efadb249d1664175968d0b86bc85214b193d3d987` |
+| Chipnet (identifier `9674cee2…`) | fund: `d155dec1716cc44305891fdaa9bf17ec39d3501b4c37cccc1f25b4a37ecd2329` · payout: `d44ca959a6cd8e6d9e4cfd450a08257df8d0e173dc7dc04f0c9040bb99d56fab` |
 
 ## Credits
 
@@ -76,9 +76,11 @@ cd contracts && npm test
 ```
 
 - `test/contract.test.ts` (9 tests, CashScript SDK). Checks a correct payout with trigger change, rounding, a short share, swapped recipients, a missing share, a trigger skimming a fee, a split coin behind other inputs, batching with non-overlapping windows, and that overlapping windows are rejected.
-- `test/template.test.ts` (13 tests). Checks the canonical identifier, that the redeem script and P2SH32 lock are byte-identical to CashScript's for four parameter sets, P2PKH recipient scripts, share maths, a VM-verified payout built from the template (and rejected variants), the funding guard (valid case plus five invalid ones), the engine encoding note, and the registry audit with no failures.
+- `test/template.test.ts` (14 tests). Also checks that the committed `template.json` is current, with bigints in XO extended-JSON form. Checks the canonical identifier, that the redeem script and P2SH32 lock are byte-identical to CashScript's for four parameter sets, P2PKH recipient scripts, share maths, a VM-verified payout built from the template (and rejected variants), the funding guard (valid case plus five invalid ones), the engine encoding note, and the registry audit with no failures.
 
 ## Chipnet
+
+**Identifier change after the chipnet run.** The run used identifier `9674cee2…`. That `template.json` stored `balance.satoshis` as the plain string `"0n"`, because our JSON step didn’t use XO’s extended-JSON bigint format (`<bigint: 0n>`). The fix changed only those two balance fields. The redeem script, locking bytecode, actions and values are identical, and the equivalence tests pass unchanged. A re-run with `c2f2492c…` needs about 5,000 more chipnet sats in the test wallet.
 
 ```bash
 cd contracts

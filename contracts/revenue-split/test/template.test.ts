@@ -2,6 +2,8 @@
  * The Revenue Split XO template: it must build exactly the contract in RevenueSplit.cash, compute the same share
  * amounts, refuse to fund a split that could never be spent, and pass the registry's automated audit.
  */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { binToHex, encodeDataPush } from '@bitauth/libauth';
 import { Contract, MockNetworkProvider } from 'cashscript';
 import { generateTemplateIdentifier, parseTemplate, serializeTemplate } from '@xo-cash/utils';
@@ -22,7 +24,8 @@ import {
 } from '../../shared/vm.js';
 
 const artifact = toArtifact(artifactJson);
-const template = parseTemplate(JSON.stringify(revenueSplitTemplate, (_key, value) => (typeof value === 'bigint' ? `${value}n` : value)));
+// Parse the object directly: a JSON round trip of our own would turn bigints into plain strings.
+const template = parseTemplate(revenueSplitTemplate as Parameters<typeof parseTemplate>[0]);
 const artist = testKey(1);
 const collaborator = testKey(2);
 const platform = testKey(3);
@@ -144,6 +147,13 @@ describe('Revenue Split template', () => {
         // checkKeyHashSize in template.ts and the "XO engine notes" in README.md.
         expect(compileValue(template, '$(<artistPublicKeyHash> OP_SIZE OP_NIP)', splitVariables())).toBe(40n);
         expect(compileScript(template, 'artistLockingBytecode', splitVariables())).toHaveLength(25);
+    });
+
+    it('committed template.json is current, with bigints in XO extended-JSON form', () => {
+        const committed = readFileSync(join(import.meta.dirname, '..', 'template.json'), 'utf8');
+
+        expect(committed).toBe(serializeTemplate(template));
+        expect(committed).not.toMatch(/"-?\d+n"/);
     });
 
     it('passes every automated registry audit check with no failures', () => {

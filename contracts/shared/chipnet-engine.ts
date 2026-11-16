@@ -9,9 +9,86 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { generateBip39Mnemonic } from '@bitauth/libauth';
-import { Engine, XO_SUPPORTED_NETWORKS } from '@xo-cash/engine';
+import { binToHex, generateBip39Mnemonic } from '@bitauth/libauth';
+import { DUST_LIMIT_SATOSHIS, Engine, XO_SUPPORTED_NETWORKS } from '@xo-cash/engine';
 import { StorageType } from '@xo-cash/state';
+import { serializeInvitation } from '@xo-cash/utils';
+
+/** JSON replacer for logging engine values. */
+export const loggable = (_key: string, value: unknown): unknown =>
+    typeof value === 'bigint' ? `${value}n` : value instanceof Uint8Array ? binToHex(value) : value;
+
+export interface FinishOptions {
+    /** Folder where the executed invitation is saved. */
+    folder: string;
+    /** File-name label, for example `revenue-split-payout`. */
+    label: string;
+    /** Add change when there is enough left over. False for transactions whose shape must not change (a burn). */
+    addChange?: boolean;
+}
+
+/**
+ * Adds change, signs this wallet's inputs, broadcasts, and saves the executed invitation for the Blaze Tool.
+ * Returns the transaction hash and the serialized transaction.
+ */
+export async function signAndBroadcast(
+    engine: Engine,
+    invitationIdentifier: string,
+    { folder, label, addChange = true }: FinishOptions,
+): Promise<{ transactionHash: string; serializedTransaction?: string }> {
+    if (addChange) {
+        const leftover = await engine.calculateChange(invitationIdentifier);
+        const fee = BigInt(await engine.estimateTransactionFee(invitationIdentifier));
+        const change = BigInt(leftover.valueSatoshis) - fee;
+
+        console.log(`  leftover ${leftover.valueSatoshis} sats, estimated fee ${fee}, change ${change}`);
+
+        if (change >= BigInt(DUST_LIMIT_SATOSHIS) || leftover.tokens.length > 0) {
+            await engine.addChangeToInvitation(invitationIdentifier);
+        }
+    }
+
+    for (const inputIndex of await engine.listOwnInputIndexes(invitationIdentifier)) {
+        await engine.signInvitation(invitationIdentifier, inputIndex);
+    }
+
+    console.log(`  missing: ${JSON.stringify(await engine.listMissingRequirements(invitationIdentifier), loggable)}`);
+
+    let transactionHash: string;
+    let serializedTransaction: string | undefined;
+    let executed: Parameters<typeof serializeInvitation>[0];
+
+    try {
+        const result = await engine.executeAction(invitationIdentifier, { broadcastTransaction: true });
+
+        transactionHash = result.builtTransaction.transactionHash;
+        serializedTransaction = result.builtTransaction.serializedTransaction;
+        executed = result.storedInvitation.invitation;
+    } catch (error) {
+        // The engine broadcasts first, then releases reserved coins; Electrum may already have dropped the spent coin,
+        // so that clean-up can throw after a successful broadcast (see server/scripts/chipnet-voucher.ts).
+        if (!(error instanceof Error) || error.name !== 'UnspentOutputNotFoundInStoreError') {
+            throw error;
+        }
+
+        const stored = await engine.getInvitation(invitationIdentifier);
+        const recorded = Object.values(stored?.invitation.result?.transactions ?? {})[0] as { transactionHash?: string } | undefined;
+
+        if (!stored || !recorded?.transactionHash) {
+            throw new Error(`Clean-up failed after broadcast and no transaction hash was recorded: ${error.message}`);
+        }
+
+        transactionHash = recorded.transactionHash;
+        executed = stored.invitation;
+    }
+
+    const file = join(folder, `invitation-${label}-${invitationIdentifier}.json`);
+
+    writeFileSync(file, serializeInvitation(executed));
+    console.log(`  BROADCAST ${transactionHash}\n  invitation saved: ${file}`);
+
+    return { transactionHash, serializedTransaction };
+}
 
 const ATTEMPT_ENV = 'XO_ENGINE_ATTEMPT';
 

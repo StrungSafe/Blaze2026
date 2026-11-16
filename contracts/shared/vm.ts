@@ -11,7 +11,11 @@ import {
     type Input,
     type Output,
 } from '@bitauth/libauth';
-import { buildCompilerBytecodeDataFromCompilationVariables, compileLockingBytecodeFromTemplateLockingScriptIdentifier } from '@xo-cash/engine';
+import {
+    buildCompilerBytecodeDataFromCompilationVariables,
+    compileLockingBytecodeFromTemplateLockingScriptIdentifier,
+    completeMergedOutput,
+} from '@xo-cash/engine';
 import { compileCashAssemblyString, parseTemplate } from '@xo-cash/utils';
 
 export type XOTemplate = ReturnType<typeof parseTemplate>;
@@ -92,6 +96,23 @@ export interface SpentCoin {
     lockingBytecode: Uint8Array;
     unlockingBytecode: Uint8Array;
     valueSatoshis: bigint;
+    /** CashTokens carried by the coin, in Libauth's Output token shape. */
+    token?: Output['token'];
+}
+
+/**
+ * Resolves one template output exactly as the engine does when it builds a transaction: value, locking bytecode and
+ * token, from invitation variables (plain values, `bytes` as hex).
+ */
+export function completeOutput(
+    template: XOTemplate,
+    actionIdentifier: string,
+    outputIdentifier: string,
+    variables: TemplateVariables,
+): { valueSatoshis?: bigint; lockingBytecode?: Uint8Array | string; token?: unknown } {
+    const invitationVariables = Object.entries(variables).map(([variableIdentifier, value]) => ({ variableIdentifier, value }));
+
+    return completeMergedOutput({ outputIdentifier } as never, 0, invitationVariables as never, template as never, actionIdentifier) as never;
 }
 
 /** Builds a version 2 transaction spending `coins` into `outputs`, and returns true when the VM accepts it. */
@@ -102,7 +123,11 @@ export function verifySpend(coins: SpentCoin[], outputs: Output[]): true | strin
         sequenceNumber: 0xffffffff,
         unlockingBytecode: coin.unlockingBytecode,
     }));
-    const sourceOutputs: Output[] = coins.map((coin) => ({ lockingBytecode: coin.lockingBytecode, valueSatoshis: coin.valueSatoshis }));
+    const sourceOutputs: Output[] = coins.map((coin) => ({
+        lockingBytecode: coin.lockingBytecode,
+        valueSatoshis: coin.valueSatoshis,
+        ...(coin.token ? { token: coin.token } : {}),
+    }));
     const result = vm.verify({ sourceOutputs, transaction: { version: 2, locktime: 0, inputs, outputs } });
 
     return result === true ? true : String(result);

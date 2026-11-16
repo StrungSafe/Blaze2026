@@ -17,7 +17,6 @@ const only = process.argv[2];
 const systems = readdirSync(root).filter(
     (name) => !name.startsWith('_') && !['node_modules', 'shared'].includes(name) && statSync(join(root, name)).isDirectory(),
 );
-const bigintSafe = (_key: string, value: unknown): unknown => (typeof value === 'bigint' ? `${value}n` : value);
 
 for (const system of systems.filter((name) => !only || name === only)) {
     const source = join(root, system, 'template.ts');
@@ -32,7 +31,7 @@ for (const system of systems.filter((name) => !only || name === only)) {
         throw new Error(`${system}/template.ts must export exactly one template object.`);
     }
 
-    const template = parseTemplate(JSON.stringify(exported[0], bigintSafe));
+    const template = parseTemplate(exported[0] as Parameters<typeof parseTemplate>[0]);
     const canonical = serializeTemplate(template);
 
     writeFileSync(join(root, system, 'template.json'), canonical);
