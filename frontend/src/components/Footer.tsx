@@ -105,7 +105,7 @@ function Footer() {
             />
 
             <span
-              className={`absolute -bottom-2 left-0 h-[2px] rounded-full bg-orange-500 transition-all duration-300 ${
+              className={`absolute -bottom-2 left-0 h-0.5 rounded-full bg-orange-500 transition-all duration-300 ${
                 active
                   ? "w-full"
                   : "w-0 group-hover:w-full"
