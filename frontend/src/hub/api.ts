@@ -1,0 +1,152 @@
+// Typed client for the XOGrid registry API. Shapes mirror docs/FRONTEND.md; keep both in step with the server.
+
+export type Badge = "unchecked" | "auto-checked" | "reviewed";
+
+export interface Counts {
+  pass: number;
+  warn: number;
+  fail: number;
+  skipped: number;
+}
+
+export interface Summary {
+  identifier: string;
+  name: string;
+  description: string;
+  publisher: string;
+  createdAt: string;
+  badge: Badge;
+  openFlags: number;
+  reviewCount: number;
+  userReviewCount: number;
+  averageRating: number | null;
+  removed: boolean;
+  removedReason: string | null;
+  audit: { checkerVersion: string; counts: Counts } | null;
+}
+
+export interface CheckResult {
+  id: string;
+  title: string;
+  status: "pass" | "warn" | "fail" | "skipped";
+  message: string;
+  details?: string[];
+}
+
+export interface PlainEnglish {
+  summary: string;
+  steps: string[];
+  whoDoesWhat: string[];
+  youWillNeed: string[];
+}
+
+export interface Detail extends Summary {
+  template: unknown;
+  plainEnglish: PlainEnglish | null;
+  auditReport: { checkerVersion: string; results: CheckResult[] } | null;
+  actions: { id: string; name: string; description: string; roles: string[] }[];
+  roles: { id: string; name: string; description: string }[];
+  flags: { id: number; reason: string; reporter: string; status: string; createdAt: string }[];
+  reviews: { id: number; reviewerAddress: string; reviewerLabel?: string | null; note: string; createdAt: string }[];
+}
+
+export interface UserReview {
+  id: number;
+  reviewerAddress: string;
+  reviewer: string;
+  rating: number;
+  body: string;
+  createdAt: string;
+}
+
+export interface ReviewStats {
+  count: number;
+  average: number | null;
+  distribution: Record<"1" | "2" | "3" | "4" | "5", number>;
+}
+
+export interface ReviewPage {
+  items: UserReview[];
+  total: number;
+  page: number;
+  pageSize: number;
+  stats: ReviewStats;
+}
+
+export interface ReviewChallenge {
+  nonce: string;
+  expiresAt: number;
+  message: string;
+  review: { rating: number; body: string };
+  walletSignRequest?: object;
+}
+
+export type TemplateSort = "newest" | "name" | "flagged" | "rating";
+
+const BASE = (import.meta.env.VITE_API_URL as string | undefined) || "";
+
+export async function hub<T>(
+  path: string,
+  init: { method?: string; body?: unknown; token?: string } = {},
+): Promise<T> {
+  let response: Response;
+
+  try {
+    response = await fetch(`${BASE}${path}`, {
+      method: init.method ?? "GET",
+      headers: {
+        ...(init.body !== undefined ? { "content-type": "application/json" } : {}),
+        ...(init.token ? { authorization: `Bearer ${init.token}` } : {}),
+      },
+      body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
+    });
+  } catch {
+    throw new Error("Unable to reach the XOGrid server. Check your connection and try again.");
+  }
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error((data as { error?: string }).error ?? `Request failed (${response.status})`);
+  }
+
+  return data as T;
+}
+
+export function listTemplates(params: {
+  query?: string;
+  badge?: Badge;
+  sort?: TemplateSort;
+  page?: number;
+  pageSize?: number;
+}): Promise<{ items: Summary[]; total: number; page: number; pageSize: number }> {
+  const search = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== "") {
+      search.set(key, String(value));
+    }
+  }
+
+  return hub(`/api/templates?${search.toString()}`);
+}
+
+export const getTemplate = (identifier: string) => hub<Detail>(`/api/templates/${identifier}`);
+
+export const listReviews = (identifier: string, page = 1) =>
+  hub<ReviewPage>(`/api/templates/${identifier}/reviews?page=${page}&pageSize=10`);
+
+export const startReview = (identifier: string, rating: number, body: string, publicKey: string) =>
+  hub<ReviewChallenge>(`/api/templates/${identifier}/reviews/challenge`, {
+    method: "POST",
+    body: { rating, body, publicKey },
+  });
+
+export const finishReview = (identifier: string, nonce: string, signedTransaction: string) =>
+  hub<{ id: number; reviewerAddress: string; rating: number; body: string }>(`/api/templates/${identifier}/reviews`, {
+    method: "POST",
+    body: { nonce, proof: { type: "transaction", signedTransaction } },
+  });
+
+export const flagTemplate = (identifier: string, reason: string) =>
+  hub<{ id: number }>(`/api/templates/${identifier}/flags`, { method: "POST", body: { reason } });

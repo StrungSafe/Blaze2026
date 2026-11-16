@@ -6,6 +6,7 @@ import LandingPage from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Explore from "./pages/Explore";
 import Publish from "./pages/Publish";
+import TemplateDetail from "./pages/TemplateDetail";
 import Policy from "./pages/Policy";
 
 import xogridlogo from "./assets/images/xogridlogo.png";
@@ -91,6 +92,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/explore" element={<Explore />} />
+        <Route path="/t/:identifier" element={<TemplateDetail />} />
         <Route path="/publish" element={<Publish />} />
         <Route path="/policy" element={<Policy />} />
       </Routes>

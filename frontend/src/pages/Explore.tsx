@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowUpRight,
@@ -18,25 +18,30 @@ import {
 } from "lucide-react";
 
 import xogridlogo from "../assets/images/xogridlogo.png";
-import { mockTemplates } from "../data/mockDashboard";
+import { listTemplates, type Badge, type Summary } from "../hub/api";
 
-const categories = [
-  "All",
-  "Payments",
-  "Wallet",
-  "Security",
-  "DeFi",
-  "Utilities",
-];
+const trustStatuses = ["All statuses", "Unchecked", "Auto-checked", "Reviewed"];
 
-const trustStatuses = [
-  "All statuses",
-  "Unchecked",
-  "Auto-checked",
-  "Reviewed",
-  "Flagged",
-  "Removed",
-];
+const badgeFromLabel: Record<string, Badge> = {
+  Unchecked: "unchecked",
+  "Auto-checked": "auto-checked",
+  Reviewed: "reviewed",
+};
+
+const badgeLabel: Record<Badge, string> = {
+  unchecked: "Unchecked",
+  "auto-checked": "Auto-checked",
+  reviewed: "Reviewed",
+};
+
+const sortFromLabel: Record<string, "newest" | "name" | "rating"> = {
+  recent: "newest",
+  name: "name",
+  rating: "rating",
+};
+
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
 const badgeStyles = {
   Unchecked: "text-slate-300 bg-slate-400/10 border-slate-400/20",
@@ -49,58 +54,68 @@ const badgeStyles = {
 
 function Explore() {
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
   const [activeStatus, setActiveStatus] = useState("All statuses");
   const [sortBy, setSortBy] = useState("recent");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [items, setItems] = useState<Summary[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredTemplates = useMemo(() => {
-    let result = [...mockTemplates];
+  // Live data from the XOGrid registry. Search is debounced so typing does not hammer the server.
+  useEffect(() => {
+    let current = true;
+    const timer = setTimeout(() => {
+      setLoading(true);
+      listTemplates({
+        query: search.trim() || undefined,
+        badge: badgeFromLabel[activeStatus],
+        sort: sortFromLabel[sortBy],
+        pageSize: 50,
+      })
+        .then((page) => {
+          if (current) {
+            setItems(page.items);
+            setTotal(page.total);
+            setError(null);
+          }
+        })
+        .catch((reason: unknown) => {
+          if (current) {
+            setError(reason instanceof Error ? reason.message : "Could not load templates.");
+          }
+        })
+        .finally(() => {
+          if (current) {
+            setLoading(false);
+          }
+        });
+    }, 250);
 
-    if (search.trim()) {
-      const query = search.toLowerCase();
+    return () => {
+      current = false;
+      clearTimeout(timer);
+    };
+  }, [search, activeStatus, sortBy]);
 
-      result = result.filter((template) =>
-        [
-          template.name,
-          template.id,
-          template.category,
-          template.badge,
-        ]
-          .filter(Boolean)
-          .some((value) => value.toLowerCase().includes(query))
-      );
-    }
-
-    if (activeCategory !== "All") {
-      result = result.filter(
-        (template) => template.category === activeCategory
-      );
-    }
-
-    if (activeStatus !== "All statuses") {
-      result = result.filter(
-        (template) => template.badge === activeStatus
-      );
-    }
-
-    if (sortBy === "name") {
-      result.sort((a, b) => a.name.localeCompare(b.name));
-    }
-
-    return result;
-  }, [search, activeCategory, activeStatus, sortBy]);
+  const filteredTemplates = items.map((item) => ({
+    id: item.identifier,
+    name: item.name,
+    category: item.publisher,
+    badge: badgeLabel[item.badge],
+    updated: formatDate(item.createdAt),
+    rating: item.averageRating,
+    reviews: item.userReviewCount,
+  }));
 
   const clearFilters = () => {
     setSearch("");
-    setActiveCategory("All");
     setActiveStatus("All statuses");
     setSortBy("recent");
   };
 
   const hasActiveFilters =
     search ||
-    activeCategory !== "All" ||
     activeStatus !== "All statuses" ||
     sortBy !== "recent";
 
@@ -478,7 +493,7 @@ function Explore() {
                   type="text"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search by template name, identifier, category..."
+                  placeholder="Search by template name or description..."
                   className="explore-input w-full rounded-2xl border border-white/[0.08] bg-[#080a10] py-4 pl-12 pr-12 text-sm text-white outline-none placeholder:text-slate-600"
                 />
 
@@ -520,36 +535,11 @@ function Explore() {
                 aria-label="Sort templates"
               >
                 <option value="recent">Recently updated</option>
+                <option value="rating">Top rated</option>
                 <option value="name">Name: A to Z</option>
               </select>
             </div>
 
-            <div className="mt-7">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-[.16em] text-slate-500">
-                Browse categories
-              </p>
-
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category) => {
-                  const isActive = activeCategory === category;
-
-                  return (
-                    <button
-                      key={category}
-                      type="button"
-                      onClick={() => setActiveCategory(category)}
-                      className={`explore-filter rounded-xl border px-4 py-2.5 text-sm font-medium ${
-                        isActive
-                          ? "border-violet-400/40 bg-violet-500/15 text-violet-200 shadow-lg shadow-violet-500/10"
-                          : "border-white/[0.07] bg-white/[0.025] text-slate-400 hover:bg-white/[0.06] hover:text-white"
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </section>
 
           {/* Results heading */}
@@ -563,7 +553,7 @@ function Explore() {
                 <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">
                   Explore templates
                   <span className="ml-3 text-sm font-normal text-slate-500">
-                    {filteredTemplates.length} found
+                    {total} found
                   </span>
                 </h2>
               </div>
@@ -582,7 +572,13 @@ function Explore() {
           </section>
 
           {/* Template cards */}
-          {filteredTemplates.length > 0 ? (
+          {error ? (
+            <div className="explore-enter rounded-3xl border border-rose-400/20 bg-rose-500/10 px-6 py-10 text-center text-sm text-rose-200">
+              {error}
+            </div>
+          ) : loading && filteredTemplates.length === 0 ? (
+            <p className="py-16 text-center text-slate-400">Loading templates...</p>
+          ) : filteredTemplates.length > 0 ? (
             <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
               {filteredTemplates.map((template, index) => (
                 <article
@@ -616,6 +612,12 @@ function Explore() {
                       {template.name}
                     </h3>
 
+                    <p className="mt-2 text-xs text-slate-500">
+                      {template.rating !== null
+                        ? `${template.rating.toFixed(1)} / 5 from ${template.reviews} review${template.reviews === 1 ? "" : "s"}`
+                        : "No reviews yet"}
+                    </p>
+
                     <div className="mt-7 rounded-2xl border border-white/[0.06] bg-black/20 p-4">
                       <p className="mb-1 text-[10px] font-semibold uppercase tracking-[.15em] text-slate-500">
                         Template identifier
@@ -629,7 +631,7 @@ function Explore() {
                     <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/[0.07] pt-5">
                       <div className="flex items-center gap-2 text-xs text-slate-500">
                         <Clock3 size={14} />
-                        Updated {template.updated}
+                        Added {template.updated}
                       </div>
 
                       <Link
