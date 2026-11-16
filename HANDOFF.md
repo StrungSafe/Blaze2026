@@ -62,3 +62,9 @@ Registry, audit checks, flags, reviews, policy preview, admin API, UI (Home, Bro
 - `main` of XOGrid-Cash/Blaze2026_XOGrid holds: server/ (registry, audit, admin login, reviews), probe/, web/ (our React and TypeScript app), docs/.
 - John (frontend dev) pushed a landing page in `frontend/` (React JSX, Vite). It is separate from `web/`. Open decision for John and Nathaniel: which UI is the real one, or how the landing page and `web/` pages are combined. `docs/FRONTEND.md` is the API contract either way. The Dockerfile at the repo root builds `web/`; point it at `frontend/` if that becomes the main UI.
 - `server/Dockerfile` (from the earlier snapshot Miguel merged) and the root `Dockerfile` both exist. The root one builds server and web together. Neither is tested with a real `docker build` yet.
+
+### Mainnet proof (2026-11-16)
+- Demo page, Selene over WizardConnect, mainnet, Claim-Code Voucher template 317c4947b5b9cc71d1fe01616cdc930b6ca3ef5808700c68d1cb0696e79b4911.
+- Issue: d77b111e4db749c177cc62d2524c0dd89b0b2ca8b2df57039e2b21e7b68c73e1 (1,000 sat voucher, fee 400).
+- Claim: b669d2b9ecb035fe3ee63613efdc6cf51cdf7e4112c52c16d2043a8d30fea919 (750 sat out, fee 250).
+- The voucher output address derived from the claim code matches the issue transaction's output.
