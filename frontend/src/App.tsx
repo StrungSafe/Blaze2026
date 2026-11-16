@@ -10,7 +10,11 @@ import Policy from "./pages/Policy";
 
 import xogridlogo from "./assets/images/xogridlogo.png";
 
-function LoadingScreen({ exiting }) {
+interface LoadingScreenProps {
+  exiting: boolean;
+}
+
+function LoadingScreen({ exiting }: LoadingScreenProps) {
   return (
     <div
       className={`xogrid-loader ${exiting ? "xogrid-loader-exit" : ""}`}

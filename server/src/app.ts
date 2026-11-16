@@ -3,10 +3,12 @@ import fastifyStatic from '@fastify/static';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import Fastify, { type FastifyInstance } from 'fastify';
-import { AdminAuth } from './admin.js';
+import { AdminAuth, type LoginProof } from './admin.js';
 import { registerAdminRoutes } from './admin-routes.js';
 import type { Db } from './db.js';
 import { BADGE_RANK, type Badge } from './badges.js';
+import { buildWalletSignRequest } from './auth/challenge-transaction.js';
+import { listUserReviews, ReviewAuth, saveUserReview, validateReview } from './user-reviews.js';
 import { validatePolicy, type Policy } from './policy.js';
 import {
     addFlag,
@@ -30,7 +32,7 @@ export interface AppOptions {
     webDir?: string;
 }
 
-const SORTS = new Set(['newest', 'name', 'flagged']);
+const SORTS = new Set(['newest', 'name', 'flagged', 'rating']);
 
 function toPositiveInteger(value: unknown): number | undefined {
     if (typeof value !== 'string' || !/^\d{1,6}$/.test(value)) {
@@ -113,7 +115,7 @@ export async function buildApp(db: Db, options: AppOptions = {}): Promise<Fastif
 
         if (q.sort !== undefined) {
             if (typeof q.sort !== 'string' || !SORTS.has(q.sort)) {
-                return reply.status(400).send({ error: 'sort must be one of: newest, name, flagged.' });
+                return reply.status(400).send({ error: 'sort must be one of: newest, name, flagged, rating.' });
             }
 
             parameters.sort = q.sort as ListParameters['sort'];
@@ -165,6 +167,90 @@ export async function buildApp(db: Db, options: AppOptions = {}): Promise<Fastif
         },
     );
 
+
+    // ----- wallet-signed community reviews -----
+    // Step 1 stores the review on the server and returns a challenge. Step 2 accepts the wallet's proof and publishes
+    // exactly the stored review. The text cannot change between the two steps.
+    const reviews = new ReviewAuth(options.clock);
+
+    app.get('/api/templates/:identifier/reviews', async (request, reply) => {
+        const { identifier } = request.params as { identifier: string };
+        const q = request.query as Record<string, unknown>;
+
+        if (!(await getTemplateDetail(db, identifier))) {
+            return reply.status(404).send({ error: 'Template not found.' });
+        }
+
+        return listUserReviews(db, identifier, toPositiveInteger(q.page) ?? 1, toPositiveInteger(q.pageSize) ?? 10);
+    });
+
+    app.post(
+        '/api/templates/:identifier/reviews/challenge',
+        { config: { rateLimit: { max: 20, timeWindow: '1 minute' } } },
+        async (request, reply) => {
+            const { identifier } = request.params as { identifier: string };
+            const body = (request.body ?? {}) as { rating?: unknown; body?: unknown; publicKey?: unknown };
+            const draft = validateReview(body.rating, body.body);
+            const template = await getTemplateDetail(db, identifier);
+
+            if (!template) {
+                return reply.status(404).send({ error: 'Template not found.' });
+            }
+
+            if (template.removed) {
+                return reply.status(409).send({ error: 'A removed template cannot be reviewed.' });
+            }
+
+            const challenge = reviews.begin(identifier, draft);
+            const result: Record<string, unknown> = { ...challenge, review: draft };
+
+            // A wallet that signs transactions needs the request built around its own public key.
+            if (typeof body.publicKey === 'string' && /^0[23][0-9a-f]{64}$/.test(body.publicKey)) {
+                const publicKey = Uint8Array.from(Buffer.from(body.publicKey, 'hex'));
+
+                result.walletSignRequest = buildWalletSignRequest(
+                    challenge.nonce,
+                    publicKey,
+                    `Post your ${draft.rating}-star review on XOGrid. This signs a message-only transaction that is never broadcast and moves no funds.`,
+                );
+            }
+
+            return result;
+        },
+    );
+
+    app.post(
+        '/api/templates/:identifier/reviews',
+        { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
+        async (request, reply) => {
+            const { identifier } = request.params as { identifier: string };
+            const body = (request.body ?? {}) as Record<string, unknown>;
+            const proof = body.proof as Record<string, unknown> | undefined;
+            let loginProof: LoginProof | undefined;
+
+            if (proof?.type === 'transaction' && typeof proof.signedTransaction === 'string') {
+                loginProof = { type: 'transaction', signedTransaction: proof.signedTransaction };
+            } else if (proof?.type === 'message' && typeof proof.signature === 'string') {
+                loginProof = { type: 'message', signature: proof.signature };
+            }
+
+            if (typeof body.nonce !== 'string' || !loginProof) {
+                return reply.status(400).send({ error: 'Request needs a nonce and a proof.' });
+            }
+
+            const outcome = reviews.complete(identifier, body.nonce, loginProof);
+
+            if ('failure' in outcome) {
+                app.log.info({ reason: outcome.failure }, 'review proof rejected');
+
+                return reply.status(401).send({ error: 'The wallet signature could not be verified. Start the review again.' });
+            }
+
+            const saved = await saveUserReview(db, identifier, outcome.publicKey, outcome.draft);
+
+            return reply.status(201).send({ ...saved, rating: outcome.draft.rating, body: outcome.draft.body });
+        },
+    );
 
     app.get('/api/spotlight', async () => ({ items: await getSpotlight(db) }));
 
