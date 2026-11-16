@@ -1,7 +1,9 @@
+import { describeTemplate, type PlainEnglish } from './describe.js';
 import { generateTemplateIdentifier, parseTemplate, serializeTemplate } from '@xo-cash/utils';
 import { hasNoFailures, MAX_TEMPLATE_BYTES, runAudit, type AuditReport, type CheckResult } from './audit/index.js';
 import { deriveBadge, type Badge } from './badges.js';
 import type { Db } from './db.js';
+import { loadRatings, type RatingStats } from './user-reviews.js';
 import { evaluatePolicy, type Policy, type PolicyDecision } from './policy.js';
 
 export class RegistryError extends Error {
@@ -29,6 +31,9 @@ export interface TemplateSummary {
     badge: Badge;
     openFlags: number;
     reviewCount: number;
+    /** Wallet-signed community reviews (hidden ones excluded) and their mean rating, one decimal. */
+    userReviewCount: number;
+    averageRating: number | null;
     removed: boolean;
     removedReason: string | null;
     audit: { checkerVersion: string; counts: AuditCounts } | null;
@@ -42,12 +47,14 @@ export interface TemplateDetail extends TemplateSummary {
     roles: { id: string; name: string; description: string }[];
     flags: { id: number; reason: string; reporter: string; status: string; createdAt: string }[];
     reviews: { id: number; reviewerAddress: string; note: string; createdAt: string }[];
+    /** What the template does, restated in plain English from its own fields. Null when removed. */
+    plainEnglish: PlainEnglish | null;
 }
 
 export interface ListParameters {
     query?: string;
     badge?: Badge;
-    sort?: 'newest' | 'name' | 'flagged';
+    sort?: 'newest' | 'name' | 'flagged' | 'rating';
     page?: number;
     pageSize?: number;
     includeRemoved?: boolean;
@@ -170,6 +177,7 @@ interface Enrichment {
     reports: Map<string, { checkerVersion: string; results: CheckResult[] }>;
     reviews: Map<string, number>;
     openFlags: Map<string, number>;
+    ratings: Map<string, RatingStats>;
 }
 
 async function loadEnrichment(db: Db): Promise<Enrichment> {
@@ -193,7 +201,7 @@ async function loadEnrichment(db: Db): Promise<Enrichment> {
         openFlags.set(row.identifier, (openFlags.get(row.identifier) ?? 0) + 1);
     }
 
-    return { reports, reviews, openFlags };
+    return { reports, reviews, openFlags, ratings: await loadRatings(db) };
 }
 
 type TemplateRow = {
@@ -223,6 +231,8 @@ function toSummary(row: TemplateRow, enrichment: Enrichment): TemplateSummary {
         }),
         openFlags: enrichment.openFlags.get(row.identifier) ?? 0,
         reviewCount,
+        userReviewCount: enrichment.ratings.get(row.identifier)?.count ?? 0,
+        averageRating: enrichment.ratings.get(row.identifier)?.average ?? null,
         removed: row.removed === 1,
         removedReason: row.removed_reason,
         audit: report ? { checkerVersion: report.checkerVersion, counts: countResults(report.results) } : null,
@@ -268,6 +278,11 @@ export async function listTemplates(db: Db, parameters: ListParameters = {}): Pr
             return a.name.localeCompare(b.name);
         }
 
+        if (sort === 'rating') {
+            // Rated templates first (best average, then most reviews); unrated ones keep name order at the end.
+            return (b.averageRating ?? -1) - (a.averageRating ?? -1) || b.userReviewCount - a.userReviewCount || a.name.localeCompare(b.name);
+        }
+
         if (sort === 'flagged') {
             return b.openFlags - a.openFlags || a.name.localeCompare(b.name);
         }
@@ -300,6 +315,7 @@ export async function getTemplateDetail(db: Db, identifier: string): Promise<Tem
     return {
         ...summary,
         template: parsed ?? null,
+        plainEnglish: parsed ? describeTemplate(parsed) : null,
         auditReport: report ? { checkerVersion: report.checkerVersion, results: report.results } : null,
         actions: Object.entries(actions).map(([id, action]) => ({
             id,

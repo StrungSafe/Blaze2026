@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { AdminAuth, type AdminSession, type LoginProof } from './admin.js';
 import type { Db } from './db.js';
+import { setReviewHidden } from './user-reviews.js';
 import { getSummary, listTemplates, RegistryError, setSpotlight } from './registry.js';
 
 declare module 'fastify' {
@@ -227,6 +228,44 @@ export function registerAdminRoutes(app: FastifyInstance, db: Db, auth: AdminAut
         return { identifier, removed: false };
     });
 
+
+    app.get('/api/admin/user-reviews', { preHandler: requireAdmin }, async (request) => {
+        const q = request.query as { hidden?: string };
+        let query = db.selectFrom('user_reviews').selectAll().orderBy('id', 'desc').limit(200);
+
+        if (q.hidden === '1' || q.hidden === '0') {
+            query = query.where('hidden', '=', Number(q.hidden));
+        }
+
+        return { items: await query.execute() };
+    });
+
+    app.post('/api/admin/user-reviews/:id/hide', { preHandler: requireAdmin }, async (request, reply) => {
+        const id = Number((request.params as { id: string }).id);
+        const reason = text((request.body as { reason?: unknown } | undefined)?.reason, 'reason', 3, 300);
+        const row = Number.isInteger(id) ? await setReviewHidden(db, id, true, reason) : undefined;
+
+        if (!row) {
+            return reply.status(404).send({ error: 'Review not found.' });
+        }
+
+        await logAction(db, request.admin!.label, 'hide-review', row.identifier, `review ${id}: ${reason}`);
+
+        return { id, hidden: true };
+    });
+
+    app.post('/api/admin/user-reviews/:id/unhide', { preHandler: requireAdmin }, async (request, reply) => {
+        const id = Number((request.params as { id: string }).id);
+        const row = Number.isInteger(id) ? await setReviewHidden(db, id, false, null) : undefined;
+
+        if (!row) {
+            return reply.status(404).send({ error: 'Review not found.' });
+        }
+
+        await logAction(db, request.admin!.label, 'unhide-review', row.identifier, `review ${id}`);
+
+        return { id, hidden: false };
+    });
 
     app.put('/api/admin/spotlight', { preHandler: requireAdmin }, async (request, reply) => {
         const items = (request.body as { items?: unknown } | undefined)?.items;
