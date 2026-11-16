@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -94,8 +95,9 @@ const principles = [
 ];
 
 function HowItWorks() {
-  const sectionRef = useRef(null);
-  const [visibleCards, setVisibleCards] = useState([]);
+  const sectionRef = useRef<HTMLElement | null>(null);
+
+  const [visibleCards, setVisibleCards] = useState<number[]>([]);
   const [principlesVisible, setPrinciplesVisible] = useState(false);
   const [ctaVisible, setCtaVisible] = useState(false);
 
@@ -104,7 +106,7 @@ function HowItWorks() {
 
     if (!section) return;
 
-    const elements = section.querySelectorAll("[data-reveal]");
+    const elements = section.querySelectorAll<HTMLElement>("[data-reveal]");
 
     if (!("IntersectionObserver" in window)) {
       setVisibleCards([0, 1, 2, 3]);
@@ -114,18 +116,22 @@ function HowItWorks() {
     }
 
     const observer = new IntersectionObserver(
-      (entries) => {
+      (entries: IntersectionObserverEntry[]) => {
         entries.forEach((entry) => {
           if (!entry.isIntersecting) return;
 
-          const revealId = entry.target.dataset.reveal;
+          const revealId = (entry.target as HTMLElement).dataset.reveal ?? "";
 
           if (revealId.startsWith("card-")) {
             const index = Number(revealId.replace("card-", ""));
 
-            setVisibleCards((previous) =>
-              previous.includes(index) ? previous : [...previous, index],
-            );
+            if (Number.isInteger(index)) {
+              setVisibleCards((previous) =>
+                previous.includes(index)
+                  ? previous
+                  : [...previous, index]
+              );
+            }
           }
 
           if (revealId === "principles") {
@@ -142,10 +148,10 @@ function HowItWorks() {
       {
         threshold: 0.12,
         rootMargin: "0px 0px -35px 0px",
-      },
+      }
     );
 
-    elements.forEach((element) => observer.observe(element));
+    elements.forEach((element: HTMLElement) => observer.observe(element));
 
     return () => observer.disconnect();
   }, []);
@@ -243,12 +249,12 @@ function HowItWorks() {
         }
 
         @media (min-width: 768px) {
-  .how-reveal {
-    transition:
-      opacity .9s ease,
-      transform .9s cubic-bezier(.2,.8,.2,1);
-  }
-}
+          .how-reveal {
+            transition:
+              opacity .9s ease,
+              transform .9s cubic-bezier(.2,.8,.2,1);
+          }
+        }
 
         @media (prefers-reduced-motion: reduce) {
           .how-pulse,
