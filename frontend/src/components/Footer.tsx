@@ -9,11 +9,16 @@ import {
 
 import xogridlogo from "../assets/images/xogridlogo.png";
 
+interface FooterLink {
+  name: string;
+  href: string;
+}
+
 function Footer() {
   const currentYear = new Date().getFullYear();
   const location = useLocation();
 
-  const footerLinks = {
+  const footerLinks: Record<string, FooterLink[]> = {
     Platform: [
       { name: "Home", href: "/" },
       { name: "How It Works", href: "/#how-it-works" },
@@ -50,7 +55,7 @@ function Footer() {
   }, [location.pathname, location.hash]);
 
   // Determine which footer link matches the current location.
-  const isActiveLink = (href) => {
+  const isActiveLink = (href: string): boolean => {
     const [pathname, hash] = href.split("#");
 
     if (hash) {
@@ -67,7 +72,7 @@ function Footer() {
     return location.pathname === href;
   };
 
-  const footerLinkClass = (href) => {
+  const footerLinkClass = (href: string): string => {
     const active = isActiveLink(href);
 
     return `group relative inline-flex items-center gap-2 text-sm transition-all duration-300 ${
@@ -77,8 +82,8 @@ function Footer() {
     }`;
   };
 
-  const renderLinks = (links) =>
-    links.map((link) => {
+  const renderLinks = (links: FooterLink[]): React.ReactNode =>
+    links.map((link: FooterLink) => {
       const active = isActiveLink(link.href);
 
       return (
@@ -99,7 +104,6 @@ function Footer() {
               }`}
             />
 
-            {/* Active underline */}
             <span
               className={`absolute -bottom-2 left-0 h-[2px] rounded-full bg-orange-500 transition-all duration-300 ${
                 active

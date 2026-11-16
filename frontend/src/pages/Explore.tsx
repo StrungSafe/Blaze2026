@@ -41,9 +41,12 @@ const sortFromLabel: Record<string, "newest" | "name" | "rating"> = {
 };
 
 const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  new Date(iso).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
 
-const badgeStyles = {
+const badgeStyles: Record<string, string> = {
   Unchecked: "text-slate-300 bg-slate-400/10 border-slate-400/20",
   "Auto-checked":
     "text-emerald-300 bg-emerald-400/10 border-emerald-400/20",
@@ -62,11 +65,14 @@ function Explore() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Live data from the XOGrid registry. Search is debounced so typing does not hammer the server.
+  // Live data from the XOGrid registry.
+  // Search is debounced so typing does not send a request on every keystroke.
   useEffect(() => {
     let current = true;
+
     const timer = setTimeout(() => {
       setLoading(true);
+
       listTemplates({
         query: search.trim() || undefined,
         badge: badgeFromLabel[activeStatus],
@@ -82,7 +88,11 @@ function Explore() {
         })
         .catch((reason: unknown) => {
           if (current) {
-            setError(reason instanceof Error ? reason.message : "Could not load templates.");
+            setError(
+              reason instanceof Error
+                ? reason.message
+                : "Could not load templates."
+            );
           }
         })
         .finally(() => {
@@ -115,7 +125,7 @@ function Explore() {
   };
 
   const hasActiveFilters =
-    search ||
+    search !== "" ||
     activeStatus !== "All statuses" ||
     sortBy !== "recent";
 
@@ -354,8 +364,7 @@ function Explore() {
         {/* Header */}
         <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-[#080a10]/85 backdrop-blur-2xl">
           <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-12">
-
-            {/* Real XOGrid logo */}
+            {/* XOGrid logo */}
             <Link
               to="/"
               aria-label="XOGrid home"
@@ -429,7 +438,6 @@ function Explore() {
 
         {/* Main content */}
         <div className="mx-auto max-w-[1440px] px-5 pb-24 pt-12 sm:px-8 sm:pt-16 lg:px-12">
-
           {/* Hero */}
           <section className="explore-enter relative mb-12">
             <div className="absolute -right-4 top-0 hidden opacity-20 lg:block">
@@ -539,16 +547,16 @@ function Explore() {
                 <option value="name">Name: A to Z</option>
               </select>
             </div>
-
           </section>
 
           {/* Results heading */}
-          <section className="explore-enter mb-6" style={{ animationDelay: ".2s" }}>
+          <section
+            className="explore-enter mb-6"
+            style={{ animationDelay: ".2s" }}
+          >
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-sm text-slate-500">
-                  REGISTRY COLLECTION
-                </p>
+                <p className="text-sm text-slate-500">REGISTRY COLLECTION</p>
 
                 <h2 className="mt-1 text-2xl font-semibold tracking-tight text-white">
                   Explore templates
@@ -577,7 +585,9 @@ function Explore() {
               {error}
             </div>
           ) : loading && filteredTemplates.length === 0 ? (
-            <p className="py-16 text-center text-slate-400">Loading templates...</p>
+            <p className="py-16 text-center text-slate-400">
+              Loading templates...
+            </p>
           ) : filteredTemplates.length > 0 ? (
             <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
               {filteredTemplates.map((template, index) => (
@@ -596,8 +606,7 @@ function Explore() {
 
                       <span
                         className={`rounded-full border px-3 py-1.5 text-[11px] font-semibold ${
-                          badgeStyles[template.badge] ||
-                          badgeStyles.Unchecked
+                          badgeStyles[template.badge] || badgeStyles.Unchecked
                         }`}
                       >
                         {template.badge}
@@ -614,7 +623,9 @@ function Explore() {
 
                     <p className="mt-2 text-xs text-slate-500">
                       {template.rating !== null
-                        ? `${template.rating.toFixed(1)} / 5 from ${template.reviews} review${template.reviews === 1 ? "" : "s"}`
+                        ? `${template.rating.toFixed(1)} / 5 from ${
+                            template.reviews
+                          } review${template.reviews === 1 ? "" : "s"}`
                         : "No reviews yet"}
                     </p>
 
@@ -716,7 +727,7 @@ function Explore() {
                 to="/policy"
                 className="transition hover:text-slate-300"
               >
-                Trust & Policy
+                Trust &amp; Policy
               </Link>
 
               <Link

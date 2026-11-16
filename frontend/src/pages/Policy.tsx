@@ -142,7 +142,18 @@ const faqs = [
   },
 ];
 
-function SectionHeading({ eyebrow, title, description }) {
+// TypeScript props for the reusable SectionHeading component.
+interface SectionHeadingProps {
+  eyebrow: string;
+  title: string;
+  description?: string;
+}
+
+function SectionHeading({
+  eyebrow,
+  title,
+  description,
+}: SectionHeadingProps) {
   return (
     <div className="max-w-2xl">
       <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-orange-500">
@@ -163,11 +174,11 @@ function SectionHeading({ eyebrow, title, description }) {
 }
 
 function Policy() {
-  const [openFaq, setOpenFaq] = useState(0);
+  const [openFaq, setOpenFaq] = useState<number>(0);
 
   // Reveal sections as they enter the viewport.
   useEffect(() => {
-    const elements = document.querySelectorAll(".policy-reveal");
+    const elements = document.querySelectorAll<HTMLElement>(".policy-reveal");
 
     if (!("IntersectionObserver" in window)) {
       elements.forEach((element) => {
@@ -198,10 +209,8 @@ function Policy() {
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#05070b] text-white">
-
       {/* Ambient background */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-
         <div className="policy-glow absolute -left-40 top-20 h-96 w-96 rounded-full bg-violet-600/10 blur-[130px]" />
 
         <div className="policy-glow-reverse absolute -right-40 top-[550px] h-96 w-96 rounded-full bg-orange-500/[0.07] blur-[130px]" />
@@ -217,7 +226,6 @@ function Policy() {
       </div>
 
       <div className="policy-content relative z-10 mx-auto max-w-7xl px-5 pb-24 pt-8 sm:px-8 lg:px-12">
-
         {/* Back navigation */}
         <div className="mb-16">
           <Link
@@ -234,7 +242,6 @@ function Policy() {
 
         {/* Hero */}
         <section className="policy-reveal relative mb-28 grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
-
           <div className="animate-[fadeUp_0.7s_ease-out_both]">
             <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/[0.07] px-4 py-2 text-xs font-semibold text-violet-300">
               <ShieldCheck size={15} />
@@ -286,9 +293,7 @@ function Policy() {
                   <p className="text-xs font-medium text-slate-500">
                     REGISTRY OVERVIEW
                   </p>
-                  <h3 className="mt-1 text-lg font-bold">
-                    Trust signals
-                  </h3>
+                  <h3 className="mt-1 text-lg font-bold">Trust signals</h3>
                 </div>
 
                 <div className="rounded-xl border border-violet-400/20 bg-violet-500/10 p-3 text-violet-300">
@@ -632,9 +637,7 @@ function Policy() {
                   </div>
 
                   <div className="flex-1">
-                    <h3 className="font-bold text-white">
-                      {badge.title}
-                    </h3>
+                    <h3 className="font-bold text-white">{badge.title}</h3>
                     <p className="mt-1 text-sm leading-6 text-slate-400">
                       {badge.description}
                     </p>
@@ -890,7 +893,6 @@ function Policy() {
 
       {/* Animation styles */}
       <style>{`
-        /* Scroll reveal */
         .policy-reveal {
           opacity: 0;
           transform: translateY(35px);
@@ -904,7 +906,6 @@ function Policy() {
           transform: translateY(0);
         }
 
-        /* Hero entrance */
         @keyframes fadeUp {
           from {
             opacity: 0;
@@ -916,7 +917,6 @@ function Policy() {
           }
         }
 
-        /* Floating hero card */
         @keyframes heroFloat {
           0%, 100% {
             transform: translateY(0);
@@ -930,7 +930,6 @@ function Policy() {
           animation: heroFloat 7s ease-in-out infinite;
         }
 
-        /* Background movement */
         @keyframes ambientFloat {
           0%, 100% {
             transform: translate(0, 0) scale(1);
@@ -957,7 +956,6 @@ function Policy() {
           animation: ambientFloatReverse 17s ease-in-out infinite;
         }
 
-        /* Interactive cards */
         .policy-card {
           transition:
             transform 0.35s ease,
@@ -973,7 +971,6 @@ function Policy() {
           }
         }
 
-        /* Mobile optimization */
         @media (max-width: 640px) {
           .policy-reveal {
             transform: translateY(22px);
@@ -989,7 +986,6 @@ function Policy() {
           }
         }
 
-        /* Accessibility */
         @media (prefers-reduced-motion: reduce) {
           .policy-reveal {
             opacity: 1;

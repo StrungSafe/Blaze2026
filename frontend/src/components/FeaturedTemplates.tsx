@@ -1,5 +1,6 @@
 
 import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent } from "react";
 import {
   ArrowUpRight,
   Copy,
@@ -15,43 +16,59 @@ import { Link } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-const badgeStyles = {
+interface Template {
+  name?: string;
+  description?: string;
+  identifier: string;
+  badge?: string;
+  flagged?: boolean;
+  blurb?: string;
+}
+
+interface SpotlightResponse {
+  items?: Template[];
+}
+
+interface BadgeStyle {
+  label: string;
+  className: string;
+  dot: string;
+}
+
+const badgeStyles: Record<string, BadgeStyle> = {
   unchecked: {
     label: "Unchecked",
-    className:
-      "border-white/10 bg-white/[0.04] text-white/50",
+    className: "border-white/10 bg-white/[0.04] text-white/50",
     dot: "bg-white/40",
   },
   "auto-checked": {
     label: "Auto-checked",
-    className:
-      "border-cyan-500/20 bg-cyan-500/[0.07] text-cyan-400",
+    className: "border-cyan-500/20 bg-cyan-500/[0.07] text-cyan-400",
     dot: "bg-cyan-400",
   },
   reviewed: {
     label: "Reviewed",
-    className:
-      "border-emerald-500/20 bg-emerald-500/[0.07] text-emerald-400",
+    className: "border-emerald-500/20 bg-emerald-500/[0.07] text-emerald-400",
     dot: "bg-emerald-400",
   },
 };
 
-function getBadge(value) {
+function getBadge(value: string | undefined): BadgeStyle {
   const normalized = String(value || "unchecked")
     .toLowerCase()
     .replaceAll("_", "-");
 
-  return badgeStyles[normalized] || badgeStyles.unchecked;
+  return badgeStyles[normalized] ?? badgeStyles.unchecked;
 }
 
 function FeaturedTemplates() {
-  const [templates, setTemplates] = useState([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [copiedId, setCopiedId] = useState(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchSpotlight = async () => {
+  const fetchSpotlight = async (): Promise<void> => {
     try {
       setLoading(true);
       setError("");
@@ -62,12 +79,14 @@ function FeaturedTemplates() {
         throw new Error("Unable to load featured templates.");
       }
 
-      const data = await response.json();
+      const data: SpotlightResponse = await response.json();
 
       setTemplates(Array.isArray(data.items) ? data.items : []);
-    } catch (err) {
+    } catch (err: unknown) {
       setError(
-        err.message || "Something went wrong while loading templates."
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while loading templates."
       );
     } finally {
       setLoading(false);
@@ -75,7 +94,7 @@ function FeaturedTemplates() {
   };
 
   useEffect(() => {
-    fetchSpotlight();
+    void fetchSpotlight();
   }, []);
 
   const filteredTemplates = useMemo(() => {
@@ -96,7 +115,7 @@ function FeaturedTemplates() {
     });
   }, [templates, searchQuery]);
 
-  const copyIdentifier = async (identifier) => {
+  const copyIdentifier = async (identifier: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(identifier);
       setCopiedId(identifier);
@@ -109,6 +128,12 @@ function FeaturedTemplates() {
     } catch {
       setCopiedId(null);
     }
+  };
+
+  const handleSearchChange = (
+    event: ChangeEvent<HTMLInputElement>
+  ): void => {
+    setSearchQuery(event.target.value);
   };
 
   return (
@@ -167,9 +192,7 @@ function FeaturedTemplates() {
             <input
               type="search"
               value={searchQuery}
-              onChange={(event) =>
-                setSearchQuery(event.target.value)
-              }
+              onChange={handleSearchChange}
               placeholder="Search featured templates..."
               aria-label="Search featured templates"
               className="h-12 w-full rounded-xl border border-white/[0.08] bg-white/[0.025] pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-white/25 focus:border-orange-500/40 focus:ring-2 focus:ring-orange-500/10"
@@ -234,7 +257,7 @@ function FeaturedTemplates() {
 
             <button
               type="button"
-              onClick={fetchSpotlight}
+              onClick={() => void fetchSpotlight()}
               className="mt-5 inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-orange-400"
             >
               <RefreshCw size={14} />
@@ -295,7 +318,7 @@ function FeaturedTemplates() {
                       {identifier && (
                         <button
                           type="button"
-                          onClick={() => copyIdentifier(identifier)}
+                          onClick={() => void copyIdentifier(identifier)}
                           aria-label="Copy template identifier"
                           className="rounded-md p-1 text-white/35 transition-colors hover:bg-white/10 hover:text-orange-400"
                         >
@@ -350,7 +373,7 @@ function FeaturedTemplates() {
                   {/* Inspect */}
                   <Link
                     to={`/t/${identifier}`}
-                    className="mt-auto flex items-center justify-between border-t border-white/[0.07] pt-4 mt-5 text-xs font-semibold text-white/55 transition-colors duration-300 hover:text-orange-400"
+                    className="mt-auto mt-5 flex items-center justify-between border-t border-white/[0.07] pt-4 text-xs font-semibold text-white/55 transition-colors duration-300 hover:text-orange-400"
                   >
                     Inspect template
 
