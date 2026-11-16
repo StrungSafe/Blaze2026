@@ -1,24 +1,19 @@
 
-import { useEffect, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import xogridlogo from "../assets/images/xogridlogo.png";
 
-import LandingPage from "./pages/Landing";
-import Publish from "./pages/Publish";
-import Policy from "./pages/Policy";
-
-import xogridlogo from "./assets/images/xogridlogo.png";
-
-function LoadingScreen({ exiting }) {
+function LoadingScreen({ exiting = false }) {
   return (
     <div
       className={`xogrid-loader ${exiting ? "xogrid-loader-exit" : ""}`}
       role="status"
       aria-label="Loading XOGrid"
     >
+      {/* Ambient background glows */}
       <div className="loader-glow loader-glow-one" />
       <div className="loader-glow loader-glow-two" />
 
       <div className="loader-content">
+        {/* Animated logo */}
         <div className="loader-logo-wrap">
           <div className="loader-orbit loader-orbit-one" />
           <div className="loader-orbit loader-orbit-two" />
@@ -34,6 +29,7 @@ function LoadingScreen({ exiting }) {
           THE TEMPLATE REGISTRY
         </p>
 
+        {/* Animated grid */}
         <div className="loader-grid">
           {Array.from({ length: 9 }).map((_, index) => (
             <span
@@ -48,6 +44,7 @@ function LoadingScreen({ exiting }) {
           <span className="loader-dots">...</span>
         </p>
 
+        {/* Progress indicator */}
         <div className="loader-progress">
           <span />
         </div>
@@ -60,39 +57,4 @@ function LoadingScreen({ exiting }) {
   );
 }
 
-function App() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isExiting, setIsExiting] = useState(false);
-
-  useEffect(() => {
-    const exitTimer = setTimeout(() => {
-      setIsExiting(true);
-    }, 1600);
-
-    const removeTimer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2050);
-
-    return () => {
-      clearTimeout(exitTimer);
-      clearTimeout(removeTimer);
-    };
-  }, []);
-
-  return (
-    <>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/publish" element={<Publish />} />
-        <Route path="/policy" element={<Policy />} />
-
-        {/* Add the template detail page when it is ready */}
-        {/* <Route path="/t/:identifier" element={<Template />} /> */}
-      </Routes>
-
-      {isLoading && <LoadingScreen exiting={isExiting} />}
-    </>
-  );
-}
-
-export default App;
+export default LoadingScreen;
