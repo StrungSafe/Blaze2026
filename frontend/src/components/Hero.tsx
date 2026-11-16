@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   ArrowDown,
@@ -7,10 +8,24 @@ import {
   ShieldCheck,
   Layers3,
   Sparkles,
+  Bitcoin,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const typingWords = ["XO templates.", "Wallet templates.", "Open templates."];
+
+const bitcoinCoins = [
+  { top: "12%", left: "12%", size: 42, delay: "0s" },
+  { top: "22%", left: "35%", size: 34, delay: "0.7s" },
+  { top: "15%", right: "15%", size: 48, delay: "1.2s" },
+  { top: "38%", left: "8%", size: 32, delay: "1.8s" },
+  { top: "42%", right: "9%", size: 38, delay: "0.4s" },
+  { bottom: "28%", left: "16%", size: 46, delay: "1.5s" },
+  { bottom: "18%", right: "17%", size: 34, delay: "0.9s" },
+  { bottom: "12%", left: "38%", size: 30, delay: "2.1s" },
+  { top: "65%", right: "30%", size: 42, delay: "1.1s" },
+  { top: "28%", left: "75%", size: 30, delay: "2.5s" },
+];
 
 function Hero() {
   const [wordIndex, setWordIndex] = useState(0);
@@ -95,6 +110,15 @@ function Hero() {
           46%, 100% { opacity: 0; }
         }
 
+        @keyframes xo-bitcoin-float {
+          0%, 100% {
+            transform: translateY(0) rotate(-5deg);
+          }
+          50% {
+            transform: translateY(-12px) rotate(5deg);
+          }
+        }
+
         .xo-circle-rotate {
           animation: xo-circle-rotate 38s linear infinite;
         }
@@ -113,6 +137,10 @@ function Hero() {
 
         .xo-reveal {
           animation: xo-reveal .9s cubic-bezier(.2,.7,.2,1) both;
+        }
+
+        .xo-bitcoin-float {
+          animation: xo-bitcoin-float 5s ease-in-out infinite;
         }
 
         .xo-delay-1 { animation-delay: .15s; }
@@ -138,7 +166,8 @@ function Hero() {
           .xo-circle-glow,
           .xo-reveal,
           .xo-cursor,
-          .xo-scroll {
+          .xo-scroll,
+          .xo-bitcoin-float {
             animation: none !important;
           }
         }
@@ -154,6 +183,30 @@ function Hero() {
 
         {/* Orange lighting */}
         <div className="absolute -right-48 top-[15%] h-[450px] w-[450px] rounded-full bg-orange-600/10 blur-[150px]" />
+
+        {/* 10 FLOATING BITCOIN CIRCLES */}
+        {bitcoinCoins.map((coin, index) => (
+          <div
+            key={index}
+            className="xo-bitcoin-float absolute flex items-center justify-center rounded-full border border-green-400/20 bg-green-400/[0.05] text-green-400/50 shadow-[0_0_25px_rgba(34,197,94,0.10)] backdrop-blur-sm"
+            style={{
+              top: coin.top,
+              bottom: coin.bottom,
+              left: coin.left,
+              right: coin.right,
+              width: coin.size,
+              height: coin.size,
+              animationDelay: coin.delay,
+              animationDuration: `${4 + (index % 4)}s`,
+            }}
+          >
+            <Bitcoin
+              size={coin.size * 0.48}
+              strokeWidth={1.3}
+              aria-hidden="true"
+            />
+          </div>
+        ))}
 
         {/* Subtle background grid */}
         <div
