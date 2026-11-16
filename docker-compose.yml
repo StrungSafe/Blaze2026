@@ -1,0 +1,29 @@
+services:
+  xogrid:
+    build:
+      context: .
+      args:
+        VITE_API_URL: ${VITE_API_URL:-}
+        VITE_SLIDES_URL: ${VITE_SLIDES_URL:-}
+        VITE_REPO_URL: ${VITE_REPO_URL:-https://github.com/XOGrid-Cash/Blaze2026_XOGrid}
+        VITE_EMBER_ADDRESS: ${VITE_EMBER_ADDRESS:-}
+    image: xogrid
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      DATABASE_PATH: /data/hub.db
+      WEB_DIR: /app/web-dist
+      SEED_ON_EMPTY: ${SEED_ON_EMPTY:-1}
+      ADMIN_IDENTITIES: ${ADMIN_IDENTITIES:-}
+    volumes:
+      - hubdata:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  hubdata:

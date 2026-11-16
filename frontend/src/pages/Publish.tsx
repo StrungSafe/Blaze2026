@@ -1,5 +1,5 @@
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -22,9 +22,15 @@ import {
   RotateCcw,
 } from "lucide-react";
 
-import { publishTemplate } from "../api";
+import { publishTemplate } from "../hub/api";
 
 const MAX_FILE_SIZE = 256 * 1024;
+
+interface PublishResult {
+  identifier: string;
+  created: boolean;
+  badge: string;
+}
 
 const publishingSteps = [
   {
@@ -48,18 +54,22 @@ const publishingSteps = [
 ];
 
 function Publish() {
-  const [jsonText, setJsonText] = useState("");
-  const [fileName, setFileName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [result, setResult] = useState(null);
-  const [copied, setCopied] = useState(false);
-  const [jsonValid, setJsonValid] = useState(false);
+  const [jsonText, setJsonText] = useState<string>("");
+  const [fileName, setFileName] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [result, setResult] = useState<PublishResult | null>(null);
+  const [copied, setCopied] = useState<boolean>(false);
+  const [jsonValid, setJsonValid] = useState<boolean>(false);
 
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const byteSize = new TextEncoder().encode(jsonText).length;
-  const sizePercentage = Math.min((byteSize / MAX_FILE_SIZE) * 100, 100);
+
+  const sizePercentage = Math.min(
+    (byteSize / MAX_FILE_SIZE) * 100,
+    100
+  );
 
   const clearMessages = () => {
     setError("");
@@ -67,14 +77,15 @@ function Publish() {
     setCopied(false);
   };
 
-  const validateJSON = (value) => {
+  const validateJSON = (value: string) => {
     if (!value.trim()) {
       setJsonValid(false);
       return;
     }
 
     try {
-      const parsed = JSON.parse(value);
+      const parsed: unknown = JSON.parse(value);
+
       setJsonValid(
         parsed !== null &&
           typeof parsed === "object" &&
@@ -85,7 +96,9 @@ function Publish() {
     }
   };
 
-  const handleTextChange = (event) => {
+  const handleTextChange = (
+    event: ChangeEvent<HTMLTextAreaElement>
+  ) => {
     const value = event.target.value;
 
     setJsonText(value);
@@ -94,7 +107,9 @@ function Publish() {
     validateJSON(value);
   };
 
-  const handleFileChange = async (event) => {
+  const handleFileChange = async (
+    event: ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
 
     if (!file) return;
@@ -139,18 +154,22 @@ function Publish() {
 
   const handleFormatJSON = () => {
     try {
-      const parsed = JSON.parse(jsonText);
+      const parsed: unknown = JSON.parse(jsonText);
       const formatted = JSON.stringify(parsed, null, 2);
 
       setJsonText(formatted);
+
       setJsonValid(
         parsed !== null &&
           typeof parsed === "object" &&
           !Array.isArray(parsed)
       );
+
       clearMessages();
     } catch {
-      setError("The JSON cannot be formatted because its syntax is invalid.");
+      setError(
+        "The JSON cannot be formatted because its syntax is invalid."
+      );
     }
   };
 
@@ -165,7 +184,7 @@ function Publish() {
     }
   };
 
-  const handlePublish = async (event) => {
+  const handlePublish = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     clearMessages();
 
@@ -179,23 +198,25 @@ function Publish() {
       return;
     }
 
-    let parsedTemplate;
+    let parsedTemplate: Record<string, unknown>;
 
     try {
-      parsedTemplate = JSON.parse(jsonText);
+      const parsed: unknown = JSON.parse(jsonText);
+
+      if (
+        parsed === null ||
+        typeof parsed !== "object" ||
+        Array.isArray(parsed)
+      ) {
+        setJsonValid(false);
+        setError("Your template must be a valid JSON object.");
+        return;
+      }
+
+      parsedTemplate = parsed as Record<string, unknown>;
     } catch {
       setJsonValid(false);
       setError("Invalid JSON. Check your syntax and try again.");
-      return;
-    }
-
-    if (
-      parsedTemplate === null ||
-      typeof parsedTemplate !== "object" ||
-      Array.isArray(parsedTemplate)
-    ) {
-      setJsonValid(false);
-      setError("Your template must be a valid JSON object.");
       return;
     }
 
@@ -203,34 +224,32 @@ function Publish() {
     setLoading(true);
 
     try {
+      // The API returns PublishResponse directly.
+      // It does not return a { data, status } wrapper.
       const response = await publishTemplate(parsedTemplate);
-      const { data, status } = response;
 
-      if (status !== 200 && status !== 201) {
-        throw new Error("The server returned an unexpected response.");
-      }
-
-      if (!data?.identifier || typeof data.identifier !== "string") {
+      if (!response.identifier) {
         throw new Error(
           "The server did not return a valid template identifier."
         );
       }
 
-      if (typeof data.created !== "boolean") {
+      if (typeof response.created !== "boolean") {
         throw new Error(
           "The server response is missing the template creation status."
         );
       }
 
       setResult({
-        identifier: data.identifier,
-        created: data.created,
-        badge: data.badge || "unchecked",
+        identifier: response.identifier,
+        created: response.created,
+        badge: response.badge || "unchecked",
       });
-    } catch (err) {
+    } catch (reason: unknown) {
       setError(
-        err.message ||
-          "Something went wrong while publishing. Please try again."
+        reason instanceof Error
+          ? reason.message
+          : "Something went wrong while publishing. Please try again."
       );
     } finally {
       setLoading(false);
@@ -245,7 +264,9 @@ function Publish() {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      setError("Unable to copy the identifier. Please copy it manually.");
+      setError(
+        "Unable to copy the identifier. Please copy it manually."
+      );
     }
   };
 
@@ -570,7 +591,7 @@ function Publish() {
                     id="template-json"
                     value={jsonText}
                     onChange={handleTextChange}
-                    spellCheck="false"
+                    spellCheck={false}
                     autoCapitalize="off"
                     autoCorrect="off"
                     placeholder={`{
@@ -625,7 +646,11 @@ function Publish() {
                 {/* SUBMIT */}
                 <button
                   type="submit"
-                  disabled={loading || !jsonText.trim() || byteSize > MAX_FILE_SIZE}
+                  disabled={
+                    loading ||
+                    !jsonText.trim() ||
+                    byteSize > MAX_FILE_SIZE
+                  }
                   className="publish-submit group relative mt-7 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-orange-500 px-6 py-4 text-sm font-bold text-black shadow-[0_8px_35px_rgba(249,115,22,0.13)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-[0_12px_40px_rgba(249,115,22,0.22)] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:translate-y-0"
                 >
                   <span className="publish-button-shine absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent" />
@@ -686,7 +711,9 @@ function Publish() {
                           <div
                             key={step.number}
                             className="publish-step group relative flex gap-4"
-                            style={{ animationDelay: `${index * 120}ms` }}
+                            style={{
+                              animationDelay: `${index * 120}ms`,
+                            }}
                           >
                             <div className="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-violet-400/30 bg-[#100e1b] text-violet-300 transition-all duration-300 group-hover:scale-110 group-hover:border-orange-400/60 group-hover:bg-orange-400/10 group-hover:text-orange-300">
                               <StepIcon size={13} />
