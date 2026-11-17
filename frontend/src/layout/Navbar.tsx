@@ -42,8 +42,8 @@ function Navbar() {
     },
     {
       name: "Featured Templates",
-      href: "/#browse",
-      section: "browse",
+      href: "/#featured-templates",
+      section: "featured-templates",
     },
     {
       name: "Publish",
@@ -81,7 +81,7 @@ function Navbar() {
   useEffect(() => {
     if (location.pathname !== "/") return;
 
-    const sectionIds = ["home", "how-it-works", "browse"];
+    const sectionIds = ["home", "how-it-works", "featured-templates"];
 
     const updateActiveSection = () => {
       const marker = window.scrollY + window.innerHeight * 0.35;

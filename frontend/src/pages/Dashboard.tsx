@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import {
@@ -23,6 +24,8 @@ import {
   Zap,
 } from "lucide-react";
 
+import type { LucideIcon } from "lucide-react";
+
 import xogridlogo from "../assets/images/xogridlogo.png";
 
 import {
@@ -31,14 +34,61 @@ import {
   mockTemplates,
 } from "../data/mockDashboard";
 
-const iconMap = {
+import { isAdminWallet } from "../config/admin";
+
+type StatIcon = "explore" | "publish" | "checked" | "flags";
+type StatColor = "purple" | "orange" | "green" | "blue";
+
+type DashboardStat = {
+  label: string;
+  value: string;
+  change: string;
+  icon: StatIcon;
+  color: StatColor;
+};
+
+type DashboardActivity = {
+  id: number;
+  title: string;
+  description: string;
+  time: string;
+  status: string;
+  type: "publish" | "check" | "explore" | "flag";
+};
+
+type DashboardTemplate = {
+  id: string;
+  name: string;
+  category: string;
+  badge: string;
+  updated: string;
+};
+
+type NavigationItem = {
+  label: string;
+  to: string;
+  icon: LucideIcon;
+  end?: boolean;
+};
+
+const stats = mockDashboardStats as DashboardStat[];
+const recentActivity = mockRecentActivity as DashboardActivity[];
+const templates = mockTemplates as DashboardTemplate[];
+
+const iconMap: Record<StatIcon, LucideIcon> = {
   explore: Compass,
   publish: Upload,
   checked: ShieldCheck,
   flags: Flag,
 };
 
-const colorMap = {
+const colorMap: Record<
+  StatColor,
+  {
+    icon: string;
+    glow: string;
+  }
+> = {
   purple: {
     icon: "bg-violet-500/10 text-violet-300",
     glow: "group-hover:border-violet-400/30",
@@ -57,7 +107,7 @@ const colorMap = {
   },
 };
 
-const navigation = [
+const navigation: NavigationItem[] = [
   {
     label: "Overview",
     to: "/dashboard",
@@ -87,10 +137,19 @@ function Dashboard() {
   const [walletMenuOpen, setWalletMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Demo only: this is not a real BCH wallet connection.
+  // Demo only: replace this with the actual connected BCH wallet address
+  // from your WizardConnect integration.
   const walletAddress = "bitcoincash:qz7...8k2p";
 
-  const filteredTemplates = mockTemplates.filter((template) =>
+  // The demo wallet must never receive administrator access.
+  const isDemoWallet = walletAddress === "bitcoincash:qz7...8k2p";
+
+  const isAdmin =
+    walletConnected &&
+    !isDemoWallet &&
+    isAdminWallet(walletAddress);
+
+  const filteredTemplates = templates.filter((template) =>
     `${template.name} ${template.category} ${template.id}`
       .toLowerCase()
       .includes(searchQuery.toLowerCase())
@@ -114,7 +173,6 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#05070b] text-white">
-      {/* Animation styles */}
       <style>{`
         @keyframes xogridFadeUp {
           from {
@@ -373,9 +431,7 @@ function Dashboard() {
       <div
         onClick={closeSidebar}
         className={`fixed inset-0 z-40 bg-black/70 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
-          sidebarOpen
-            ? "visible opacity-100"
-            : "invisible opacity-0"
+          sidebarOpen ? "visible opacity-100" : "invisible opacity-0"
         }`}
       />
 
@@ -385,7 +441,6 @@ function Dashboard() {
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        {/* Brand */}
         <div className="flex h-[88px] items-center justify-between border-b border-white/[0.07] px-7">
           <Link to="/" onClick={closeSidebar} aria-label="XOGrid home">
             <img
@@ -405,15 +460,13 @@ function Dashboard() {
           </button>
         </div>
 
-        {/* Workspace label */}
         <div className="px-6 pb-3 pt-8">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">
             Workspace
           </p>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 space-y-1 px-4">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-4">
           {navigation.map((item) => {
             const Icon = item.icon;
 
@@ -444,6 +497,36 @@ function Dashboard() {
             );
           })}
 
+          {/* Admin section: visible only to an approved real wallet */}
+          {isAdmin && (
+            <>
+              <div className="!my-6 border-t border-white/[0.07]" />
+
+              <p className="px-4 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">
+                Administration
+              </p>
+
+              <NavLink
+                to="/admin"
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  `xogrid-nav-link group flex items-center gap-3 rounded-xl border px-4 py-3.5 text-[13px] font-medium ${
+                    isActive
+                      ? "border-orange-500/20 bg-orange-500/[0.09] text-orange-400 shadow-[inset_3px_0_0_#f97316]"
+                      : "border-transparent text-white/55 hover:border-white/[0.06] hover:bg-white/[0.035] hover:text-white"
+                  }`
+                }
+              >
+                <ShieldCheck size={18} strokeWidth={1.8} />
+                <span>Admin Dashboard</span>
+                <ArrowUpRight
+                  size={14}
+                  className="ml-auto text-white/30 transition-colors group-hover:text-orange-400"
+                />
+              </NavLink>
+            </>
+          )}
+
           <div className="!my-6 border-t border-white/[0.07]" />
 
           <p className="px-4 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">
@@ -460,7 +543,6 @@ function Dashboard() {
           </Link>
         </nav>
 
-        {/* Sidebar footer */}
         <div className="border-t border-white/[0.07] p-4">
           <div className="rounded-2xl border border-violet-400/10 bg-violet-500/[0.055] p-4 transition duration-300 hover:border-violet-400/25 hover:bg-violet-500/[0.09]">
             <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300">
@@ -493,7 +575,6 @@ function Dashboard() {
 
       {/* Main content */}
       <div className="relative min-h-screen lg:pl-[270px]">
-        {/* Header */}
         <header className="xogrid-header-enter sticky top-0 z-30 border-b border-white/[0.07] bg-[#05070b]/80 backdrop-blur-2xl">
           <div className="flex h-[88px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10">
             <div className="flex min-w-0 items-center gap-3">
@@ -518,7 +599,6 @@ function Dashboard() {
             </div>
 
             <div className="flex shrink-0 items-center gap-3">
-              {/* Desktop search */}
               <div className="relative hidden md:block">
                 <Search
                   size={16}
@@ -534,7 +614,6 @@ function Dashboard() {
                 />
               </div>
 
-              {/* Wallet button */}
               <div className="relative">
                 <button
                   type="button"
@@ -587,7 +666,6 @@ function Dashboard() {
           </div>
         </header>
 
-        {/* Dashboard body */}
         <main className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
           {/* Welcome */}
           <section className="xogrid-section-enter mb-9 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
@@ -677,7 +755,7 @@ function Dashboard() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {mockDashboardStats.map((stat) => {
+              {stats.map((stat) => {
                 const Icon = iconMap[stat.icon];
                 const colors = colorMap[stat.color];
 
@@ -762,18 +840,9 @@ function Dashboard() {
                 <table className="w-full min-w-[570px] text-left">
                   <thead>
                     <tr className="border-b border-white/[0.06] text-[10px] uppercase tracking-wider text-white/30">
-                      <th className="px-6 py-4 font-semibold">
-                        Template
-                      </th>
-
-                      <th className="px-4 py-4 font-semibold">
-                        Category
-                      </th>
-
-                      <th className="px-4 py-4 font-semibold">
-                        Status
-                      </th>
-
+                      <th className="px-6 py-4 font-semibold">Template</th>
+                      <th className="px-4 py-4 font-semibold">Category</th>
+                      <th className="px-4 py-4 font-semibold">Status</th>
                       <th className="px-6 py-4 text-right font-semibold">
                         Updated
                       </th>
@@ -877,8 +946,8 @@ function Dashboard() {
 
               <div className="p-5 sm:px-6">
                 <div className="space-y-6">
-                  {mockRecentActivity.map((activity, index) => {
-                    const ActivityIcon =
+                  {recentActivity.map((activity, index) => {
+                    const ActivityIcon: LucideIcon =
                       activity.type === "publish"
                         ? Upload
                         : activity.type === "check"
@@ -901,7 +970,7 @@ function Dashboard() {
                         key={activity.id}
                         className="xogrid-activity-item relative flex gap-3"
                       >
-                        {index !== mockRecentActivity.length - 1 && (
+                        {index !== recentActivity.length - 1 && (
                           <div className="absolute bottom-[-22px] left-[17px] top-10 w-px bg-white/[0.07]" />
                         )}
 

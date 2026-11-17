@@ -540,7 +540,7 @@ function HowItWorks() {
           </div>
 
           <Link
-            to="/browse"
+            to="/explore"
             className="group inline-flex shrink-0 items-center justify-center gap-3 rounded-xl bg-orange-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_10px_35px_rgba(249,115,22,.16)] transition-all duration-300 hover:-translate-y-1 hover:bg-orange-400 hover:shadow-[0_12px_40px_rgba(249,115,22,.3)]"
           >
             Explore templates
