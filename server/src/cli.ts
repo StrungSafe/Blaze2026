@@ -1,7 +1,5 @@
-import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
 import { isValidAdminIdentity, seedAdmins } from './admin.js';
-import { createDb, migrate } from './db.js';
+import { migrate, openDatabase } from './db.js';
 import { listTemplates, reauditAll } from './registry.js';
 import { seed } from './seed.js';
 
@@ -16,26 +14,21 @@ Commands:
   admin-list                     Print the moderator allowlist
   admin-remove <identity>        Remove a moderator
 
-Environment: DATABASE_PATH (default ./data/hub.db)`;
+Environment: DATABASE_URL (PostgreSQL) or DATABASE_PATH (SQLite, default ./data/hub.db)`;
 
 const command = process.argv[2];
-const databasePath = process.env.DATABASE_PATH ?? './data/hub.db';
 
 if (!command || !['init', 'seed', 'audit', 'list', 'admin-add', 'admin-list', 'admin-remove'].includes(command)) {
     console.error(USAGE);
     process.exit(command ? 1 : 0);
 }
 
-if (databasePath !== ':memory:') {
-    mkdirSync(dirname(databasePath), { recursive: true });
-}
-
-const db = createDb(databasePath);
+const { db, description } = openDatabase();
 
 await migrate(db);
 
 if (command === 'init') {
-    console.log(`Database ready at ${databasePath}`);
+    console.log(`Database ready: ${description}`);
 } else if (command === 'seed') {
     const result = await seed(db);
 

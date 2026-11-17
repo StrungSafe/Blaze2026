@@ -161,13 +161,22 @@ export async function saveUserReview(db: Db, identifier: string, publicKey: stri
         throw new RegistryError('This wallet has already reviewed this template.', 409);
     }
 
-    const inserted = await db
-        .insertInto('user_reviews')
-        .values({ identifier, reviewer: publicKey, rating: draft.rating, body: draft.body, created_at: iso(), hidden: 0, hidden_reason: null })
-        .returning('id')
-        .executeTakeFirstOrThrow();
+    try {
+        const inserted = await db
+            .insertInto('user_reviews')
+            .values({ identifier, reviewer: publicKey, rating: draft.rating, body: draft.body, created_at: iso(), hidden: 0, hidden_reason: null })
+            .returning('id')
+            .executeTakeFirstOrThrow();
 
-    return { id: inserted.id, reviewerAddress: addressOfPublicKey(publicKey) };
+        return { id: inserted.id, reviewerAddress: addressOfPublicKey(publicKey) };
+    } catch (error) {
+        // Two submissions racing past the check above hit the unique constraint (PostgreSQL code 23505, or SQLite's message).
+        if ((error as { code?: string }).code === '23505' || /UNIQUE constraint failed/i.test(String((error as Error).message))) {
+            throw new RegistryError('This wallet has already reviewed this template.', 409);
+        }
+
+        throw error;
+    }
 }
 
 export async function ratingStats(db: Db, identifier: string): Promise<RatingStats> {

@@ -12,12 +12,14 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest --run",
+    "test:postgres": "vitest --run --no-file-parallelism",
     "cli": "tsx src/cli.ts",
     "cli:prod": "node dist/cli.js"
   },
   "devDependencies": {
     "@types/better-sqlite3": "9.6.0",
     "@types/node": "26.6.6",
+    "@types/pg": "8.23.1",
     "tsx": "4.23.15",
     "typescript": "7.0.2",
     "vite": "8.3.7",
@@ -33,7 +35,8 @@
     "@xo-cash/utils": "0.0.11",
     "better-sqlite3": "13.0.3",
     "fastify": "5.12.8",
-    "kysely": "0.29.8"
+    "kysely": "0.29.8",
+    "pg": "8.23.1"
   },
   "overrides": {
     "canvas": "npm:empty-npm-package@1.0.0"

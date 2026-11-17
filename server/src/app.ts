@@ -74,7 +74,18 @@ export async function buildApp(db: Db, options: AppOptions = {}): Promise<Fastif
         }
     });
 
-    app.get('/api/health', async () => ({ ok: true }));
+    // Touches the database so an uptime pinger also keeps a hosted database awake, and reports 503 if it is unreachable.
+    app.get('/api/health', async (_request, reply) => {
+        try {
+            await db.selectFrom('templates').select('identifier').limit(1).execute();
+
+            return { ok: true };
+        } catch (error) {
+            app.log.error(error, 'Health check could not reach the database');
+
+            return reply.code(503).send({ ok: false });
+        }
+    });
 
     // The template exactly as an XO tool expects it. The identifier is a hash of the content, so the response can
     // never change and may be cached forever.

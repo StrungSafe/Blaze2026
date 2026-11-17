@@ -68,3 +68,11 @@ Registry, audit checks, flags, reviews, policy preview, admin API, UI (Home, Bro
 - Issue: d77b111e4db749c177cc62d2524c0dd89b0b2ca8b2df57039e2b21e7b68c73e1 (1,000 sat voucher, fee 400).
 - Claim: b669d2b9ecb035fe3ee63613efdc6cf51cdf7e4112c52c16d2043a8d30fea919 (750 sat out, fee 250).
 - The voucher output address derived from the claim code matches the issue transaction's output.
+
+
+## Hosted deployment (Postgres)
+
+The server now supports PostgreSQL. With `DATABASE_URL` set (Supabase Session pooler string) all data lives there; without
+it the server uses SQLite exactly as before. The whole test suite passes on both (`npm test`, and
+`TEST_DATABASE_URL=... npm run test:postgres`). `/api/health` now touches the database so an uptime pinger keeps a free
+host and a free database awake. The hosting plan and Miguel's setup steps are in `docs/DEPLOY.md`.

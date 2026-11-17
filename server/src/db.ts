@@ -1,8 +1,16 @@
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
 import Database from 'better-sqlite3';
-import { Kysely, SqliteDialect, type Generated } from 'kysely';
+import { Kysely, PostgresDialect, SqliteDialect, type ColumnDefinitionBuilder, type Generated } from 'kysely';
+import pg from 'pg';
 
-// Keep column types portable (TEXT / INTEGER only, no SQLite-only features) so a later move to PostgreSQL is a
-// dialect and migration change, not a rewrite.
+// Column types stay portable (TEXT / INTEGER only, no database-specific features), so the same schema and queries run
+// on SQLite (local, tests, a single container) and PostgreSQL (hosted, e.g. Supabase). Only the connection and the
+// auto-increment id column differ.
+
+type Backend = 'sqlite' | 'postgres';
+
+const backends = new WeakMap<object, Backend>();
 
 export interface TemplatesTable {
     identifier: string;
@@ -101,13 +109,88 @@ export function createDb(path: string): Db {
         sqlite.pragma('journal_mode = WAL');
     }
 
-    return new Kysely<DatabaseSchema>({ dialect: new SqliteDialect({ database: sqlite }) });
+    const db = new Kysely<DatabaseSchema>({ dialect: new SqliteDialect({ database: sqlite }) });
+
+    backends.set(db, 'sqlite');
+
+    return db;
+}
+
+/** True when the connection string points at this machine, where TLS is normally off. */
+function isLocalConnection(url: URL): boolean {
+    return ['localhost', '127.0.0.1', '::1', '[::1]', ''].includes(url.hostname);
+}
+
+/**
+ * Opens a PostgreSQL database from a connection string (for Supabase use the Session pooler string). TLS is on for
+ * every remote host; Supabase presents its own certificate chain, so the certificate is encrypted-but-unverified
+ * unless the string asks for sslmode=disable.
+ */
+export function createPostgresDb(connectionString: string): Db {
+    const url = new URL(connectionString);
+    const sslmode = url.searchParams.get('sslmode');
+
+    // pg would turn sslmode=require into full certificate verification, which Supabase's chain fails, so decide here.
+    url.searchParams.delete('sslmode');
+
+    const useTls = sslmode !== 'disable' && !isLocalConnection(url);
+    const pool = new pg.Pool({
+        connectionString: url.toString(),
+        ssl: useTls ? { rejectUnauthorized: false } : undefined,
+        max: 5,
+        idleTimeoutMillis: 30_000,
+        connectionTimeoutMillis: 15_000,
+    });
+
+    // An idle connection can be dropped by the host; without a handler that error would crash the whole server.
+    pool.on('error', (error) => {
+        console.error(`Database connection error (the pool reconnects on the next query): ${error.message}`);
+    });
+
+    const db = new Kysely<DatabaseSchema>({ dialect: new PostgresDialect({ pool }) });
+
+    backends.set(db, 'postgres');
+
+    return db;
+}
+
+export interface OpenedDatabase {
+    db: Db;
+    backend: Backend;
+    /** Safe to print: never contains a password. */
+    description: string;
+}
+
+/**
+ * Opens the database the environment asks for: PostgreSQL when DATABASE_URL is set, otherwise SQLite at DATABASE_PATH.
+ */
+export function openDatabase(env: Record<string, string | undefined> = process.env): OpenedDatabase {
+    const databaseUrl = env.DATABASE_URL?.trim();
+
+    if (databaseUrl) {
+        const url = new URL(databaseUrl);
+
+        return { db: createPostgresDb(databaseUrl), backend: 'postgres', description: `PostgreSQL at ${url.hostname}` };
+    }
+
+    const path = env.DATABASE_PATH ?? './data/hub.db';
+
+    if (path !== ':memory:') {
+        mkdirSync(dirname(path), { recursive: true });
+    }
+
+    return { db: createDb(path), backend: 'sqlite', description: `SQLite file ${path}` };
 }
 
 /**
  * Creates all tables if they do not exist yet. Safe to run on every start.
  */
 export async function migrate(db: Db): Promise<void> {
+    const backend = backends.get(db) ?? 'sqlite';
+    // SQLite auto-increments an INTEGER primary key; PostgreSQL needs the SERIAL type for the same thing.
+    const idType = backend === 'postgres' ? 'serial' : 'integer';
+    const idColumn = (c: ColumnDefinitionBuilder): ColumnDefinitionBuilder => (backend === 'postgres' ? c.primaryKey() : c.primaryKey().autoIncrement());
+
     await db.schema
         .createTable('templates')
         .ifNotExists()
@@ -124,7 +207,7 @@ export async function migrate(db: Db): Promise<void> {
     await db.schema
         .createTable('audit_reports')
         .ifNotExists()
-        .addColumn('id', 'integer', (c) => c.primaryKey().autoIncrement())
+        .addColumn('id', idType, idColumn)
         .addColumn('identifier', 'text', (c) => c.notNull().references('templates.identifier'))
         .addColumn('checker_version', 'text', (c) => c.notNull())
         .addColumn('results_json', 'text', (c) => c.notNull())
@@ -134,7 +217,7 @@ export async function migrate(db: Db): Promise<void> {
     await db.schema
         .createTable('flags')
         .ifNotExists()
-        .addColumn('id', 'integer', (c) => c.primaryKey().autoIncrement())
+        .addColumn('id', idType, idColumn)
         .addColumn('identifier', 'text', (c) => c.notNull().references('templates.identifier'))
         .addColumn('reason', 'text', (c) => c.notNull())
         .addColumn('reporter', 'text', (c) => c.notNull())
@@ -145,7 +228,7 @@ export async function migrate(db: Db): Promise<void> {
     await db.schema
         .createTable('reviews')
         .ifNotExists()
-        .addColumn('id', 'integer', (c) => c.primaryKey().autoIncrement())
+        .addColumn('id', idType, idColumn)
         .addColumn('identifier', 'text', (c) => c.notNull().references('templates.identifier'))
         .addColumn('reviewer_address', 'text', (c) => c.notNull())
         .addColumn('reviewer_label', 'text')
@@ -157,7 +240,7 @@ export async function migrate(db: Db): Promise<void> {
     await db.schema
         .createTable('user_reviews')
         .ifNotExists()
-        .addColumn('id', 'integer', (c) => c.primaryKey().autoIncrement())
+        .addColumn('id', idType, idColumn)
         .addColumn('identifier', 'text', (c) => c.notNull().references('templates.identifier'))
         .addColumn('reviewer', 'text', (c) => c.notNull())
         .addColumn('rating', 'integer', (c) => c.notNull())
@@ -188,7 +271,7 @@ export async function migrate(db: Db): Promise<void> {
     await db.schema
         .createTable('moderation_log')
         .ifNotExists()
-        .addColumn('id', 'integer', (c) => c.primaryKey().autoIncrement())
+        .addColumn('id', idType, idColumn)
         .addColumn('actor', 'text', (c) => c.notNull())
         .addColumn('action', 'text', (c) => c.notNull())
         .addColumn('identifier', 'text')

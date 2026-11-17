@@ -1,19 +1,15 @@
-import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
 import { seedAdmins } from './admin.js';
 import { buildApp } from './app.js';
-import { createDb, migrate } from './db.js';
+import { migrate, openDatabase } from './db.js';
 import { seed } from './seed.js';
 
 const port = Number(process.env.PORT ?? 3000);
 const host = process.env.HOST ?? '0.0.0.0';
-const databasePath = process.env.DATABASE_PATH ?? './data/hub.db';
 
-if (databasePath !== ':memory:') {
-    mkdirSync(dirname(databasePath), { recursive: true });
-}
+// DATABASE_URL (PostgreSQL, e.g. Supabase) wins when set; otherwise a SQLite file at DATABASE_PATH is used.
+const { db, description } = openDatabase();
 
-const db = createDb(databasePath);
+console.log(`Database: ${description}`);
 
 // Creating missing tables on every start is safe and means a fresh container works without a manual step.
 await migrate(db);

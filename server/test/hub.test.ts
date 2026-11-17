@@ -3,7 +3,8 @@ import { generateTemplateIdentifier, parseTemplate, serializeTemplate } from '@x
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app.js';
-import { createDb, migrate, type Db } from '../src/db.js';
+import type { Db } from '../src/db.js';
+import { freshDb } from './helpers.js';
 import { seed } from '../src/seed.js';
 
 let db: Db;
@@ -13,8 +14,7 @@ const canonicalJson = serializeTemplate(p2pkhTemplate);
 const canonicalId = generateTemplateIdentifier(parseTemplate(canonicalJson));
 
 beforeEach(async () => {
-    db = createDb(':memory:');
-    await migrate(db);
+    db = await freshDb();
     app = await buildApp(db, { rateLimit: false });
 });
 

@@ -12,6 +12,7 @@ services:
       - "${PORT:-3000}:3000"
     environment:
       DATABASE_PATH: /data/hub.db
+      DATABASE_URL: ${DATABASE_URL:-}
       WEB_DIR: /app/web-dist
       SEED_ON_EMPTY: ${SEED_ON_EMPTY:-1}
       ADMIN_IDENTITIES: ${ADMIN_IDENTITIES:-}

@@ -5,7 +5,8 @@ import { seedAdmins } from '../src/admin.js';
 import { buildApp } from '../src/app.js';
 import { signChallengeTransaction } from '../src/auth/challenge-transaction.js';
 import { signMessage } from '../src/auth/signed-message.js';
-import { createDb, migrate, type Db } from '../src/db.js';
+import type { Db } from '../src/db.js';
+import { freshDb } from './helpers.js';
 import { describeTemplate } from '../src/describe.js';
 import { seed } from '../src/seed.js';
 import { addressOfPublicKey, statsFromRatings, validateReview } from '../src/user-reviews.js';
@@ -21,8 +22,7 @@ let clock = 1_000_000;
 
 beforeEach(async () => {
     clock = 1_000_000;
-    db = createDb(':memory:');
-    await migrate(db);
+    db = await freshDb();
     await seed(db);
     await seedAdmins(db, `mod=${pub(mod)}`);
     app = await buildApp(db, { rateLimit: false, clock: () => clock });
