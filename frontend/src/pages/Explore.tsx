@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  ArrowLeft,
   ArrowUpRight,
   Search,
   SlidersHorizontal,
@@ -364,18 +365,28 @@ function Explore() {
         {/* Header */}
         <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-[#080a10]/85 backdrop-blur-2xl">
           <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-12">
-            {/* XOGrid logo */}
-            <Link
-              to="/"
-              aria-label="XOGrid home"
-              className="group shrink-0"
-            >
-              <img
-                src={xogridlogo}
-                alt="XOGrid"
-                className="explore-logo h-12 w-auto max-w-[165px] object-contain sm:h-[54px]"
-              />
-            </Link>
+            {/* Back arrow and XOGrid logo */}
+            <div className="flex items-center gap-3">
+              <Link
+                to="/"
+                aria-label="Go back"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.035] text-slate-300 transition hover:border-orange-400/40 hover:bg-orange-500/10 hover:text-orange-300"
+              >
+                <ArrowLeft size={20} />
+              </Link>
+
+              <Link
+                to="/"
+                aria-label="XOGrid home"
+                className="group shrink-0"
+              >
+                <img
+                  src={xogridlogo}
+                  alt="XOGrid"
+                  className="explore-logo h-12 w-auto max-w-[165px] object-contain sm:h-[54px]"
+                />
+              </Link>
+            </div>
 
             {/* Desktop navigation */}
             <nav className="hidden items-center gap-3 sm:flex">
