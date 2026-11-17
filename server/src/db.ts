@@ -100,8 +100,8 @@ export interface DatabaseSchema {
 export type Db = Kysely<DatabaseSchema>;
 
 /**
- * better-sqlite3 is a native module and an optional dependency: hosts that only use PostgreSQL (e.g. Vercel with
- * DATABASE_URL) may skip or fail its build, so it is loaded only when a SQLite database is actually opened.
+ * better-sqlite3 is a native module, so it is loaded only when a SQLite database is actually opened: a server on
+ * PostgreSQL (DATABASE_URL) still starts even if the native binary is missing or broken on its host.
  */
 function loadBetterSqlite3(): typeof BetterSqlite3 {
     try {
