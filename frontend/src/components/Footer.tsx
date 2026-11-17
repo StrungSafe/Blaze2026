@@ -6,7 +6,15 @@ import {
   ShieldCheck,
   ArrowUp,
   ArrowUpRight,
+  Mail,
 } from "lucide-react";
+
+import {
+  SiX,
+  SiDiscord,
+  SiTelegram,
+  SiGithub,
+} from "react-icons/si";
 
 import xogridlogo from "../assets/images/xogridlogo.png";
 
@@ -18,6 +26,16 @@ interface FooterLink {
 function Footer() {
   const currentYear = new Date().getFullYear();
   const location = useLocation();
+
+  // Replace these with your official XOGrid accounts.
+  const CONTACT_EMAIL = "xogrid@.com";
+
+  const socialLinks = [
+    { name: "X", href: "https://x.com/YOUR_X_USERNAME", icon: SiX },
+    { name: "Discord", href: "https://discord.gg/YOUR_INVITE", icon: SiDiscord },
+    { name: "Telegram", href: "https://t.me/YOUR_USERNAME", icon: SiTelegram },
+    { name: "GitHub", href: "https://github.com/YOUR_GITHUB", icon: SiGithub },
+  ];
 
   const footerLinks: Record<string, FooterLink[]> = {
     Platform: [
@@ -32,37 +50,26 @@ function Footer() {
     ],
   };
 
-  // Smooth scrolling for footer section links.
   useEffect(() => {
     if (!location.hash) return;
 
     const sectionId = decodeURIComponent(location.hash.slice(1));
 
-    const scrollToSection = () => {
-      const section = document.getElementById(sectionId);
-
-      if (section) {
-        section.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
-    };
-
-    const timeout = window.setTimeout(scrollToSection, 100);
+    const timeout = window.setTimeout(() => {
+      document.getElementById(sectionId)?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
 
     return () => window.clearTimeout(timeout);
   }, [location.pathname, location.hash]);
 
-  // Check active footer links.
   const isActiveLink = (href: string): boolean => {
     const [pathname, hash] = href.split("#");
 
     if (hash) {
-      return (
-        location.pathname === pathname &&
-        location.hash === `#${hash}`
-      );
+      return location.pathname === pathname && location.hash === `#${hash}`;
     }
 
     if (href === "/") {
@@ -72,14 +79,10 @@ function Footer() {
     return location.pathname === href;
   };
 
-  // Footer link styling.
-  const footerLinkClass = (href: string): string => {
-    const active = isActiveLink(href);
-
-    return `xogrid-footer-link group inline-flex items-center gap-2 text-sm ${
-      active ? "is-active" : ""
+  const footerLinkClass = (href: string): string =>
+    `xogrid-footer-link group inline-flex items-center gap-2 text-sm ${
+      isActiveLink(href) ? "is-active" : ""
     }`;
-  };
 
   const renderLinks = (links: FooterLink[]): ReactNode =>
     links.map((link) => {
@@ -93,11 +96,7 @@ function Footer() {
             className={footerLinkClass(link.href)}
           >
             <span>{link.name}</span>
-
-            <ArrowUpRight
-              size={13}
-              className="footer-link-arrow"
-            />
+            <ArrowUpRight size={13} className="footer-link-arrow" />
           </Link>
         </li>
       );
@@ -105,32 +104,27 @@ function Footer() {
 
   return (
     <footer className="relative overflow-hidden border-t border-white/[0.08] bg-[#05070b]">
-
       <style>{`
-        /* Footer link default appearance */
         .xogrid-footer-link {
-          color: rgba(255, 255, 255, 0.45) !important;
+          color: rgba(255,255,255,.45) !important;
           text-decoration: none !important;
           transition: color 250ms ease !important;
         }
 
-        /* Force orange on hover */
         .xogrid-footer-link:hover,
-        .xogrid-footer-link:focus-visible {
+        .xogrid-footer-link:focus-visible,
+        .xogrid-footer-link.is-active {
           color: #F97316 !important;
           text-decoration: none !important;
         }
 
-        /* Active page */
         .xogrid-footer-link.is-active {
-          color: #F97316 !important;
           font-weight: 600;
         }
 
-        /* Arrow animation */
         .footer-link-arrow {
           opacity: 0;
-          transform: translate(-4px, 0);
+          transform: translate(-4px,0);
           transition: all 250ms ease;
           flex-shrink: 0;
         }
@@ -139,25 +133,53 @@ function Footer() {
         .xogrid-footer-link:focus-visible .footer-link-arrow,
         .xogrid-footer-link.is-active .footer-link-arrow {
           opacity: 1;
-          transform: translate(0, 0);
+          transform: translate(0,0);
         }
 
-        /* Trust and Policy link */
         .xogrid-footer-policy {
-          color: rgba(255, 255, 255, 0.4) !important;
+          color: rgba(255,255,255,.4) !important;
           text-decoration: none !important;
           transition: color 250ms ease !important;
         }
 
         .xogrid-footer-policy:hover,
-        .xogrid-footer-policy:focus-visible {
+        .xogrid-footer-policy:focus-visible,
+        .xogrid-footer-policy.is-active {
           color: #F97316 !important;
           text-decoration: none !important;
         }
 
-        .xogrid-footer-policy.is-active {
-          color: #F97316 !important;
-          font-weight: 600;
+        .xogrid-footer-social {
+          display: flex;
+          width: 39px;
+          height: 39px;
+          align-items: center;
+          justify-content: center;
+          border: 1px solid rgba(255,255,255,.1);
+          border-radius: 11px;
+          background: rgba(255,255,255,.03);
+          color: rgba(255,255,255,.55);
+          transition: all 250ms ease;
+        }
+
+        .xogrid-footer-social:hover {
+          color: #F97316;
+          border-color: rgba(249,115,22,.4);
+          background: rgba(249,115,22,.08);
+          transform: translateY(-3px);
+        }
+
+        .xogrid-footer-email {
+          display: inline-flex;
+          align-items: center;
+          gap: 9px;
+          color: rgba(255,255,255,.5);
+          font-size: 13px;
+          transition: color 250ms ease;
+        }
+
+        .xogrid-footer-email:hover {
+          color: #F97316;
         }
 
         @keyframes waveFlow {
@@ -171,9 +193,9 @@ function Footer() {
         }
 
         @keyframes waveHighlight {
-          0%, 100% {
+          0%,100% {
             transform: translateX(0) translateY(0);
-            opacity: 0.5;
+            opacity: .5;
           }
           50% {
             transform: translateX(-2%) translateY(-7px);
@@ -194,13 +216,8 @@ function Footer() {
         }
 
         @media (max-width: 640px) {
-          .animate-wave {
-            animation-duration: 25s;
-          }
-
-          .animate-wave-reverse {
-            animation-duration: 32s;
-          }
+          .animate-wave { animation-duration: 25s; }
+          .animate-wave-reverse { animation-duration: 32s; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -214,14 +231,11 @@ function Footer() {
 
       {/* Ambient lighting */}
       <div className="pointer-events-none absolute -top-32 left-1/4 h-72 w-72 rounded-full bg-purple-600/[0.07] blur-[120px]" />
-
       <div className="pointer-events-none absolute -right-20 bottom-0 h-64 w-64 rounded-full bg-orange-500/[0.05] blur-[110px]" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 pb-8 pt-16 sm:px-8 lg:px-12">
-
         {/* Main footer */}
-        <div className="grid grid-cols-1 gap-12 border-b border-white/[0.08] pb-14 md:grid-cols-2 lg:grid-cols-4 lg:gap-10">
-
+        <div className="grid grid-cols-1 gap-12 border-b border-white/[0.08] pb-14 md:grid-cols-2 lg:grid-cols-5 lg:gap-10">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="inline-flex items-center gap-3">
@@ -241,7 +255,6 @@ function Footer() {
 
             <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
-
               <span className="text-xs text-white/55">
                 Built for the Bitcoin Cash ecosystem
               </span>
@@ -250,10 +263,7 @@ function Footer() {
 
           {/* Platform */}
           <div>
-            <h3 className="text-sm font-semibold text-white">
-              Platform
-            </h3>
-
+            <h3 className="text-sm font-semibold text-white">Platform</h3>
             <ul className="mt-6 space-y-5">
               {renderLinks(footerLinks.Platform)}
             </ul>
@@ -261,13 +271,42 @@ function Footer() {
 
           {/* Resources */}
           <div>
-            <h3 className="text-sm font-semibold text-white">
-              Resources
-            </h3>
-
+            <h3 className="text-sm font-semibold text-white">Resources</h3>
             <ul className="mt-6 space-y-5">
               {renderLinks(footerLinks.Resources)}
             </ul>
+          </div>
+
+          {/* Follow us and email */}
+          <div>
+            <h3 className="text-sm font-semibold text-white">Follow Us</h3>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              {socialLinks.map(({ name, href, icon: Icon }) => (
+                <a
+                  key={name}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`Follow XOGrid on ${name}`}
+                  title={name}
+                  className="xogrid-footer-social"
+                >
+                  <Icon size={17} />
+                </a>
+              ))}
+            </div>
+
+            <h3 className="mt-8 text-sm font-semibold text-white">Email Us</h3>
+
+            <a
+              href={`mailto:${CONTACT_EMAIL}`}
+              className="xogrid-footer-email mt-5"
+            >
+              <Mail size={16} />
+              <span>{CONTACT_EMAIL}</span>
+              <ArrowUpRight size={13} />
+            </a>
           </div>
         </div>
 
@@ -290,10 +329,7 @@ function Footer() {
             <button
               type="button"
               onClick={() =>
-                window.scrollTo({
-                  top: 0,
-                  behavior: "smooth",
-                })
+                window.scrollTo({ top: 0, behavior: "smooth" })
               }
               aria-label="Back to top"
               className="group flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-white/50 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/40 hover:bg-orange-500/10 hover:text-orange-500"
@@ -324,7 +360,6 @@ function Footer() {
 
       {/* Animated waves */}
       <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 overflow-hidden sm:h-48 lg:h-60">
-
         {/* Purple wave */}
         <svg
           className="absolute bottom-0 left-0 h-full w-[200%] animate-wave"
@@ -337,7 +372,6 @@ function Footer() {
             fill="#8B5CF6"
             fillOpacity="0.10"
           />
-
           <path
             d="M0 135 C150 65 270 65 420 135 C570 205 690 205 840 135 C990 65 1110 65 1260 135 C1350 175 1400 175 1440 155 V240 H0 Z"
             fill="#A78BFA"
@@ -357,7 +391,6 @@ function Footer() {
             fill="#F97316"
             fillOpacity="0.055"
           />
-
           <path
             d="M0 175 C150 115 270 115 420 175 C570 235 690 235 840 175 C990 115 1110 115 1260 175 C1350 210 1400 210 1440 190 V240 H0 Z"
             fill="#8B5CF6"
