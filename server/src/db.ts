@@ -1,6 +1,7 @@
 import { mkdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { dirname } from 'node:path';
-import Database from 'better-sqlite3';
+import type BetterSqlite3 from 'better-sqlite3';
 import { Kysely, PostgresDialect, SqliteDialect, type ColumnDefinitionBuilder, type Generated } from 'kysely';
 import pg from 'pg';
 
@@ -99,10 +100,22 @@ export interface DatabaseSchema {
 export type Db = Kysely<DatabaseSchema>;
 
 /**
+ * better-sqlite3 is a native module and an optional dependency: hosts that only use PostgreSQL (e.g. Vercel with
+ * DATABASE_URL) may skip or fail its build, so it is loaded only when a SQLite database is actually opened.
+ */
+function loadBetterSqlite3(): typeof BetterSqlite3 {
+    try {
+        return createRequire(import.meta.url)('better-sqlite3') as typeof BetterSqlite3;
+    } catch (error) {
+        throw new Error(`SQLite needs the better-sqlite3 package, which is not installed here. Set DATABASE_URL to use PostgreSQL instead. (${(error as Error).message})`);
+    }
+}
+
+/**
  * Opens (and creates, if needed) the SQLite database at the given path. Use ':memory:' for tests.
  */
 export function createDb(path: string): Db {
-    const sqlite = new Database(path);
+    const sqlite = new (loadBetterSqlite3())(path);
     sqlite.pragma('foreign_keys = ON');
 
     if (path !== ':memory:') {
