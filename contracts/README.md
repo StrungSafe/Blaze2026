@@ -9,7 +9,7 @@ The method follows the guide [Building a BCH XO Template for a Smart Contract](h
 | System | Status | Template identifier | Based on | Credits |
 | --- | --- | --- | --- | --- |
 | [revenue-split](revenue-split/) | Chipnet verified (fund + payout, earlier identifier `9674cee2…`); 23 offline tests | `c2f2492c2ef122b33262525efadb249d1664175968d0b86bc85214b193d3d987` | Draft [`RevenueSplit.cash`](https://github.com/XOGrid-Cash/Blaze2026_XOGrid/blob/8267aec7042fac07662ec5b2e765643d834fa127/contracts/RevenueSplit.cash) (XOGrid commit `8267aec`) | angelnath |
-| [token-burner](token-burner/) | Chipnet verified (mint, deposit, burn); 18 offline tests | `2fb462ac7c3e545d7055c68d8b47a935379e40f330919ed99b822885360acb1d` | [`burner.cash`](https://gitlab.com/dagurval/contract-burner/-/blob/f20240756800e07c091f35e0227967e7db8727d3/burner.cash) (dagurval/contract-burner `f2024075`, MIT per its README), used unchanged; live at [tokenburner.cash](https://www.tokenburner.cash/) | Dagur Valberg Johannsson |
+| [token-burner](token-burner/) | Chipnet verified (deposits of tokens and BCH, single and batch burns); 21 offline tests | `9ab922f238d2d0a52c870a8c30afa88da6484143c6a24d0ddd82c311d7d62d5d` | [`burner.cash`](https://gitlab.com/dagurval/contract-burner/-/blob/f20240756800e07c091f35e0227967e7db8727d3/burner.cash) (dagurval/contract-burner `f2024075`, MIT per its README), used unchanged; live at [tokenburner.cash](https://www.tokenburner.cash/) | Dagur Valberg Johannsson |
 
 **Status levels**: Draft → Tested offline → Chipnet verified → Reviewed. Update the row in the same change that moves a system forward.
 

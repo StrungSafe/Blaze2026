@@ -63,6 +63,10 @@ const tokenBurnerTemplate = {
     start: [
         { action: 'depositFungibleTokens', role: 'depositor' },
         { action: 'depositNonfungibleToken', role: 'depositor' },
+        { action: 'depositSatoshis', role: 'depositor' },
+        // Any wallet can start a burn, but the engine can only spend burner coins it already tracks: XO 0.1.1-next
+        // starts watching the burner address only after this wallet has sent something to it.
+        { action: 'burn', role: 'burner' },
     ],
     actions: {
         depositFungibleTokens: {
@@ -95,15 +99,31 @@ const tokenBurnerTemplate = {
             requirements: { participants: [{ role: 'depositor', slots: { min: 1, max: 1 } }] },
             transaction: 'depositNonfungibleTransaction',
         },
+        depositSatoshis: {
+            name: 'Send BCH to the burner (a gift to miners)',
+            description:
+                'Send $(<depositSatoshis>) satoshis to the burner address. This is not a burn of the BCH: whoever burns the coin next spends it into an OP_RETURN carrying 0 satoshis, so the whole amount becomes the transaction fee and goes to the miner.',
+            icon: 'send',
+            roles: {
+                depositor: {
+                    name: 'Send BCH to the burner',
+                    description: 'Choose how many satoshis to send. They will go to a miner as a fee when the burner is next swept.',
+                    icon: 'send',
+                    requirements: { variables: ['depositSatoshis'] },
+                },
+            },
+            requirements: { participants: [{ role: 'depositor', slots: { min: 1, max: 1 } }] },
+            transaction: 'depositSatoshisTransaction',
+        },
         burn: {
             name: 'Burn',
             description:
-                'Destroy the tokens in a burner coin. The transaction has exactly one output, an OP_RETURN with your farewell message (up to 220 bytes), so the tokens are gone for good and the coin’s satoshis go to miners.',
+                'Destroy the tokens in burner coins. The transaction has exactly one output, an OP_RETURN with your farewell message (up to 220 bytes), so the tokens are gone for good and the coins’ satoshis go to miners. Your wallet can only see burner coins after it has sent something to the burner address itself.',
             icon: 'burn',
             roles: {
                 burner: {
                     name: 'Burn',
-                    description: 'Pick a burner coin and write a farewell message (it can be empty).',
+                    description: 'Pick one or more burner coins and write a farewell message (it can be empty).',
                     icon: 'burn',
                     requirements: { variables: ['burnMessage'] },
                 },
@@ -133,6 +153,16 @@ const tokenBurnerTemplate = {
             locktime: 0,
             composable: true,
         },
+        depositSatoshisTransaction: {
+            name: 'BCH sent to the burner',
+            description: '$(<depositSatoshis>) satoshis were sent to the burner; they go to a miner when the burner is next swept.',
+            icon: 'send',
+            inputs: [],
+            outputs: [{ output: 'burnerSatoshisOutput' }],
+            version: 2,
+            locktime: 0,
+            composable: true,
+        },
         burnTransaction: {
             name: 'Tokens burned',
             description: 'Tokens were burned with the farewell message: $(<burnMessage>)',
@@ -158,6 +188,14 @@ const tokenBurnerTemplate = {
                 amount: '$(<tokenAmount>)',
                 nft: null,
             },
+        },
+        burnerSatoshisOutput: {
+            name: 'BCH awaiting the next burn',
+            description: '$(<depositSatoshis>) satoshis at the burner address, a gift to whichever miner mines the next burn.',
+            icon: 'burn',
+            lockingScript: 'burnerLockingScript',
+            valueSatoshis: '$(<depositSatoshis>)',
+            token: null,
         },
         burnerNonfungibleOutput: {
             name: 'NFT awaiting burn',
@@ -246,7 +284,8 @@ const tokenBurnerTemplate = {
         },
         depositSatoshis: {
             name: 'Satoshis with the tokens',
-            description: 'Satoshis sent along with the tokens. A token output needs some (about 1000 is typical); they pay the burn fee and go to miners.',
+            description:
+                'Satoshis sent to the burner address, alone or with tokens (a token output needs about 1000). They become the fee of the next burn and go to a miner; they are not destroyed.',
             type: 'satoshis',
         },
         burnMessage: {

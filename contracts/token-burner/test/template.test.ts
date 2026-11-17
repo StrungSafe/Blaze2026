@@ -89,6 +89,23 @@ describe('Token Burner template', () => {
         expect(binToHex(token.nft.commitment)).toBe('2342');
     });
 
+    it('resolves a BCH-only deposit (a gift to miners) to the burner address with no token', () => {
+        const output = completeOutput(template, 'depositSatoshis', 'burnerSatoshisOutput', { depositSatoshis: 2000n });
+
+        expect(output.valueSatoshis).toBe(2000n);
+        expect(binToHex(output.lockingBytecode as Uint8Array)).toBe(binToHex(compileLock(template, 'burnerLockingScript', {})));
+        expect(output.token).toBeUndefined();
+    });
+
+    it('offers every deposit and the burn itself as start actions', () => {
+        expect(template.start.map((entry) => `${entry.action}/${entry.role}`)).toEqual([
+            'depositFungibleTokens/depositor',
+            'depositNonfungibleToken/depositor',
+            'depositSatoshis/depositor',
+            'burn/burner',
+        ]);
+    });
+
     it('committed template.json is current, with bigints in XO extended-JSON form', () => {
         const committed = readFileSync(join(import.meta.dirname, '..', 'template.json'), 'utf8');
 

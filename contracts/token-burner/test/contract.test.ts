@@ -39,6 +39,10 @@ describe('TokenBurner contract (burner.cash)', () => {
             expect(verifySpend([nftCoin], [farewell('farewell, #42')])).toBe(true);
         });
 
+        it('spending a BCH-only coin (no tokens), with all its satoshis going to the miner as the fee', () => {
+            expect(verifySpend([burnerCoin(undefined, 2000n)], [farewell('a gift to miners')])).toBe(true);
+        });
+
         it('burning several burner coins in one transaction', () => {
             expect(verifySpend([fungibleCoin, nftCoin, burnerCoin(undefined, 5000n)], [farewell('all of it')])).toBe(true);
         });

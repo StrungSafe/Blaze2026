@@ -4,14 +4,16 @@
  *     npx tsx token-burner/scripts/chipnet.ts mint      # creates a test fungible token in the XO wallet
  *     npx tsx token-burner/scripts/chipnet.ts deposit   # XO action depositFungibleTokens: sends some to the burner
  *     npx tsx token-burner/scripts/chipnet.ts burn      # XO action burn: destroys them with a farewell message
+ *     npx tsx token-burner/scripts/chipnet.ts deposit-bch  # XO action depositSatoshis: BCH to the burner (a gift to miners)
+ *     npx tsx token-burner/scripts/chipnet.ts burn-all  # XO action burn on every coin at the burner address, anyone's
  *
  * Uses the test wallet in contracts/.xo-demo (gitignored), which needs a few thousand chipnet satoshis. The burner
  * address is the same one tokenburner.cash uses on chipnet, so the burn also appears in its chipnet feed.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { binToHex, decodeTransactionBch, hexToBin } from '@bitauth/libauth';
-import { getTemplateLockingScriptOrThrow } from '@xo-cash/engine';
+import { binToHex, decodeTransactionBch, hexToBin, sha256 } from '@bitauth/libauth';
+import { compileLockingBytecodeFromTemplateLockingScriptIdentifier, getTemplateLockingScriptOrThrow } from '@xo-cash/engine';
 import { p2pkhTemplate } from '@xo-cash/templates';
 import { generateTemplateIdentifier, parseTemplate, serializeTemplate } from '@xo-cash/utils';
 
@@ -39,10 +41,12 @@ interface BurnerState {
     depositTransactionHash?: string;
     depositOutputIndex?: number;
     burnTransactionHash?: string;
+    burnAllTransactionHashes?: string[];
+    depositBchTransactionHash?: string;
 }
 
-if (!['mint', 'deposit', 'burn'].includes(mode ?? '')) {
-    console.error('Usage: chipnet.ts mint | deposit | burn');
+if (!['mint', 'deposit', 'burn', 'deposit-bch', 'burn-all'].includes(mode ?? '')) {
+    console.error('Usage: chipnet.ts mint | deposit | burn | deposit-bch | burn-all');
     process.exit(1);
 }
 
@@ -234,6 +238,111 @@ try {
         state.depositOutputIndex = deposited.serializedTransaction ? findOutputIndex(deposited.serializedTransaction, hexToBin(burnerLock)) : 0;
         writeState(state);
         console.log(`\nDEPOSITED at ${deposited.transactionHash}:${state.depositOutputIndex}. Next:  npx tsx token-burner/scripts/chipnet.ts burn`);
+    } else if (mode === 'deposit-bch') {
+        const satoshis = BigInt(process.env.DEPOSIT_SATS ?? '1000');
+        const feeCoin = (await engine.listSpendableUnspentOutputs())
+            .filter((output) => output.tokenCategory === undefined)
+            .sort((a, b) => Number(BigInt(b.valueSatoshis) - BigInt(a.valueSatoshis)))[0];
+
+        if (!feeCoin || BigInt(feeCoin.valueSatoshis) < satoshis + 500n) {
+            throw new Error('No plain BCH coin large enough for this deposit.');
+        }
+
+        const intent = template.start?.find((entry) => entry.action === 'depositSatoshis');
+
+        if (!intent) {
+            throw new Error('depositSatoshis start intent not found.');
+        }
+
+        step(`Sending ${satoshis} sats to the burner (depositSatoshis: a gift to the miner of the next burn)`);
+
+        const created = await engine.createInvitation({
+            templateIdentifier: TEMPLATE_ID,
+            actionIdentifier: 'depositSatoshis',
+            intent,
+            variables: [{ variableIdentifier: 'depositSatoshis', roleIdentifier: 'depositor', value: satoshis }],
+            inputs: [{ outpointTransactionHash: hexToBin(feeCoin.outpointTransactionHash), outpointIndex: feeCoin.outpointIndex }],
+        });
+
+        await engine.appendInvitation(created.invitation.invitationIdentifier, {
+            templateIdentifier: TEMPLATE_ID,
+            actionIdentifier: 'depositSatoshis',
+            outputs: [{ outputIdentifier: 'burnerSatoshisOutput', roleIdentifier: 'burner' }],
+        });
+
+        const deposited = await signAndBroadcast(engine, created.invitation.invitationIdentifier, { folder: FOLDER, label: 'token-burner-deposit-bch' });
+
+        state.depositBchTransactionHash = deposited.transactionHash;
+        writeState(state);
+        console.log(`\nBCH DEPOSITED: ${deposited.transactionHash}. Sweep it with:  npx tsx token-burner/scripts/chipnet.ts burn-all`);
+    } else if (mode === 'burn-all') {
+        // Every deposit shares one burner script, so once this wallet watches it the engine tracks everyone's coins.
+        const burnerLock = compileLockingBytecodeFromTemplateLockingScriptIdentifier(template, 'burnerLockingScript', {});
+        const burnerScriptHash = binToHex(sha256.hash(burnerLock).reverse());
+        const coins = (await engine.listUnspentOutputs()).filter((output) => output.scriptHash === burnerScriptHash && output.reservedBy === undefined);
+
+        if (coins.length === 0) {
+            throw new Error('This wallet sees no coins at the burner address. (A wallet only watches it after using the burner once.)');
+        }
+
+        step(`Found ${coins.length} coin(s) at the burner address`);
+        coins.forEach((coin) =>
+            console.log(`  ${coin.outpointTransactionHash}:${coin.outpointIndex} ${coin.valueSatoshis} sats, ${coin.tokenCategory ? `${coin.tokenAmount ?? 0} of ${coin.tokenCategory.slice(0, 12)}…` : 'no tokens'}`),
+        );
+
+        // Uses the template's burn start entry, so any wallet that watches the burner address can sweep it.
+        const intent = template.start?.find((entry) => entry.action === 'burn');
+
+        if (!intent) {
+            throw new Error('burn intent not found on the burner locking script.');
+        }
+
+        /** Burns `batch` in one transaction through the template's burn action, and checks its shape. */
+        const burnCoins = async (batch: typeof coins, label: string): Promise<string> => {
+            const created = await engine.createInvitation({
+                templateIdentifier: TEMPLATE_ID,
+                actionIdentifier: 'burn',
+                intent,
+                variables: [{ variableIdentifier: 'burnMessage', roleIdentifier: 'burner', value: BURN_MESSAGE }],
+                inputs: batch.map((coin) => ({
+                    inputIdentifier: 'burnerInput',
+                    outpointTransactionHash: hexToBin(coin.outpointTransactionHash),
+                    outpointIndex: coin.outpointIndex,
+                })),
+            });
+
+            await engine.appendInvitation(created.invitation.invitationIdentifier, {
+                templateIdentifier: TEMPLATE_ID,
+                actionIdentifier: 'burn',
+                outputs: [{ outputIdentifier: 'farewellOutput' }],
+            });
+
+            const burned = await signAndBroadcast(engine, created.invitation.invitationIdentifier, { folder: FOLDER, label, addChange: false });
+            const decoded = burned.serializedTransaction ? decodeTransactionBch(hexToBin(burned.serializedTransaction)) : undefined;
+
+            if (typeof decoded === 'object') {
+                console.log(`  inputs: ${decoded.inputs.length}, outputs: ${decoded.outputs.length}, output 0 starts with ${binToHex(decoded.outputs[0]?.lockingBytecode.slice(0, 1) ?? new Uint8Array())}, token: ${decoded.outputs[0]?.token ? 'yes' : 'none'}`);
+            }
+
+            return burned.transactionHash;
+        };
+
+        state.burnAllTransactionHashes = [];
+
+        try {
+            step(`Burning all ${coins.length} coin(s) in one transaction`);
+            state.burnAllTransactionHashes.push(await burnCoins(coins, 'token-burner-burn-all'));
+        } catch (error) {
+            console.log(`  The engine refused a batch burn (${error instanceof Error ? `${error.name}: ${error.message}` : String(error)}).`);
+            step('Falling back to one burn per coin');
+
+            for (const [index, coin] of coins.entries()) {
+                state.burnAllTransactionHashes.push(await burnCoins([coin], `token-burner-burn-all-${index}`));
+            }
+        }
+
+        writeState(state);
+        console.log(`\nBURNED ALL: ${state.burnAllTransactionHashes.join(', ')}`);
     } else {
         if (state.depositTransactionHash === undefined || state.depositOutputIndex === undefined) {
             throw new Error('Nothing deposited yet: run "deposit" first.');
