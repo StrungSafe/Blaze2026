@@ -46,6 +46,10 @@ function Navbar() {
       section: "featured-templates",
     },
     {
+      name: "Demo",
+      href: "/demo",
+    },
+    {
       name: "Publish",
       href: "/publish",
     },
@@ -226,8 +230,6 @@ function Navbar() {
 
     return location.pathname === link.href;
   };
-
-  const closeMenu = () => setMenuOpen(false);
 
   // Open wallet modal
   const openWalletModal = () => {
