@@ -1,9 +1,9 @@
-import { secp256k1, binToHex } from '@bitauth/libauth';
+import { secp256k1, binToHex, encodeTransaction, encodeLockingBytecodeP2pkh, hash160 } from '@bitauth/libauth';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { seedAdmins, isValidAdminIdentity } from '../src/admin.js';
 import { buildApp } from '../src/app.js';
-import { signChallengeTransaction } from '../src/auth/challenge-transaction.js';
+import { buildChallengeTransaction, signChallengeTransaction } from '../src/auth/challenge-transaction.js';
 import { signMessage } from '../src/auth/signed-message.js';
 import type { Db } from '../src/db.js';
 import { freshDb } from './helpers.js';
@@ -136,6 +136,10 @@ describe('sessions', () => {
             ['POST', '/api/admin/templates/x/remove'],
             ['POST', '/api/admin/templates/x/restore'],
             ['PUT', '/api/admin/spotlight'],
+            ['GET', '/api/admin/templates'],
+            ['GET', '/api/admin/user-reviews'],
+            ['POST', '/api/admin/user-reviews/1/hide'],
+            ['POST', '/api/admin/user-reviews/1/unhide'],
         ];
 
         for (const [method, url] of routes) {
@@ -256,5 +260,72 @@ describe('allowlist seeding', () => {
         await seedAdmins(db, `alice=${pub(keyA)}`);
 
         expect(await db.selectFrom('admins').selectAll().execute()).toHaveLength(1);
+    });
+});
+
+
+describe('wallet sign request on the login challenge', () => {
+    const publicKey = pub(keyA);
+
+    it('adds a walletSignRequest only when a public key is sent', async () => {
+        const plain = (await call('POST', '/api/admin/challenge', {})).json();
+        const withKey = (await call('POST', '/api/admin/challenge', { publicKey })).json();
+
+        expect(plain.walletSignRequest).toBeUndefined();
+        expect(withKey.walletSignRequest).toBeDefined();
+        expect(withKey.walletSignRequest.broadcast).toBe(false);
+    });
+
+    it('builds the request around this nonce and this key, so the wallet signs exactly what login verifies', async () => {
+        const { nonce, walletSignRequest } = (await call('POST', '/api/admin/challenge', { publicKey })).json();
+        const expected = buildChallengeTransaction(nonce, secp256k1.derivePublicKeyCompressed(keyA) as Uint8Array);
+
+        expect(walletSignRequest.transaction).toBe(binToHex(encodeTransaction(expected.transaction)));
+        expect(walletSignRequest.sourceOutputs).toHaveLength(1);
+        expect(walletSignRequest.sourceOutputs[0].lockingBytecode).toBe(
+            binToHex(encodeLockingBytecodeP2pkh(hash160(secp256k1.derivePublicKeyCompressed(keyA) as Uint8Array))),
+        );
+    });
+
+    it('ignores a malformed public key instead of failing', async () => {
+        for (const bad of ['', 'zz', '04' + '11'.repeat(32), 42]) {
+            const res = await call('POST', '/api/admin/challenge', { publicKey: bad });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.json().walletSignRequest).toBeUndefined();
+        }
+    });
+});
+
+describe('admin template list', () => {
+    it('includes removed templates, which the public list hides', async () => {
+        const t = await token();
+        const id = await firstId();
+        const before = (await call('GET', '/api/admin/templates', undefined, t)).json();
+
+        expect(before.items.every((item: { removed: boolean }) => !item.removed)).toBe(true);
+
+        await call('POST', `/api/admin/templates/${id}/remove`, { reason: 'Misleading description' }, t);
+
+        const adminList = (await call('GET', '/api/admin/templates?pageSize=50', undefined, t)).json();
+        const publicList = (await call('GET', '/api/templates?pageSize=50')).json();
+        const tombstone = adminList.items.find((item: { identifier: string }) => item.identifier === id);
+
+        expect(tombstone.removed).toBe(true);
+        expect(tombstone.removedReason).toBe('Misleading description');
+        expect(adminList.total).toBe(publicList.total + 1);
+        expect(publicList.items.map((item: { identifier: string }) => item.identifier)).not.toContain(id);
+    });
+
+    it('supports search and paging', async () => {
+        const t = await token();
+        const all = (await call('GET', '/api/admin/templates?pageSize=50', undefined, t)).json();
+        const small = (await call('GET', '/api/admin/templates?pageSize=2&page=2', undefined, t)).json();
+        const found = (await call('GET', '/api/admin/templates?query=voucher', undefined, t)).json();
+
+        expect(small.items).toHaveLength(2);
+        expect(small.total).toBe(all.total);
+        expect(found.items.length).toBeGreaterThan(0);
+        expect(found.items.every((item: { name: string; description: string }) => /voucher/i.test(item.name + item.description))).toBe(true);
     });
 });

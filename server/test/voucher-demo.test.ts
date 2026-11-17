@@ -18,7 +18,7 @@ import {
     voucherLockingBytecode,
     walletLockingBytecode,
     type Coin,
-} from '../../web/src/voucher/core.js';
+} from '../../frontend/src/voucher/core.js';
 
 // A real voucher created and claimed on chipnet by scripts/chipnet-voucher.ts (txs d21098db… and 31375029…).
 const REAL_CODE = '8524747c3baa65f7ef86fa28ecdf18d3';

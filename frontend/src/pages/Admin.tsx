@@ -1,488 +1,719 @@
-
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
+import QRCode from "qrcode";
 import {
-  ShieldCheck,
-  LockKeyhole,
-  ArrowLeft,
-  Wallet,
-  Users,
-  Blocks,
   Activity,
+  ArrowLeft,
+  Blocks,
   FileCheck2,
-  ArrowUpRight,
-  Sparkles,
+  Flag,
+  Loader2,
+  LogOut,
+  MessageSquare,
+  ShieldCheck,
+  Wallet,
 } from "lucide-react";
 
-import { Link } from "react-router-dom";
 import xogridlogo from "../assets/images/xogridlogo.png";
-import { isAdminAccessConfigured } from "../config/admin";
+import type { Summary } from "../hub/api";
+import {
+  SessionExpiredError,
+  adminFlags,
+  adminLogout,
+  adminMe,
+  adminSummary,
+  adminTemplates,
+  adminUserReviews,
+  featureOnly,
+  hideUserReview,
+  readAdminToken,
+  removeTemplate,
+  requestChallenge,
+  resolveFlag,
+  restoreTemplate,
+  reviewTemplate,
+  saveAdminToken,
+  submitLogin,
+  unhideUserReview,
+  type AdminFlag,
+  type AdminSummary,
+  type AdminUserReview,
+} from "../hub/admin";
+import { publicKeyHex, signWithWallet, startWalletSession, type WalletSession } from "../hub/wallet";
 
-const adminSections = [
-  {
-    label: "User Management",
-    description: "Manage registered platform users",
-    icon: Users,
-  },
-  {
-    label: "Template Registry",
-    description: "Review and manage published templates",
-    icon: Blocks,
-  },
-  {
-    label: "Verification",
-    description: "Monitor automated template checks",
-    icon: ShieldCheck,
-  },
-  {
-    label: "Community Reports",
-    description: "Review submitted community flags",
-    icon: FileCheck2,
-  },
+type Tab = "overview" | "flags" | "templates" | "reviews";
+
+const TABS: { id: Tab; label: string; icon: typeof Activity }[] = [
+  { id: "overview", label: "Overview", icon: Activity },
+  { id: "flags", label: "Community reports", icon: Flag },
+  { id: "templates", label: "Template registry", icon: Blocks },
+  { id: "reviews", label: "Community reviews", icon: MessageSquare },
 ];
 
-export default function Admin() {
-  const configured = isAdminAccessConfigured();
+const field =
+  "w-full rounded-lg border border-white/[0.09] bg-black/30 px-3 py-2 text-xs text-white outline-none transition placeholder:text-white/25 focus:border-amber-500/40";
+const smallButton =
+  "rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-white/80 transition hover:border-amber-500/40 hover:text-amber-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/10 disabled:hover:text-white/80";
 
+const STYLE = `
+  @keyframes adminFadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes adminGlow { 0%, 100% { opacity: .35; transform: scale(1); } 50% { opacity: .7; transform: scale(1.12); } }
+  .admin-fade { animation: adminFadeUp .6s ease both; }
+  .admin-ambient { animation: adminGlow 8s ease-in-out infinite; }
+  .admin-grid-bg {
+    background-image: linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+    background-size: 55px 55px;
+    mask-image: linear-gradient(to bottom, black, transparent 85%);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .admin-fade, .admin-ambient { animation: none !important; }
+  }
+`;
+
+function Shell({ status, children }: { status?: string; children: ReactNode }) {
   return (
-    <main className="admin-page relative min-h-screen overflow-hidden bg-[#05070B] text-white">
-      <style>{`
-        @keyframes adminFadeUp {
-          from {
-            opacity: 0;
-            transform: translateY(24px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes adminFadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        @keyframes adminSlideDown {
-          from {
-            opacity: 0;
-            transform: translateY(-18px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes adminGlow {
-          0%, 100% {
-            opacity: .35;
-            transform: scale(1);
-          }
-          50% {
-            opacity: .7;
-            transform: scale(1.12);
-          }
-        }
-
-        @keyframes adminPulse {
-          0%, 100% { opacity: .55; }
-          50% { opacity: 1; }
-        }
-
-        @keyframes adminShine {
-          from { transform: translateX(-150%); }
-          to { transform: translateX(250%); }
-        }
-
-        .admin-header {
-          animation: adminSlideDown .7s ease both;
-        }
-
-        .admin-intro {
-          animation: adminFadeUp .8s ease .1s both;
-        }
-
-        .admin-status {
-          animation: adminFadeUp .8s ease .2s both;
-        }
-
-        .admin-card {
-          opacity: 0;
-          animation: adminFadeUp .7s ease forwards;
-          transition:
-            transform .35s ease,
-            border-color .35s ease,
-            background .35s ease,
-            box-shadow .35s ease;
-        }
-
-        .admin-card:hover {
-          transform: translateY(-6px);
-          border-color: rgba(245, 158, 11, .35);
-          background: #10151d;
-          box-shadow: 0 16px 45px rgba(0, 0, 0, .25),
-                      0 0 25px rgba(245, 158, 11, .045);
-        }
-
-        .admin-icon {
-          transition: transform .35s ease, background .35s ease;
-        }
-
-        .admin-card:hover .admin-icon {
-          transform: rotate(-7deg) scale(1.08);
-          background: rgba(245, 158, 11, .13);
-        }
-
-        .admin-module {
-          opacity: 0;
-          animation: adminFadeUp .7s ease forwards;
-          transition:
-            transform .3s ease,
-            border-color .3s ease,
-            box-shadow .3s ease;
-        }
-
-        .admin-module:hover {
-          transform: translateY(-4px);
-          border-color: rgba(245, 158, 11, .35);
-          box-shadow: 0 12px 35px rgba(0, 0, 0, .2);
-        }
-
-        .admin-module:hover .module-arrow {
-          opacity: 1;
-          transform: translate(2px, -2px);
-        }
-
-        .module-arrow {
-          opacity: 0;
-          transition: all .3s ease;
-        }
-
-        .admin-ambient {
-          animation: adminGlow 8s ease-in-out infinite;
-        }
-
-        .admin-status-dot {
-          animation: adminPulse 2s ease-in-out infinite;
-        }
-
-        .admin-shine {
-          position: relative;
-          overflow: hidden;
-        }
-
-        .admin-shine::after {
-          content: "";
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 35%;
-          height: 100%;
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255,255,255,.035),
-            transparent
-          );
-          transform: translateX(-150%);
-          animation: adminShine 7s ease-in-out infinite;
-          pointer-events: none;
-        }
-
-        .admin-grid-bg {
-          background-image:
-            linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
-          background-size: 55px 55px;
-          mask-image: linear-gradient(to bottom, black, transparent 85%);
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .admin-page *,
-          .admin-page *::before,
-          .admin-page *::after {
-            animation-duration: .01ms !important;
-            animation-iteration-count: 1 !important;
-            scroll-behavior: auto !important;
-            transition-duration: .01ms !important;
-          }
-
-          .admin-card,
-          .admin-module {
-            opacity: 1;
-          }
-        }
-      `}</style>
-
-      {/* Background Effects */}
+    <main className="relative min-h-screen overflow-hidden bg-[#05070B] text-white">
+      <style>{STYLE}</style>
       <div className="admin-grid-bg pointer-events-none absolute inset-0" />
-
       <div className="admin-ambient pointer-events-none absolute -left-40 top-32 h-[420px] w-[420px] rounded-full bg-amber-500/[0.055] blur-[120px]" />
 
-      <div className="admin-ambient pointer-events-none absolute -right-40 top-[500px] h-[400px] w-[400px] rounded-full bg-orange-500/[0.035] blur-[120px]" />
-
-      {/* Fixed Top Navigation */}
-      <header className="admin-header fixed inset-x-0 top-0 z-50 border-b border-white/[0.07] bg-[#0B0E13]/90 shadow-lg shadow-black/20 backdrop-blur-2xl">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.07] bg-[#0B0E13]/90 shadow-lg shadow-black/20 backdrop-blur-2xl">
         <div className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 sm:px-8">
           <Link to="/" className="group flex items-center gap-3">
-            <img
-              src={xogridlogo}
-              alt="XOGrid"
-              className="h-9 w-auto object-contain transition duration-300 group-hover:scale-105"
-            />
-
+            <img src={xogridlogo} alt="XOGrid" className="h-9 w-auto object-contain transition duration-300 group-hover:scale-105" />
             <span className="hidden border-l border-white/10 pl-3 text-xs font-medium tracking-wider text-gray-400 transition group-hover:text-amber-400 sm:block">
               ADMINISTRATION
             </span>
           </Link>
 
-          <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2 transition hover:border-amber-500/40">
-            <span className="admin-status-dot h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,.65)]" />
-
-            <span className="text-xs font-medium text-amber-400">
-              {configured ? "Authentication pending" : "Setup pending"}
-            </span>
-          </div>
+          {status ? (
+            <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2">
+              <span className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,.65)]" />
+              <span className="text-xs font-medium text-amber-400">{status}</span>
+            </div>
+          ) : null}
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="relative z-10 mx-auto max-w-7xl px-5 pb-12 pt-[116px] sm:px-8 lg:pb-16 lg:pt-[132px]">
-        {/* Page Heading */}
-        <div className="admin-intro mb-10">
-          <div className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-gray-500">
-            <Activity size={14} className="text-amber-500" />
+      <div className="relative z-10 mx-auto max-w-7xl px-5 pb-16 pt-[116px] sm:px-8 lg:pt-[132px]">
+        {children}
 
-            Control Center
-
-            <span className="text-gray-700">/</span>
-
-            Admin Access
-          </div>
-
-          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-            <div>
-              <div className="mb-3 flex items-center gap-2">
-                <Sparkles size={16} className="text-amber-500" />
-
-                <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-amber-500">
-                  Private Control Center
-                </span>
-              </div>
-
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">
-                Administration
-                <span className="text-amber-500">.</span>
-              </h1>
-
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-gray-400">
-                Manage the XOGrid template registry, platform activity,
-                verification processes and community contributions.
-              </p>
-            </div>
-
-            <div className="hidden items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.025] px-4 py-3 sm:flex">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10">
-                <ShieldCheck size={17} className="text-amber-500" />
-              </div>
-
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-gray-500">
-                  Security level
-                </p>
-                <p className="mt-0.5 text-xs font-semibold text-white">
-                  Restricted access
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Access Status */}
-        <section className="admin-status admin-shine mb-10 overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0D1117] shadow-[0_20px_70px_rgba(0,0,0,.18)]">
-          <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-            <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/[0.07] shadow-[0_0_25px_rgba(245,158,11,.07)]">
-                {configured ? (
-                  <Wallet size={22} className="text-amber-500" />
-                ) : (
-                  <LockKeyhole size={22} className="text-amber-500" />
-                )}
-              </div>
-
-              <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="text-lg font-semibold">
-                    Administrator authorization
-                  </h2>
-
-                  <span className="rounded-md border border-amber-500/20 bg-amber-500/[0.08] px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-400">
-                    {configured
-                      ? "Pending verification"
-                      : "Not configured"}
-                  </span>
-                </div>
-
-                <p className="mt-2 max-w-xl text-sm leading-6 text-gray-400">
-                  {configured
-                    ? "The administrator addresses are configured. Wallet ownership verification and backend authorization are still required."
-                    : "The three authorized administrator wallet addresses have not been added yet. This control center is awaiting initial setup."}
-                </p>
-              </div>
-            </div>
-
-            <div className="shrink-0 rounded-xl border border-white/[0.08] bg-black/20 px-5 py-4 transition hover:border-amber-500/20">
-              <p className="text-xs text-gray-500">
-                Authorized administrators
-              </p>
-
-              <p className="mt-1 text-2xl font-semibold tabular-nums">
-                0{" "}
-                <span className="text-sm font-normal text-gray-500">
-                  / 3
-                </span>
-              </p>
-            </div>
-          </div>
-
-          <div className="border-t border-white/[0.07] bg-black/10 px-6 py-4 sm:px-8">
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <ShieldCheck size={15} className="text-amber-500" />
-
-              Access is reserved for three approved administrator wallets.
-            </div>
-          </div>
-        </section>
-
-        {/* Authorized Administrators */}
-        <section className="mb-12">
-          <div className="mb-5">
-            <div className="mb-2 flex items-center gap-2">
-              <div className="h-5 w-[3px] rounded-full bg-amber-500" />
-
-              <h2 className="text-base font-semibold">
-                Authorized administrators
-              </h2>
-            </div>
-
-            <p className="text-sm text-gray-500">
-              Three designated accounts will manage the platform.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            {[1, 2, 3].map((admin, index) => (
-              <div
-                key={admin}
-                style={{ animationDelay: `${0.15 + index * 0.15}s` }}
-                className="admin-card group relative overflow-hidden rounded-xl border border-white/[0.08] bg-[#0D1117] p-5"
-              >
-                <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-amber-500/[0.035] blur-2xl transition group-hover:bg-amber-500/[0.09]" />
-
-                <div className="relative mb-5 flex items-center justify-between">
-                  <div className="admin-icon flex h-10 w-10 items-center justify-center rounded-lg border border-amber-500/15 bg-amber-500/[0.06]">
-                    <Wallet size={18} className="text-amber-500" />
-                  </div>
-
-                  <span className="rounded-md border border-white/[0.08] bg-white/[0.03] px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-gray-500">
-                    Awaiting setup
-                  </span>
-                </div>
-
-                <div className="relative">
-                  <h3 className="text-sm font-semibold transition-colors group-hover:text-amber-400">
-                    Administrator {admin}
-                  </h3>
-
-                  <p className="mt-2 break-all text-xs text-gray-500">
-                    Wallet address not added
-                  </p>
-
-                  <div className="mt-5 border-t border-white/[0.07] pt-4">
-                    <span className="text-xs text-gray-600">
-                      Access permissions pending
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Administration Modules */}
-        <section>
-          <div className="mb-5">
-            <div className="mb-2 flex items-center gap-2">
-              <div className="h-5 w-[3px] rounded-full bg-amber-500" />
-
-              <h2 className="text-base font-semibold">
-                Administration modules
-              </h2>
-            </div>
-
-            <p className="text-sm text-gray-500">
-              Platform management tools planned for the control center.
-            </p>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            {adminSections.map((section, index) => {
-              const Icon = section.icon;
-
-              return (
-                <div
-                  key={section.label}
-                  style={{ animationDelay: `${0.3 + index * 0.12}s` }}
-                  className="admin-module group flex items-center gap-4 rounded-xl border border-white/[0.08] bg-[#0D1117] p-5"
-                >
-                  <div className="admin-icon flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-amber-500/15 bg-amber-500/[0.06]">
-                    <Icon size={19} className="text-amber-500" />
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-semibold transition-colors group-hover:text-amber-400">
-                      {section.label}
-                    </h3>
-
-                    <p className="mt-1 text-xs leading-5 text-gray-500">
-                      {section.description}
-                    </p>
-                  </div>
-
-                  <ArrowUpRight
-                    size={17}
-                    className="module-arrow shrink-0 text-amber-500"
-                  />
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="mt-14 flex flex-col gap-4 border-t border-white/[0.07] pt-7 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-medium text-gray-400">
-              XOGrid Administration
-            </p>
-
-            <p className="mt-1 text-[11px] text-gray-600">
-              Private Control Center · Restricted Access
-            </p>
-          </div>
-
-          <Link
-            to="/"
-            className="group inline-flex items-center gap-2 text-sm font-medium text-gray-400 transition hover:text-amber-400"
-          >
-            <ArrowLeft
-              size={16}
-              className="transition-transform group-hover:-translate-x-1"
-            />
-
+        <footer className="mt-14 flex items-center justify-between border-t border-white/[0.07] pt-7">
+          <p className="text-[11px] text-gray-600">XOGrid Administration · access is checked by the server on every request</p>
+          <Link to="/" className="group inline-flex items-center gap-2 text-sm font-medium text-gray-400 transition hover:text-amber-400">
+            <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
             Return to XOGrid
           </Link>
         </footer>
       </div>
     </main>
+  );
+}
+
+export default function Admin() {
+  const [token, setToken] = useState(readAdminToken());
+  const [name, setName] = useState("");
+  const [checking, setChecking] = useState(token !== "");
+
+  const signOut = useCallback(() => {
+    saveAdminToken("");
+    setToken("");
+    setName("");
+  }, []);
+
+  // A stored token is only a claim. Ask the server whether it is still a live moderator session.
+  useEffect(() => {
+    if (!token) {
+      setChecking(false);
+      return;
+    }
+
+    let current = true;
+
+    adminMe(token)
+      .then((me) => {
+        if (current) setName(me.admin);
+      })
+      .catch(() => {
+        if (current) signOut();
+      })
+      .finally(() => {
+        if (current) setChecking(false);
+      });
+
+    return () => {
+      current = false;
+    };
+  }, [token, signOut]);
+
+  if (checking) {
+    return (
+      <Shell>
+        <p className="flex items-center gap-2 text-sm text-gray-400">
+          <Loader2 size={16} className="animate-spin" /> Checking your session...
+        </p>
+      </Shell>
+    );
+  }
+
+  if (!token) {
+    return (
+      <Shell status="Sign in required">
+        <Login
+          onLogin={(newToken, admin) => {
+            saveAdminToken(newToken);
+            setName(admin);
+            setToken(newToken);
+          }}
+        />
+      </Shell>
+    );
+  }
+
+  return (
+    <Shell status={name ? `Signed in as ${name}` : "Signed in"}>
+      <Portal
+        token={token}
+        onExpired={signOut}
+        onLogout={() => {
+          void adminLogout(token);
+          signOut();
+        }}
+      />
+    </Shell>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Login: connect a WizardConnect wallet, sign a message-only transaction (never broadcast), send it to the server.
+// ---------------------------------------------------------------------------------------------------------------
+
+function Login({ onLogin }: { onLogin: (token: string, admin: string) => void }) {
+  const [qr, setQr] = useState<string | null>(null);
+  const [status, setStatus] = useState("");
+  const [walletName, setWalletName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [triedKey, setTriedKey] = useState("");
+  const session = useRef<WalletSession | null>(null);
+
+  useEffect(() => () => session.current?.cleanup(), []);
+
+  async function connect() {
+    session.current?.cleanup();
+    setError("");
+    setTriedKey("");
+    setWalletName("");
+
+    try {
+      session.current = startWalletSession(setStatus, setWalletName);
+      setQr(await QRCode.toDataURL(session.current.qrUri, { width: 240, margin: 1 }));
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not start the wallet connection.");
+    }
+  }
+
+  async function signIn() {
+    if (!session.current || busy) return;
+
+    setBusy(true);
+    setError("");
+
+    try {
+      const key = await publicKeyHex(session.current);
+
+      setTriedKey(key);
+
+      const challenge = await requestChallenge(key);
+
+      if (!challenge.walletSignRequest) {
+        throw new Error("The server did not return a signing request.");
+      }
+
+      const signedTransaction = await signWithWallet(session.current, challenge.walletSignRequest);
+      const result = await submitLogin(challenge.nonce, signedTransaction);
+
+      session.current.cleanup();
+      session.current = null;
+      onLogin(result.token, result.admin);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Sign in failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="admin-fade max-w-xl">
+      <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-amber-500">
+        <ShieldCheck size={14} /> Private control center
+      </div>
+      <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+        Moderator sign in<span className="text-amber-500">.</span>
+      </h1>
+      <p className="mt-3 text-sm leading-6 text-gray-400">
+        Connect a WizardConnect wallet such as Selene. You sign a message-only transaction that is never broadcast and moves no funds.
+        The server checks that the signing key is on its moderator list.
+      </p>
+
+      <div className="mt-8 rounded-2xl border border-white/[0.09] bg-[#0D1117] p-6">
+        <button
+          type="button"
+          onClick={connect}
+          disabled={busy}
+          className="flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-semibold text-black transition hover:bg-amber-400 disabled:opacity-50"
+        >
+          <Wallet size={17} />
+          {qr ? "Restart wallet connection" : "Connect wallet"}
+        </button>
+
+        {qr && !walletName ? (
+          <div className="mt-5">
+            <img src={qr} alt="Wallet connection QR code" width={220} height={220} className="rounded-xl bg-white p-2" />
+            <p className="mt-2 text-xs text-gray-500">Scan with Selene, Paytaca or another WizardConnect wallet.</p>
+          </div>
+        ) : null}
+
+        {status ? <p className="mt-3 text-xs text-gray-500">Relay: {status}</p> : null}
+
+        {walletName ? (
+          <button
+            type="button"
+            onClick={signIn}
+            disabled={busy}
+            className="mt-5 flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-3 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20 disabled:opacity-50"
+          >
+            {busy ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+            {busy ? "Approve in your wallet..." : `Sign in with ${walletName}`}
+          </button>
+        ) : null}
+
+        {error ? (
+          <div className="mt-5 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-xs text-rose-300">
+            <p>{error}</p>
+            {triedKey && error === "Login failed." ? (
+              <p className="mt-2 break-all text-rose-200/80">
+                If you expected to be allowed in, ask the admin to add this key to the moderator list: <span className="font-mono">{triedKey}</span>
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Portal
+// ---------------------------------------------------------------------------------------------------------------
+
+function Portal({ token, onLogout, onExpired }: { token: string; onLogout: () => void; onExpired: () => void }) {
+  const [tab, setTab] = useState<Tab>("overview");
+  const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
+  const [version, setVersion] = useState(0);
+
+  const refresh = useCallback(() => setVersion((value) => value + 1), []);
+
+  /** Runs a moderator action, shows the outcome, reloads the data, and returns true on success. */
+  const act = useCallback(
+    async (action: () => Promise<unknown>, success = "Done."): Promise<boolean> => {
+      try {
+        await action();
+        setNotice({ ok: true, text: success });
+        refresh();
+
+        return true;
+      } catch (reason) {
+        if (reason instanceof SessionExpiredError) {
+          onExpired();
+
+          return false;
+        }
+
+        setNotice({ ok: false, text: reason instanceof Error ? reason.message : "That did not work." });
+
+        return false;
+      }
+    },
+    [onExpired, refresh],
+  );
+
+  const handleError = useCallback(
+    (reason: unknown): string => {
+      if (reason instanceof SessionExpiredError) {
+        onExpired();
+      }
+
+      return reason instanceof Error ? reason.message : "Something went wrong.";
+    },
+    [onExpired],
+  );
+
+  return (
+    <div className="admin-fade">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+        <div>
+          <div className="mb-3 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-amber-500">
+            <ShieldCheck size={14} /> Private control center
+          </div>
+          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+            Administration<span className="text-amber-500">.</span>
+          </h1>
+        </div>
+        <button type="button" onClick={onLogout} className={`${smallButton} inline-flex items-center gap-2 self-start`}>
+          <LogOut size={14} /> Sign out
+        </button>
+      </div>
+
+      <nav className="mt-8 flex flex-wrap gap-2" aria-label="Administration sections">
+        {TABS.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setTab(item.id)}
+              aria-current={tab === item.id ? "page" : undefined}
+              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition ${
+                tab === item.id
+                  ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
+                  : "border-white/[0.08] bg-white/[0.025] text-gray-400 hover:text-white"
+              }`}
+            >
+              <Icon size={15} /> {item.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {notice ? (
+        <p
+          role="status"
+          className={`mt-5 rounded-xl border px-4 py-3 text-xs ${
+            notice.ok ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-300" : "border-rose-500/20 bg-rose-500/10 text-rose-300"
+          }`}
+        >
+          {notice.text}
+        </p>
+      ) : null}
+
+      <div className="mt-6">
+        {tab === "overview" && <OverviewTab token={token} version={version} onError={handleError} />}
+        {tab === "flags" && <FlagsTab token={token} version={version} act={act} onError={handleError} />}
+        {tab === "templates" && <TemplatesTab token={token} version={version} act={act} onError={handleError} />}
+        {tab === "reviews" && <ReviewsTab token={token} version={version} act={act} onError={handleError} />}
+      </div>
+    </div>
+  );
+}
+
+interface TabProps {
+  token: string;
+  version: number;
+  onError: (reason: unknown) => string;
+}
+
+interface ActProps extends TabProps {
+  act: (action: () => Promise<unknown>, success?: string) => Promise<boolean>;
+}
+
+/** Loads data for a tab and reloads when any dependency changes (the version bumps after every action). */
+function useTabData<T>(load: () => Promise<T>, deps: unknown[], onError: (reason: unknown) => string) {
+  const [data, setData] = useState<T | null>(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let current = true;
+
+    load()
+      .then((value) => {
+        if (current) {
+          setData(value);
+          setError("");
+        }
+      })
+      .catch((reason: unknown) => {
+        if (current) setError(onError(reason));
+      });
+
+    return () => {
+      current = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+
+  return { data, error };
+}
+
+const card = "rounded-2xl border border-white/[0.09] bg-[#0D1117] p-5";
+const when = (iso: string) => iso.slice(0, 16).replace("T", " ");
+
+function ErrorLine({ message }: { message: string }) {
+  return message ? <p className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-xs text-rose-300">{message}</p> : null;
+}
+
+function OverviewTab({ token, version, onError }: TabProps) {
+  const { data, error } = useTabData<AdminSummary>(() => adminSummary(token), [version], onError);
+
+  if (error) return <ErrorLine message={error} />;
+  if (!data) return <p className="text-sm text-gray-500">Loading...</p>;
+
+  const stats = [
+    { label: "Templates", value: data.templates.total - data.templates.removed, icon: Blocks },
+    { label: "Open reports", value: data.openFlags, icon: Flag },
+    { label: "Moderator reviews", value: data.reviews, icon: FileCheck2 },
+    { label: "With failing checks", value: data.templates.withFailingChecks, icon: ShieldCheck },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+
+          return (
+            <div key={stat.label} className={card}>
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-amber-500/15 bg-amber-500/[0.06]">
+                <Icon size={18} className="text-amber-500" />
+              </div>
+              <p className="mt-4 text-3xl font-semibold tabular-nums">{stat.value}</p>
+              <p className="mt-1 text-xs text-gray-500">{stat.label}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-xs text-gray-500">
+        Badges: {Object.entries(data.templates.byBadge).map(([badge, count]) => `${badge} ${count}`).join(" · ")}
+        {data.templates.removed > 0 ? ` · removed ${data.templates.removed}` : ""}
+      </p>
+
+      <section>
+        <h2 className="mb-3 text-base font-semibold">Recent moderator actions</h2>
+        {data.recentActions.length === 0 ? (
+          <p className="text-sm text-gray-500">No actions yet.</p>
+        ) : (
+          <ul className={`${card} divide-y divide-white/[0.06] p-0`}>
+            {data.recentActions.map((action, index) => (
+              <li key={index} className="flex flex-wrap gap-x-3 gap-y-1 px-5 py-3 text-xs">
+                <span className="text-gray-500">{when(action.at)}</span>
+                <span className="font-medium text-amber-400">{action.actor}</span>
+                <span className="text-gray-300">{action.action}</span>
+                <span className="min-w-0 break-words text-gray-500">{action.note}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function FlagsTab({ token, version, act, onError }: ActProps) {
+  const { data, error } = useTabData<{ items: AdminFlag[] }>(() => adminFlags(token), [version], onError);
+
+  if (error) return <ErrorLine message={error} />;
+  if (!data) return <p className="text-sm text-gray-500">Loading...</p>;
+  if (data.items.length === 0) return <p className="text-sm text-gray-500">No open reports.</p>;
+
+  return (
+    <div className="space-y-3">
+      {data.items.map((flag: AdminFlag) => (
+        <div key={flag.id} className={card}>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <Link to={`/t/${flag.identifier}`} className="text-sm font-semibold underline decoration-white/20 hover:text-amber-400">
+                {flag.templateName}
+              </Link>
+              <p className="mt-2 break-words text-sm text-gray-300">{flag.reason}</p>
+              <p className="mt-2 text-[11px] text-gray-500">
+                Reported {when(flag.createdAt)} by {flag.reporter}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button type="button" className={smallButton} onClick={() => void act(() => resolveFlag(token, flag.id, "dismissed"), "Report dismissed.")}>
+                Dismiss
+              </button>
+              <button type="button" className={smallButton} onClick={() => void act(() => resolveFlag(token, flag.id, "upheld"), "Report upheld.")}>
+                Uphold
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TemplatesTab({ token, version, act, onError }: ActProps) {
+  const [query, setQuery] = useState("");
+  const [applied, setApplied] = useState("");
+  const { data, error } = useTabData(() => adminTemplates(token, applied), [version, applied], onError);
+
+  return (
+    <div>
+      <form
+        className="mb-4 flex gap-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          setApplied(query);
+        }}
+      >
+        <input aria-label="Search templates" className={field} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by name, description or identifier" />
+        <button type="submit" className={smallButton}>
+          Search
+        </button>
+      </form>
+
+      <ErrorLine message={error} />
+      {!data && !error ? <p className="text-sm text-gray-500">Loading...</p> : null}
+      {data && data.items.length === 0 ? <p className="text-sm text-gray-500">No templates match.</p> : null}
+
+      <div className="space-y-3">
+        {data?.items.map((template) => (
+          <TemplateRow key={template.identifier} token={token} template={template} act={act} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TemplateRow({ token, template, act }: { token: string; template: Summary; act: ActProps["act"] }) {
+  const [note, setNote] = useState("");
+  const ready = note.trim().length >= 3;
+
+  return (
+    <div className={card}>
+      <div className="flex flex-wrap items-center gap-3">
+        <Link to={`/t/${template.identifier}`} className="text-sm font-semibold underline decoration-white/20 hover:text-amber-400">
+          {template.name}
+        </Link>
+        <span className="rounded-md border border-white/[0.08] bg-white/[0.03] px-2 py-1 text-[10px] uppercase tracking-wider text-gray-400">
+          {template.removed ? "removed" : template.badge}
+        </span>
+        {template.openFlags > 0 ? <span className="text-[11px] text-amber-400">{template.openFlags} open report{template.openFlags === 1 ? "" : "s"}</span> : null}
+        <span className="ml-auto break-all font-mono text-[10px] text-gray-600">{template.identifier.slice(0, 16)}…</span>
+      </div>
+
+      {template.removed ? (
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-400">
+          <span className="min-w-0 break-words">Removed: {template.removedReason}</span>
+          <button type="button" className={smallButton} onClick={() => void act(() => restoreTemplate(token, template.identifier), "Template restored.")}>
+            Restore
+          </button>
+        </div>
+      ) : (
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <input
+            aria-label={`Note for ${template.name}`}
+            className={field}
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="Type a note first: review note, removal reason or featured blurb (3+ characters)"
+          />
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              className={smallButton}
+              disabled={!ready}
+              onClick={() =>
+                void act(() => reviewTemplate(token, template.identifier, note.trim()), "Review recorded.").then((ok) => ok && setNote(""))
+              }
+            >
+              Review
+            </button>
+            <button
+              type="button"
+              className={smallButton}
+              disabled={!ready}
+              onClick={() => {
+                if (!window.confirm(`Remove "${template.name}"? It stays listed as a removed tombstone with your reason.`)) return;
+
+                void act(() => removeTemplate(token, template.identifier, note.trim()), "Template removed.").then((ok) => ok && setNote(""));
+              }}
+            >
+              Remove
+            </button>
+            <button
+              type="button"
+              className={smallButton}
+              disabled={!ready}
+              onClick={() => {
+                if (!window.confirm("This replaces the whole featured list on the Home page with this one template. Continue?")) return;
+
+                void act(() => featureOnly(token, template.identifier, note.trim()), "Featured on Home.").then((ok) => ok && setNote(""));
+              }}
+            >
+              Feature only
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReviewsTab({ token, version, act, onError }: ActProps) {
+  const { data, error } = useTabData<{ items: AdminUserReview[] }>(() => adminUserReviews(token), [version], onError);
+  const [reasons, setReasons] = useState<Record<number, string>>({});
+
+  if (error) return <ErrorLine message={error} />;
+  if (!data) return <p className="text-sm text-gray-500">Loading...</p>;
+  if (data.items.length === 0) return <p className="text-sm text-gray-500">No community reviews yet.</p>;
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-gray-500">
+        A community review proves a wallet signed it, not that the person used the template. Hide reviews that are abusive or spam; hidden reviews stay on record here.
+      </p>
+
+      {data.items.map((review: AdminUserReview) => {
+        const reason = reasons[review.id] ?? "";
+
+        return (
+          <div key={review.id} className={card}>
+            <div className="flex flex-wrap items-center gap-3 text-xs">
+              <span className="font-semibold text-amber-400">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
+              <Link to={`/t/${review.identifier}`} className="font-mono text-[11px] text-gray-400 underline decoration-white/20 hover:text-amber-400">
+                {review.identifier.slice(0, 12)}…
+              </Link>
+              <span className="text-gray-500">{when(review.created_at)}</span>
+              <span className="font-mono text-[10px] text-gray-600">{review.reviewer.slice(0, 10)}…</span>
+              {review.hidden ? <span className="rounded-md border border-rose-500/20 bg-rose-500/10 px-2 py-1 text-[10px] uppercase tracking-wider text-rose-300">hidden</span> : null}
+            </div>
+
+            <p className="mt-3 break-words text-sm text-gray-300">{review.body}</p>
+
+            {review.hidden ? (
+              <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-400">
+                <span className="min-w-0 break-words">Hidden: {review.hidden_reason}</span>
+                <button type="button" className={smallButton} onClick={() => void act(() => unhideUserReview(token, review.id), "Review is visible again.")}>
+                  Unhide
+                </button>
+              </div>
+            ) : (
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <input
+                  aria-label={`Reason for hiding review ${review.id}`}
+                  className={field}
+                  value={reason}
+                  onChange={(event) => setReasons((previous) => ({ ...previous, [review.id]: event.target.value }))}
+                  placeholder="Reason for hiding (3+ characters)"
+                />
+                <button
+                  type="button"
+                  className={`${smallButton} shrink-0`}
+                  disabled={reason.trim().length < 3}
+                  onClick={() => void act(() => hideUserReview(token, review.id, reason.trim()), "Review hidden.")}
+                >
+                  Hide
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }

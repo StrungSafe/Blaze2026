@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { AdminAuth, type AdminSession, type LoginProof } from './admin.js';
+import { buildWalletSignRequest } from './auth/challenge-transaction.js';
 import type { Db } from './db.js';
 import { setReviewHidden } from './user-reviews.js';
 import { getSummary, listTemplates, RegistryError, setSpotlight } from './registry.js';
@@ -55,7 +56,18 @@ export function registerAdminRoutes(app: FastifyInstance, db: Db, auth: AdminAut
 
     // ----- login -----
 
-    app.post('/api/admin/challenge', limit(20), async () => auth.issueChallenge());
+    // A wallet that signs transactions needs the request built around its own public key. Sending the key here lets a
+    // browser app ask the wallet to sign without bundling any signing code of its own (the reviews flow does the same).
+    app.post('/api/admin/challenge', limit(20), async (request) => {
+        const body = (request.body ?? {}) as { publicKey?: unknown };
+        const challenge = auth.issueChallenge();
+
+        if (typeof body.publicKey === 'string' && /^0[23][0-9a-f]{64}$/.test(body.publicKey)) {
+            return { ...challenge, walletSignRequest: buildWalletSignRequest(challenge.nonce, Uint8Array.from(Buffer.from(body.publicKey, 'hex'))) };
+        }
+
+        return challenge;
+    });
 
     app.post('/api/admin/login', limit(10), async (request, reply) => {
         const body = (request.body ?? {}) as Record<string, unknown>;
@@ -122,6 +134,20 @@ export function registerAdminRoutes(app: FastifyInstance, db: Db, auth: AdminAut
             reviews: (await db.selectFrom('reviews').select('id').execute()).length,
             recentActions: recent.map((row) => ({ actor: row.actor, action: row.action, identifier: row.identifier, note: row.note, at: row.created_at })),
         };
+    });
+
+    // Every template including removed ones, so a moderator can find a tombstone and restore it. The public list hides them.
+    app.get('/api/admin/templates', { preHandler: requireAdmin }, async (request) => {
+        const q = request.query as { query?: string; page?: string; pageSize?: string };
+        const toNumber = (value: string | undefined): number | undefined => (typeof value === 'string' && /^\d{1,6}$/.test(value) ? Number(value) : undefined);
+
+        return listTemplates(db, {
+            query: typeof q.query === 'string' ? q.query.slice(0, 100) : undefined,
+            page: toNumber(q.page),
+            pageSize: toNumber(q.pageSize),
+            sort: 'newest',
+            includeRemoved: true,
+        });
     });
 
     app.get('/api/admin/flags', { preHandler: requireAdmin }, async (request) => {

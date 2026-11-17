@@ -57,8 +57,8 @@ Limits to be honest about in the UI copy: a review proves a wallet signed it, no
 
 Login proves control of an allowlisted moderator key by signing a challenge with a WizardConnect wallet. There are no passwords.
 
-1. `POST /api/admin/challenge` returns `{ nonce, expiresAt, message }` (valid for 5 minutes, single use).
-2. The wallet signs. The UI builds the request with `buildWalletSignRequest(nonce, publicKey)` from `server/src/auth/challenge-transaction.ts` (see `web/src/wallet.ts`) and calls the wallet with `broadcast: false`. Nothing is ever broadcast.
+1. `POST /api/admin/challenge` with body `{ publicKey }` (the wallet's compressed public key, hex) returns `{ nonce, expiresAt, message, walletSignRequest }`, valid for 5 minutes, single use. Without a `publicKey` the `walletSignRequest` is left out.
+2. The wallet signs `walletSignRequest` (see `signWithWallet` in `frontend/src/hub/wallet.ts`), which already has `broadcast: false`. The UI builds nothing itself and needs no signing library. Nothing is ever broadcast.
 3. `POST /api/admin/login` with `{ nonce, proof }` where `proof` is `{ type: 'transaction', signedTransaction }` or `{ type: 'message', signature }`. Returns `{ token, admin, expiresAt }`. A failure is always a generic 401 `Login failed.`; the real reason is only in the server log.
 4. Send `Authorization: Bearer <token>` on every call below. Sessions last 1 hour. A 401 means log in again.
 
@@ -67,6 +67,7 @@ Login proves control of an allowlisted moderator key by signing a challenge with
 | `POST /api/admin/logout` | | |
 | `GET /api/admin/me` | | `{ admin, expiresAt }` |
 | `GET /api/admin/summary` | | Template counts by badge, open flags, review count, last 20 actions |
+| `GET /api/admin/templates` | `?query&page&pageSize` | Same shape as the public list, but removed templates are included so they can be restored |
 | `GET /api/admin/flags` | `?status=open` | `{ items }` with the template name |
 | `POST /api/admin/flags/:id/resolve` | `{ status: 'dismissed' \| 'upheld', note? }` | |
 | `POST /api/admin/templates/:identifier/review` | `{ note }` (3 to 500 chars) | One review per moderator per template. 409 if repeated |
@@ -78,7 +79,7 @@ Moderator routes never send the open CORS header. Disable the action buttons unt
 
 ## Wallet connections (the Demo page)
 
-The demo talks to wallets through one interface, `WalletConnector` in `web/src/voucher/wallet.ts`:
+The demo talks to wallets through one interface, `WalletConnector` in `frontend/src/voucher/wallet.ts`:
 
 - `start(onStatus, onReady)` returns `{ uri, qrUri }` for the QR code
 - `keys(scanPerPath)` lists the public keys the wallet shares
@@ -89,7 +90,7 @@ The demo talks to wallets through one interface, `WalletConnector` in `web/src/v
 
 ### Rules that must not be relaxed
 
-- `web/src/voucher/core.ts` builds and verifies every transaction. It is covered by `server/test/voucher-demo.test.ts` and `server/test/spend-probe.test.ts`. Restyle the UI freely, but change `core.ts` only together with its tests.
+- `frontend/src/voucher/core.ts` builds and verifies every transaction. It is covered by `server/test/voucher-demo.test.ts` and `server/test/spend-probe.test.ts`. Restyle the UI freely, but change `core.ts` only together with its tests.
 - Never broadcast a wallet-signed transaction unless `verifySignedIssue` returned `valid`. Never remove that check.
 - The claim code is shown before broadcasting and is never stored or sent to a server. The claim link keeps it after the `#`.
 - Mainnet needs the explicit real-money confirmation. Chipnet is the default.

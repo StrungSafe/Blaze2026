@@ -10,6 +10,7 @@ import TemplateDetail from "./pages/TemplateDetail";
 import Policy from "./pages/Policy";
 import Admin from "./pages/Admin";
 import Documentation from "./pages/Documentation";
+import Demo from "./pages/Demo";
 
 import xogridlogo from "./assets/images/xogridlogo.png";
 
@@ -97,6 +98,7 @@ function App() {
         <Route path="/t/:identifier" element={<TemplateDetail />} />
         <Route path="/publish" element={<Publish />} />
         <Route path="/policy" element={<Policy />} />
+        <Route path="/demo" element={<Demo />} />
 
         {/* XOGrid Documentation */}
         <Route path="/docs" element={<Documentation />} />

@@ -34,7 +34,7 @@ import {
   mockTemplates,
 } from "../data/mockDashboard";
 
-import { isAdminWallet } from "../config/admin";
+import { hasAdminToken } from "../hub/admin";
 
 type StatIcon = "explore" | "publish" | "checked" | "flags";
 type StatColor = "purple" | "orange" | "green" | "blue";
@@ -141,13 +141,10 @@ function Dashboard() {
   // from your WizardConnect integration.
   const walletAddress = "bitcoincash:qz7...8k2p";
 
-  // The demo wallet must never receive administrator access.
-  const isDemoWallet = walletAddress === "bitcoincash:qz7...8k2p";
-
-  const isAdmin =
-    walletConnected &&
-    !isDemoWallet &&
-    isAdminWallet(walletAddress);
+  // Cosmetic only: show the Administration link when a moderator session exists in this browser tab.
+  // Access itself is decided by the server, which checks a wallet signature against the moderator list and
+  // answers 401 to everything else, so hiding or showing this link protects nothing by itself.
+  const isAdmin = hasAdminToken();
 
   const filteredTemplates = templates.filter((template) =>
     `${template.name} ${template.category} ${template.id}`
