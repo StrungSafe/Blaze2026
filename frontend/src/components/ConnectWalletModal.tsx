@@ -1,7 +1,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
-import { X, Wallet, Loader2, ShieldCheck } from "lucide-react";
+import {
+  X,
+  Wallet,
+  Loader2,
+  ShieldCheck,
+  Copy,
+  Check,
+  ExternalLink,
+  Smartphone,
+  ScanLine,
+  Sparkles,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 import {
   startWalletSession,
@@ -11,28 +25,49 @@ import {
 interface ConnectWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onWalletConnect?: () => void;
 }
+
+type WalletSessionWithUri = WalletSession & {
+  uri?: string;
+  qrUri: string;
+};
+
+type MobileScreen = "choices" | "wizard";
 
 function ConnectWalletModal({
   isOpen,
   onClose,
+  onWalletConnect,
 }: ConnectWalletModalProps) {
   const [qr, setQr] = useState<string | null>(null);
+  const [walletUri, setWalletUri] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const [mobileScreen, setMobileScreen] =
+    useState<MobileScreen>("choices");
 
   const session = useRef<WalletSession | null>(null);
 
+  function resetModal() {
+    session.current?.cleanup();
+    session.current = null;
+
+    setQr(null);
+    setWalletUri(null);
+    setStatus("");
+    setError(null);
+    setConnecting(false);
+    setCopied(false);
+    setConnected(false);
+    setMobileScreen("choices");
+  }
+
   useEffect(() => {
-    if (!isOpen) {
-      session.current?.cleanup();
-      session.current = null;
-      setQr(null);
-      setStatus("");
-      setError(null);
-      setConnecting(false);
-    }
+    if (!isOpen) resetModal();
   }, [isOpen]);
 
   useEffect(() => {
@@ -43,257 +78,632 @@ function ConnectWalletModal({
   }, []);
 
   function closeModal() {
-    session.current?.cleanup();
-    session.current = null;
-    setQr(null);
-    setStatus("");
-    setError(null);
-    setConnecting(false);
+    resetModal();
     onClose();
   }
 
+  function openWalletConnect() {
+    if (onWalletConnect) {
+      onWalletConnect();
+      return;
+    }
+
+    setError(
+      "WalletConnect is not connected to this modal yet. Connect your existing WalletConnect handler through the onWalletConnect prop."
+    );
+  }
+
   async function connectWallet() {
-    if (connecting) return;
+    if (connecting || connected) return;
+
+    session.current?.cleanup();
+    session.current = null;
 
     setConnecting(true);
+    setConnected(false);
     setError(null);
-    setStatus("Preparing wallet connection...");
+    setCopied(false);
+    setQr(null);
+    setWalletUri(null);
+    setStatus("Preparing secure connection...");
 
     try {
       const created = startWalletSession(
         (message) => setStatus(message),
         (name) => {
-          setStatus(`Connected to ${name}`);
+          setStatus(`Successfully connected to ${name}`);
           setConnecting(false);
+          setConnected(true);
           setQr(null);
+          setWalletUri(null);
         }
       );
 
       session.current = created;
 
-      const qrCode = await QRCode.toDataURL(created.qrUri, {
-        width: 240,
+      const sessionData = created as WalletSessionWithUri;
+
+      const standardUri =
+        typeof sessionData.uri === "string" &&
+        sessionData.uri.length > 0
+          ? sessionData.uri
+          : sessionData.qrUri;
+
+      const qrUri = sessionData.qrUri;
+
+      if (!standardUri || !qrUri) {
+        throw new Error(
+          "WizardConnect did not return a valid connection URI."
+        );
+      }
+
+      setWalletUri(standardUri);
+
+      const qrCode = await QRCode.toDataURL(qrUri, {
+        width: 220,
         margin: 1,
+        errorCorrectionLevel: "M",
+        color: {
+          dark: "#080A12",
+          light: "#FFFFFF",
+        },
       });
 
       setQr(qrCode);
-      setStatus("Waiting for your wallet to connect...");
+      setStatus("Connection ready. Open your compatible wallet.");
     } catch (reason) {
+      session.current?.cleanup();
+      session.current = null;
       setConnecting(false);
+
       setError(
         reason instanceof Error
           ? reason.message
-          : "Unable to start wallet connection."
+          : "Unable to start wallet connection. Please try again."
       );
+
       setStatus("");
     }
+  }
+
+  async function copyWalletLink() {
+    if (!walletUri) return;
+
+    try {
+      await navigator.clipboard.writeText(walletUri);
+      setCopied(true);
+      setError(null);
+      setStatus("Connection link copied.");
+
+      window.setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setError("Unable to copy connection link. Please try again.");
+    }
+  }
+
+  function selectWizardConnect() {
+    setMobileScreen("wizard");
+    setError(null);
+    connectWallet();
+  }
+
+  function backToChoices() {
+    session.current?.cleanup();
+    session.current = null;
+
+    setQr(null);
+    setWalletUri(null);
+    setStatus("");
+    setError(null);
+    setConnecting(false);
+    setCopied(false);
+    setConnected(false);
+    setMobileScreen("choices");
   }
 
   if (!isOpen) return null;
 
   return (
     <div
-      className="wallet-modal-backdrop fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-[#05070b]/85 px-3 py-3 backdrop-blur-xl sm:px-4 sm:py-6"
+      className="wallet-modal-backdrop fixed inset-0 z-[9999] flex items-center justify-center bg-[#05070b]/85 px-3 py-3 backdrop-blur-md"
       onClick={closeModal}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="connect-wallet-title"
-        className="wallet-modal relative my-auto w-full max-w-md rounded-[24px] p-[2px] lg:max-w-3xl xl:max-w-4xl"
+        className="wallet-modal relative w-full max-w-[340px] rounded-[19px] p-[1px] sm:max-w-[390px] lg:max-w-[690px]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="wallet-modal-border absolute inset-0 rounded-[24px]">
+        <div className="wallet-modal-border absolute inset-0 rounded-[19px]">
           <div className="wallet-modal-border-glow" />
         </div>
 
-        <div className="relative isolate overflow-hidden rounded-[22px] border border-white/[0.06] bg-[#05070b] p-4 shadow-2xl shadow-black/60 sm:p-6 lg:p-8">
-
-          {/* Ambient lighting */}
-          <div className="pointer-events-none absolute -left-24 -top-24 h-52 w-52 rounded-full bg-violet-600/20 blur-[90px]" />
-
-          <div className="pointer-events-none absolute -right-20 top-1/3 h-48 w-48 rounded-full bg-purple-500/15 blur-[90px]" />
-
-          <div className="pointer-events-none absolute -bottom-24 -right-20 h-44 w-44 rounded-full bg-orange-500/10 blur-[90px]" />
+        <div className="relative overflow-hidden rounded-[18px] border border-white/[0.06] bg-[#080A12] p-4 sm:p-5 lg:p-6">
+          <div className="pointer-events-none absolute -left-20 -top-20 h-40 w-40 rounded-full bg-violet-600/15 blur-[75px]" />
+          <div className="pointer-events-none absolute -right-20 bottom-0 h-40 w-40 rounded-full bg-orange-500/10 blur-[75px]" />
 
           <div className="relative z-10">
 
-            {/* Close button */}
-            <button
-              type="button"
-              onClick={closeModal}
-              aria-label="Close wallet modal"
-              className="absolute right-0 top-0 z-20 flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 transition duration-300 hover:rotate-90 hover:border-orange-500/40 hover:bg-orange-500/10 hover:text-orange-400 sm:h-9 sm:w-9"
-            >
-              <X size={17} />
-            </button>
-
-            {/* Main content: column on mobile, row on desktop */}
-            <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-center lg:gap-8 xl:gap-10">
-
-              {/* Left section */}
-              <div className="min-w-0 flex-1">
-
-                {/* Wallet icon */}
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-orange-400 shadow-lg shadow-orange-500/10 sm:h-14 sm:w-14 lg:mx-0 lg:h-16 lg:w-16 lg:rounded-2xl">
-                  <Wallet
-                    size={25}
-                    className="sm:h-7 sm:w-7 lg:h-[30px] lg:w-[30px]"
-                  />
-                </div>
-
-                {/* Heading */}
-                <div className="mt-3 text-center sm:mt-4 lg:text-left">
-                  <h2
-                    id="connect-wallet-title"
-                    className="text-xl font-bold tracking-tight text-white sm:text-2xl"
-                  >
-                    Connect your wallet
-                  </h2>
-
-                  <p className="mx-auto mt-1 max-w-xs text-xs leading-5 text-slate-400 sm:mt-2 sm:text-sm lg:mx-0">
-                    Connect your Bitcoin Cash wallet to get started
-                    with XOGrid.
-                  </p>
-                </div>
-
-                {/* Wallet option */}
-                <div className="mt-4 rounded-xl border border-white/[0.08] bg-white/[0.035] p-3 transition duration-300 hover:border-orange-500/30 hover:bg-white/[0.05] sm:mt-5 sm:rounded-2xl sm:p-4">
-
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-orange-500/10 bg-orange-500/10 text-orange-400 sm:h-11 sm:w-11 sm:rounded-xl">
-                      <Wallet size={19} />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-white">
-                        WizardConnect
-                      </p>
-
-                      <p className="mt-0.5 text-[11px] leading-4 text-slate-500 sm:text-xs">
-                        Selene, Paytaca and compatible wallets
-                      </p>
-                    </div>
-                  </div>
-
+            {/* MOBILE: CONNECTION OPTIONS */}
+            <div className="lg:hidden">
+              {mobileScreen === "choices" ? (
+                <>
                   <button
                     type="button"
-                    onClick={connectWallet}
-                    disabled={connecting}
-                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-orange-500/30 disabled:cursor-not-allowed disabled:opacity-60 sm:mt-4 sm:rounded-xl sm:py-3"
+                    onClick={closeModal}
+                    aria-label="Close wallet modal"
+                    className="absolute right-0 top-0 flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.05] text-slate-400 transition hover:border-orange-500/40 hover:text-white"
                   >
-                    {connecting ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <Wallet size={16} />
-                    )}
-
-                    {connecting
-                      ? "Waiting for wallet..."
-                      : "Connect wallet"}
+                    <X size={17} />
                   </button>
-                </div>
-              </div>
 
-              {/* Right section: desktop only */}
-              <div className="hidden min-w-0 flex-1 lg:block">
+                  <div className="pr-10">
+                    <h2
+                      id="connect-wallet-title"
+                      className="text-xl font-bold tracking-tight text-white"
+                    >
+                      Connect a wallet
+                    </h2>
 
-                {qr ? (
-                  <div className="flex flex-col items-center rounded-xl border border-white/10 bg-black/40 p-4 text-center sm:rounded-2xl sm:p-5">
-
-                    <p className="text-sm font-semibold text-white">
-                      Scan to connect
-                    </p>
-
-                    <p className="mt-1 max-w-xs text-xs leading-5 text-slate-400">
-                      Open Selene, Paytaca or another compatible
-                      wallet and scan this QR code.
-                    </p>
-
-                    <img
-                      src={qr}
-                      alt="Wallet connection QR code"
-                      width={240}
-                      height={240}
-                      className="mt-4 w-full max-w-[220px] rounded-xl bg-white p-2"
-                    />
-
-                    <p className="mt-3 text-xs text-orange-400">
-                      {status}
+                    <p className="mt-2 text-xs leading-5 text-slate-400">
+                      Choose how your Bitcoin Cash wallet connects.
                     </p>
                   </div>
-                ) : (
-                  <div className="flex min-h-[230px] flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-6 text-center sm:rounded-2xl">
 
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-orange-400">
-                      <Wallet size={21} />
+                  <div className="mt-6 space-y-3">
+                    <button
+                      type="button"
+                      onClick={openWalletConnect}
+                      className="wallet-choice-card flex w-full items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.035] p-4 text-left transition hover:border-orange-500/40 hover:bg-white/[0.06]"
+                    >
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange-500/15 bg-orange-500/10 text-orange-400">
+                        <Wallet size={25} />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">
+                          WalletConnect
+                        </p>
+                        <p className="mt-1 text-[11px] leading-5 text-slate-400">
+                          Scan with a WalletConnect wallet or pick one from
+                          the list.
+                        </p>
+                      </div>
+
+                      <ChevronRight
+                        size={18}
+                        className="shrink-0 text-slate-500"
+                      />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={selectWizardConnect}
+                      className="wallet-choice-card flex w-full items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.035] p-4 text-left transition hover:border-orange-500/40 hover:bg-white/[0.06]"
+                    >
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange-500/15 bg-orange-500/10 text-orange-400">
+                        <Sparkles size={25} />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">
+                          Wizard Connect
+                        </p>
+                        <p className="mt-1 text-[11px] leading-5 text-slate-400">
+                          Connect an HD wallet that supports Wizard Connect.
+                        </p>
+                      </div>
+
+                      <ChevronRight
+                        size={18}
+                        className="shrink-0 text-slate-500"
+                      />
+                    </button>
+                  </div>
+
+                  <div className="mt-5 flex items-center gap-2 border-t border-white/[0.07] pt-4">
+                    <ShieldCheck
+                      size={15}
+                      className="shrink-0 text-emerald-400"
+                    />
+                    <p className="text-[10px] leading-4 text-slate-500">
+                      XOGrid will never ask for your recovery phrase or
+                      private keys.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={backToChoices}
+                      className="flex items-center gap-1.5 text-xs font-medium text-slate-400 transition hover:text-white"
+                    >
+                      <ChevronLeft size={16} />
+                      Back
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      aria-label="Close wallet modal"
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/[0.05] text-slate-400 transition hover:text-white"
+                    >
+                      <X size={17} />
+                    </button>
+                  </div>
+
+                  <div className="mt-4 text-center">
+                    <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-orange-400">
+                      <Sparkles size={22} />
                     </div>
 
-                    <p className="mt-3 text-sm font-medium text-white">
-                      Your wallet connection
-                    </p>
+                    <h2 className="mt-3 text-lg font-bold text-white">
+                      Wizard Connect
+                    </h2>
 
-                    <p className="mt-1 max-w-xs text-xs leading-5 text-slate-500">
-                      Click Connect wallet to generate your secure
-                      connection QR code.
+                    <p className="mt-1 text-xs leading-5 text-slate-400">
+                      Scan the QR code or copy the connection link to open
+                      your compatible wallet.
                     </p>
+                  </div>
+
+                  {connected ? (
+                    <div className="mt-5 flex flex-col items-center rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] p-5 text-center">
+                      <Check size={30} className="text-emerald-400" />
+                      <p className="mt-2 text-sm font-semibold text-emerald-400">
+                        Wallet connected successfully
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mt-5 flex min-h-[210px] flex-col items-center justify-center rounded-xl border border-white/[0.08] bg-black/20 p-4">
+                        {qr ? (
+                          <>
+                            <div className="rounded-xl bg-white p-2">
+                              <img
+                                src={qr}
+                                alt="WizardConnect wallet QR code"
+                                className="h-[180px] w-[180px] rounded-md"
+                              />
+                            </div>
+
+                            <p className="mt-3 text-[10px] text-orange-400">
+                              {status || "Waiting for wallet connection..."}
+                            </p>
+                          </>
+                        ) : connecting ? (
+                          <>
+                            <Loader2
+                              size={28}
+                              className="animate-spin text-orange-400"
+                            />
+                            <p className="mt-3 text-xs text-slate-300">
+                              Preparing your connection...
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <ScanLine
+                              size={28}
+                              className="text-slate-500"
+                            />
+                            <p className="mt-3 text-xs text-slate-400">
+                              QR code not available.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={connectWallet}
+                              className="mt-3 rounded-lg bg-orange-500 px-4 py-2 text-xs font-semibold text-white"
+                            >
+                              Try again
+                            </button>
+                          </>
+                        )}
+                      </div>
+
+                      {walletUri && (
+                        <>
+                          <a
+                            href={walletUri}
+                            className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3 text-xs font-bold text-white transition hover:from-orange-400 hover:to-orange-300"
+                          >
+                            <ExternalLink size={15} />
+                            Open compatible wallet
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={copyWalletLink}
+                            className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-xs font-semibold text-slate-300 transition hover:border-orange-500/30 hover:text-white"
+                          >
+                            {copied ? (
+                              <Check
+                                size={15}
+                                className="text-emerald-400"
+                              />
+                            ) : (
+                              <Copy size={15} />
+                            )}
+                            {copied
+                              ? "Connection link copied"
+                              : "Copy connection link"}
+                          </button>
+                        </>
+                      )}
+
+                      {connecting && (
+                        <button
+                          type="button"
+                          onClick={connectWallet}
+                          className="mt-3 flex w-full items-center justify-center gap-2 text-[11px] text-slate-500 hover:text-orange-400"
+                        >
+                          <RefreshCw size={12} />
+                          Generate new connection
+                        </button>
+                      )}
+                    </>
+                  )}
+
+                  {status && !qr && !connected && (
+                    <p className="mt-3 text-center text-[10px] text-slate-500">
+                      {status}
+                    </p>
+                  )}
+
+                  <div className="mt-4 flex items-start gap-2 border-t border-white/[0.07] pt-3">
+                    <Smartphone
+                      size={14}
+                      className="mt-0.5 shrink-0 text-orange-400"
+                    />
+                    <p className="text-[10px] leading-4 text-slate-500">
+                      Use a compatible Bitcoin Cash HD wallet such as
+                      Selene or Paytaca.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* DESKTOP: EXISTING WIZARDCONNECT EXPERIENCE */}
+            <div className="hidden lg:block">
+              <button
+                type="button"
+                onClick={closeModal}
+                aria-label="Close wallet modal"
+                className="absolute right-0 top-0 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-slate-400 transition hover:rotate-90 hover:border-orange-500/40 hover:text-orange-400"
+              >
+                <X size={15} />
+              </button>
+
+              <div className="flex flex-row items-center gap-6">
+                <div className="min-w-0 flex-1">
+                  <div className="wallet-icon-animation relative mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-orange-400 lg:mx-0">
+                    <div className="wallet-icon-ring absolute inset-0 rounded-xl border border-orange-400/30" />
+                    <Wallet size={21} />
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-[#080A12] bg-orange-500 text-white">
+                      <Sparkles size={8} />
+                    </span>
+                  </div>
+
+                  <div className="mt-3 text-center lg:text-left">
+                    <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full border border-orange-500/15 bg-orange-500/[0.07] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-orange-400">
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-400" />
+                      Secure connection
+                    </div>
+
+                    <h2 className="text-xl font-bold tracking-tight text-white">
+                      Connect your wallet
+                    </h2>
+
+                    <p className="mx-auto mt-1 max-w-[270px] text-xs leading-5 text-slate-400 lg:mx-0">
+                      Connect your Bitcoin Cash wallet to access XOGrid.
+                    </p>
+                  </div>
+
+                  <div className="wallet-option-card mt-4 rounded-xl border border-white/[0.08] bg-white/[0.035] p-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-orange-500/15 bg-orange-500/10 text-orange-400">
+                        <Wallet size={19} />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-bold text-white">
+                            WizardConnect
+                          </p>
+                          <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[8px] font-semibold text-emerald-400">
+                            Supported
+                          </span>
+                        </div>
+
+                        <p className="mt-0.5 text-[10px] text-slate-400">
+                          Compatible Bitcoin Cash HD wallets
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 border-t border-white/[0.07] pt-3">
+                      <p className="text-[11px] leading-5 text-slate-400">
+                        Connect an HD wallet that supports{" "}
+                        <span className="font-semibold text-orange-400">
+                          WizardConnect
+                        </span>
+                        , such as Selene or Paytaca.
+                      </p>
+                    </div>
+
+                    {!walletUri && !connected && (
+                      <button
+                        type="button"
+                        onClick={connectWallet}
+                        disabled={connecting}
+                        className="wallet-connect-button mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3 text-xs font-bold text-white shadow-lg shadow-orange-500/15 transition hover:-translate-y-0.5 hover:from-orange-400 hover:to-orange-300 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {connecting ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <Wallet size={15} />
+                        )}
+                        {connecting
+                          ? "Preparing connection..."
+                          : "Connect an HD Wallet"}
+                      </button>
+                    )}
+
+                    {connected && (
+                      <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.07] p-3">
+                        <Check size={17} className="text-emerald-400" />
+                        <p className="text-xs font-semibold text-emerald-400">
+                          Wallet connected successfully
+                        </p>
+                      </div>
+                    )}
 
                     {status && (
-                      <p className="mt-2 text-xs text-orange-400">
-                        {status}
-                      </p>
+                      <div className="mt-2 flex items-start gap-2 rounded-lg border border-orange-500/10 bg-orange-500/[0.05] p-2">
+                        <span className="mt-1 h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-orange-400" />
+                        <p className="text-[10px] leading-4 text-orange-300">
+                          {status}
+                        </p>
+                      </div>
                     )}
                   </div>
-                )}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  {connected ? (
+                    <div className="flex min-h-[290px] flex-col items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-5 text-center">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                        <Check size={25} />
+                      </div>
+                      <p className="mt-3 text-sm font-bold text-white">
+                        Wallet connected
+                      </p>
+                      <p className="mt-1 text-[10px] text-slate-400">
+                        Your WizardConnect session is active.
+                      </p>
+                    </div>
+                  ) : qr ? (
+                    <div className="wallet-qr-panel flex flex-col items-center rounded-xl border border-white/[0.08] bg-black/30 p-4 text-center">
+                      <div className="mb-3 flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/[0.07] px-2.5 py-1">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-emerald-400">
+                          Ready to connect
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <ScanLine size={16} className="text-orange-400" />
+                        <p className="text-sm font-bold text-white">
+                          Scan to connect
+                        </p>
+                      </div>
+
+                      <p className="mt-1.5 max-w-[220px] text-[10px] leading-4 text-slate-400">
+                        Scan with Selene, Paytaca or another compatible wallet.
+                      </p>
+
+                      <div className="mt-3 rounded-xl bg-white p-2 shadow-[0_0_30px_rgba(249,115,22,0.10)]">
+                        <img
+                          src={qr}
+                          alt="WizardConnect wallet QR code"
+                          width={190}
+                          height={190}
+                          className="h-[170px] w-[170px] rounded-md"
+                        />
+                      </div>
+
+                      <p className="mt-2 text-[10px] text-orange-400">
+                        {status || "Waiting for wallet connection..."}
+                      </p>
+
+                      {walletUri && (
+                        <button
+                          type="button"
+                          onClick={copyWalletLink}
+                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 text-[10px] font-semibold text-slate-300 transition hover:border-orange-500/30 hover:text-white"
+                        >
+                          {copied ? (
+                            <Check size={13} className="text-emerald-400" />
+                          ) : (
+                            <Copy size={13} />
+                          )}
+                          {copied ? "Copied" : "Copy connection link"}
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex min-h-[290px] flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-5 text-center">
+                      <div className="qr-placeholder-icon flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/[0.08] text-orange-400">
+                        <ScanLine size={22} />
+                      </div>
+                      <p className="mt-3 text-sm font-semibold text-white">
+                        Desktop wallet connection
+                      </p>
+                      <p className="mt-1 max-w-[220px] text-[10px] leading-5 text-slate-500">
+                        Generate a QR code and scan it using your compatible
+                        Bitcoin Cash wallet.
+                      </p>
+                      <div className="mt-3 flex items-center gap-1.5 text-[9px] uppercase tracking-wider text-slate-600">
+                        <ShieldCheck size={12} />
+                        Secure connection
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Error */}
             {error && (
-              <p className="mt-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-center text-xs text-rose-300 sm:mt-4 sm:text-sm">
+              <div
+                role="alert"
+                className="mt-3 rounded-lg border border-rose-500/20 bg-rose-500/[0.08] p-2.5 text-center text-[11px] leading-5 text-rose-300"
+              >
                 {error}
-              </p>
+              </div>
             )}
 
-            {/* Security note */}
-            <div className="mt-4 flex items-start gap-2 border-t border-white/[0.07] pt-3 sm:mt-5 sm:pt-4">
+            <div className="mt-4 hidden items-start gap-2.5 border-t border-white/[0.07] pt-3 lg:flex">
               <ShieldCheck
                 size={15}
                 className="mt-0.5 shrink-0 text-emerald-400"
               />
-
-              <p className="text-[10px] leading-4 text-slate-500 sm:text-xs sm:leading-5">
-                XOGrid will never ask for your wallet recovery
-                phrase or private keys. Only connect through a
-                wallet you trust.
-              </p>
+              <div>
+                <p className="text-[10px] font-semibold text-slate-300">
+                  Your wallet. Your control.
+                </p>
+                <p className="mt-0.5 text-[9px] leading-4 text-slate-500">
+                  XOGrid will never ask for your recovery phrase or private
+                  keys.
+                </p>
+              </div>
             </div>
-
           </div>
         </div>
       </div>
 
       <style>{`
         .wallet-modal-backdrop {
-          animation: walletBackdropIn 250ms ease-out both;
+          animation: walletBackdropIn 220ms ease-out both;
         }
 
         .wallet-modal {
           isolation: isolate;
           background: linear-gradient(
             135deg,
-            rgba(249, 115, 22, 0.5),
-            rgba(124, 58, 237, 0.25),
-            rgba(249, 115, 22, 0.5)
+            rgba(249, 115, 22, 0.65),
+            rgba(124, 58, 237, 0.3),
+            rgba(249, 115, 22, 0.65)
           );
-          animation: walletZoomIn 450ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          animation: walletZoomIn 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+          box-shadow: 0 20px 65px rgba(0, 0, 0, 0.6);
         }
 
         .wallet-modal-border {
-          position: absolute;
-          inset: 0;
           overflow: hidden;
-          border-radius: 24px;
           pointer-events: none;
         }
 
@@ -303,25 +713,45 @@ function ConnectWalletModal({
           background: conic-gradient(
             from 0deg,
             transparent 0deg,
-            transparent 285deg,
-            #f97316 310deg,
-            #fb923c 325deg,
-            #f97316 340deg,
+            transparent 275deg,
+            #f97316 305deg,
+            #fb923c 320deg,
+            #a855f7 335deg,
             transparent 360deg
           );
-          animation: walletBorderRotate 3s linear infinite;
+          animation: walletBorderRotate 5s linear infinite;
+        }
+
+        .wallet-icon-animation {
+          animation: walletFloat 4s ease-in-out infinite;
+        }
+
+        .wallet-icon-ring {
+          animation: walletIconPulse 2.8s ease-in-out infinite;
+        }
+
+        .wallet-option-card,
+        .wallet-choice-card {
+          animation: walletContentIn 450ms 80ms both;
+        }
+
+        .wallet-qr-panel {
+          animation: walletContentIn 400ms ease-out both;
+        }
+
+        .wallet-connect-button {
+          position: relative;
+          overflow: hidden;
         }
 
         @keyframes walletBorderRotate {
-          to {
-            transform: rotate(360deg);
-          }
+          to { transform: rotate(360deg); }
         }
 
         @keyframes walletZoomIn {
           from {
             opacity: 0;
-            transform: scale(0.88) translateY(18px);
+            transform: scale(0.95) translateY(12px);
           }
           to {
             opacity: 1;
@@ -330,19 +760,47 @@ function ConnectWalletModal({
         }
 
         @keyframes walletBackdropIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes walletFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-3px); }
+        }
+
+        @keyframes walletIconPulse {
+          0%, 100% {
+            opacity: 0.25;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.8;
+            transform: scale(1.05);
+          }
+        }
+
+        @keyframes walletContentIn {
           from {
             opacity: 0;
+            transform: translateY(7px);
           }
           to {
             opacity: 1;
+            transform: translateY(0);
           }
         }
 
         @media (prefers-reduced-motion: reduce) {
           .wallet-modal,
           .wallet-modal-backdrop,
-          .wallet-modal-border-glow {
-            animation: none;
+          .wallet-modal-border-glow,
+          .wallet-icon-animation,
+          .wallet-icon-ring,
+          .wallet-option-card,
+          .wallet-choice-card,
+          .wallet-qr-panel {
+            animation: none !important;
           }
         }
       `}</style>

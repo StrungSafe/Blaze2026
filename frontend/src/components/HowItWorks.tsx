@@ -23,7 +23,7 @@ const steps = [
     icon: Search,
     label: "Explore the registry",
     details: ["Browse published templates", "Search and filter the collection"],
-    link: "/browse",
+    link: "/explore",
     linkLabel: "Browse templates",
   },
   {
@@ -37,7 +37,7 @@ const steps = [
       "Inspect automated check results",
       "Read flags and signed reviews",
     ],
-    link: "/browse",
+    link: "/explore",
     linkLabel: "Inspect templates",
   },
   {
