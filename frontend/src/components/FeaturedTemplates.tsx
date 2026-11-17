@@ -407,7 +407,7 @@ function FeaturedTemplates() {
             </p>
 
             <Link
-              to="/browse"
+              to="/explore"
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-xs font-semibold text-white transition hover:bg-orange-400"
             >
               Explore templates
