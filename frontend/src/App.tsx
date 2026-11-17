@@ -8,6 +8,7 @@ import Explore from "./pages/Explore";
 import Publish from "./pages/Publish";
 import TemplateDetail from "./pages/TemplateDetail";
 import Policy from "./pages/Policy";
+import Admin from "./pages/Admin";
 
 import xogridlogo from "./assets/images/xogridlogo.png";
 
@@ -95,6 +96,9 @@ function App() {
         <Route path="/t/:identifier" element={<TemplateDetail />} />
         <Route path="/publish" element={<Publish />} />
         <Route path="/policy" element={<Policy />} />
+
+        {/* XOGrid Admin entry */}
+        <Route path="/admin" element={<Admin />} />
       </Routes>
 
       {isLoading && <LoadingScreen exiting={isExiting} />}

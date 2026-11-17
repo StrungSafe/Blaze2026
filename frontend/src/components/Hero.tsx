@@ -297,7 +297,7 @@ function Hero() {
         <div className="xo-reveal xo-delay-3 mt-10 flex w-full flex-col justify-center gap-4 sm:w-auto sm:flex-row">
           {/* Primary CTA */}
           <Link
-            to="/browse"
+            to="/explore"
             className="group inline-flex items-center justify-center gap-3 rounded-xl bg-orange-500 px-8 py-4 text-sm font-semibold text-white shadow-[0_12px_45px_rgba(249,115,22,.25)] transition-all duration-300 hover:-translate-y-1 hover:bg-orange-400 hover:shadow-[0_15px_50px_rgba(249,115,22,.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
           >
             Explore templates
