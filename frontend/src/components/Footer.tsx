@@ -28,7 +28,7 @@ function Footer() {
   const location = useLocation();
 
   // Replace these with your official XOGrid accounts.
-  const CONTACT_EMAIL = "hello@xogrid.com";
+  const CONTACT_EMAIL = "xogrid@.com";
 
   const socialLinks = [
     { name: "X", href: "https://x.com/YOUR_X_USERNAME", icon: SiX },
