@@ -1,5 +1,29 @@
+export interface DashboardStat {
+  label: string;
+  value: string;
+  change: string;
+  icon: "explore" | "publish" | "checked" | "flags";
+  color: "purple" | "orange" | "green" | "blue";
+}
 
-export const mockDashboardStats = [
+export interface DashboardActivity {
+  id: number;
+  title: string;
+  description: string;
+  time: string;
+  status: string;
+  type: "publish" | "check" | "explore" | "flag";
+}
+
+export interface DashboardTemplate {
+  id: string;
+  name: string;
+  category: string;
+  badge: "Auto-checked" | "Reviewed" | "Unchecked";
+  updated: string;
+}
+
+export const mockDashboardStats: DashboardStat[] = [
   {
     label: "Templates explored",
     value: "24",
@@ -30,7 +54,7 @@ export const mockDashboardStats = [
   },
 ];
 
-export const mockRecentActivity = [
+export const mockRecentActivity: DashboardActivity[] = [
   {
     id: 1,
     title: "Template published",
@@ -65,7 +89,7 @@ export const mockRecentActivity = [
   },
 ];
 
-export const mockTemplates = [
+export const mockTemplates: DashboardTemplate[] = [
   {
     id: "XO-8F21A9",
     name: "BCH Payment Template",

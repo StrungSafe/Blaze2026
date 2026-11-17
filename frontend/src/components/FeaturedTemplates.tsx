@@ -138,7 +138,7 @@ function FeaturedTemplates() {
 
   return (
     <section
-      id="browse"
+      id="featured-templates"
       className="relative overflow-hidden px-5 py-24 sm:px-8 lg:px-12"
     >
       {/* Ambient lighting */}
@@ -169,7 +169,7 @@ function FeaturedTemplates() {
           </div>
 
           <Link
-            to="/browse"
+            to="/explore"
             className="group inline-flex w-fit items-center gap-3 rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-500/15 transition-all duration-300 hover:-translate-y-1 hover:bg-orange-400 hover:shadow-orange-500/25"
           >
             Browse all templates
