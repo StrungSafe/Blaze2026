@@ -13,10 +13,13 @@ import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'n
 import { basename, join, relative } from 'node:path';
 import * as cashc014 from 'cashc';
 import * as cashc09 from 'cashc-0.9';
+import * as cashc010 from 'cashc-0.10';
 
 /** Supported compilers, matched against the version range in a file's pragma. */
 const COMPILERS = [
     { pragma: /^\^0\.9\.\d+$/, version: '0.9.3', compileString: cashc09.compileString },
+    // The prerelease BadgerStake was built with; it reproduces the deployed bytecode.
+    { pragma: /^\^0\.10\.\d+$/, version: '0.10.0-next.4', compileString: cashc010.compileString },
     { pragma: /^\^0\.14\.\d+$/, version: '0.14.0', compileString: cashc014.compileString },
 ];
 

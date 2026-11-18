@@ -5,11 +5,17 @@
 import {
     binToHex,
     createVirtualMachineBch2026,
+    encodeTransactionBch,
+    generateTransaction,
     hash160,
     hexToBin,
     secp256k1,
+    walletTemplateP2pkhNonHd,
+    walletTemplateToCompilerBch,
     type Input,
+    type InputTemplate,
     type Output,
+    type Transaction,
 } from '@bitauth/libauth';
 import {
     buildCompilerBytecodeDataFromCompilationVariables,
@@ -100,7 +106,15 @@ export interface SpentCoin {
     token?: Output['token'];
     /** The spending input's sequence number. Defaults to 0xffffffff (final: no relative timelock). */
     sequenceNumber?: number;
+    /**
+     * A private key to sign this input with, for a P2PKH coin (lockingBytecode must be its P2PKH lock). The unlocking
+     * bytecode is then generated (a Schnorr signature over all outputs, and the public key) and unlockingBytecode is
+     * ignored.
+     */
+    signingKey?: Uint8Array;
 }
+
+const p2pkhCompiler = walletTemplateToCompilerBch(walletTemplateP2pkhNonHd);
 
 /**
  * Resolves one template output exactly as the engine does when it builds a transaction: value, locking bytecode and
@@ -117,20 +131,60 @@ export function completeOutput(
     return completeMergedOutput({ outputIdentifier } as never, 0, invitationVariables as never, template as never, actionIdentifier) as never;
 }
 
-/** Builds a transaction (version 2 unless given) spending `coins` into `outputs`, and returns true when the VM accepts it. */
-export function verifySpend(coins: SpentCoin[], outputs: Output[], { version = 2 }: { version?: number } = {}): true | string {
-    const inputs: Input[] = coins.map((coin, index) => ({
-        outpointTransactionHash: new Uint8Array(32).fill(index + 1),
-        outpointIndex: 0,
-        sequenceNumber: coin.sequenceNumber ?? 0xffffffff,
-        unlockingBytecode: coin.unlockingBytecode,
-    }));
+/**
+ * Builds the transaction spending `coins` into `outputs` (version 2 unless given), signing any coin that has a
+ * signingKey. Returns the transaction and its source outputs, or the generation error.
+ */
+export function buildSpend(coins: SpentCoin[], outputs: Output[], { version = 2 }: { version?: number } = {}): { transaction: Transaction; sourceOutputs: Output[] } | string {
     const sourceOutputs: Output[] = coins.map((coin) => ({
         lockingBytecode: coin.lockingBytecode,
         valueSatoshis: coin.valueSatoshis,
         ...(coin.token ? { token: coin.token } : {}),
     }));
-    const result = vm.verify({ sourceOutputs, transaction: { version, locktime: 0, inputs, outputs } });
+    const inputs = coins.map((coin, index) => ({
+        outpointTransactionHash: new Uint8Array(32).fill(index + 1),
+        outpointIndex: 0,
+        sequenceNumber: coin.sequenceNumber ?? 0xffffffff,
+        unlockingBytecode: coin.signingKey
+            ? {
+                  compiler: p2pkhCompiler,
+                  data: { keys: { privateKeys: { key: coin.signingKey } } },
+                  script: 'unlock',
+                  valueSatoshis: coin.valueSatoshis,
+                  ...(coin.token ? { token: coin.token } : {}),
+              }
+            : coin.unlockingBytecode,
+    }));
+
+    if (coins.every((coin) => coin.signingKey === undefined)) {
+        return { transaction: { version, locktime: 0, inputs: inputs as Input[], outputs }, sourceOutputs };
+    }
+
+    const generated = generateTransaction({ version, locktime: 0, inputs: inputs as InputTemplate<typeof p2pkhCompiler>[], outputs });
+
+    return generated.success ? { transaction: generated.transaction, sourceOutputs } : `Transaction generation failed: ${JSON.stringify(generated.errors)}`;
+}
+
+/** Builds a transaction (version 2 unless given) spending `coins` into `outputs`, and returns true when the VM accepts it. */
+export function verifySpend(coins: SpentCoin[], outputs: Output[], options: { version?: number } = {}): true | string {
+    const spend = buildSpend(coins, outputs, options);
+
+    if (typeof spend === 'string') {
+        return spend;
+    }
+
+    const result = vm.verify(spend);
 
     return result === true ? true : String(result);
+}
+
+/** The encoded size in bytes of a spend, for fee checks. */
+export function spendSize(coins: SpentCoin[], outputs: Output[], options: { version?: number } = {}): number {
+    const spend = buildSpend(coins, outputs, options);
+
+    if (typeof spend === 'string') {
+        throw new Error(spend);
+    }
+
+    return encodeTransactionBch(spend.transaction).length;
 }

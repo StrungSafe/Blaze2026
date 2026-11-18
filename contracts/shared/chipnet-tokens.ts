@@ -113,11 +113,13 @@ export interface GenesisParameters {
     tokenRecipient: Uint8Array;
     changeRecipient: Uint8Array;
     feeSatoshis?: bigint;
+    /** Also create an NFT of the new category on the token output (for example a minting NFT that holds the supply). */
+    nft?: { capability: 'none' | 'mutable' | 'minting'; commitment: Uint8Array };
 }
 
 /** Builds, VM-checks and returns a signed fungible-token genesis transaction. */
 export function buildFungibleGenesis(parameters: GenesisParameters): { category: string; serializedTransaction: string; transactionHash: string } {
-    const { minter, coin, tokenAmount, tokenSatoshis, tokenRecipient, changeRecipient, feeSatoshis = 500n } = parameters;
+    const { minter, coin, tokenAmount, tokenSatoshis, tokenRecipient, changeRecipient, feeSatoshis = 500n, nft } = parameters;
 
     if (coin.outputIndex !== 0) {
         throw new Error(`A genesis input must be output 0 of its transaction; this coin is output ${coin.outputIndex}.`);
@@ -125,7 +127,7 @@ export function buildFungibleGenesis(parameters: GenesisParameters): { category:
 
     const category = hexToBin(coin.transactionHash);
     const changeSatoshis = coin.valueSatoshis - tokenSatoshis - feeSatoshis;
-    const outputs: Output[] = [{ lockingBytecode: tokenRecipient, valueSatoshis: tokenSatoshis, token: { category, amount: tokenAmount } }];
+    const outputs: Output[] = [{ lockingBytecode: tokenRecipient, valueSatoshis: tokenSatoshis, token: { category, amount: tokenAmount, ...(nft ? { nft } : {}) } }];
 
     if (changeSatoshis >= 546n) {
         outputs.push({ lockingBytecode: changeRecipient, valueSatoshis: changeSatoshis });
