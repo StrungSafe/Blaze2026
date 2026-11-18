@@ -10,6 +10,25 @@ npm run web          # http://127.0.0.1:5180
 npm run web:build    # static build into web/dist (gitignored)
 ```
 
+### Docker image
+
+`templates/Dockerfile` builds the page and serves it with nginx (unprivileged, port 8080). Build from the **repo root**, because the page uses the logo from `frontend/`:
+
+```bash
+docker build -f templates/Dockerfile -t xogrid-template-tools .
+docker run --rm -p 8080:8080 xogrid-template-tools    # http://localhost:8080
+```
+
+- **Build context:** `templates/Dockerfile.dockerignore` replaces the repo's `.dockerignore` for this build. It's an allow-list that lets in only these:
+  - the templates' `package.json` and `package-lock.json`
+  - each system's `template.json`
+  - `web/`
+  - the logo
+
+  So the chipnet test wallet in `templates/.xo-demo` never reaches the build.
+- **Page headers:** `web/nginx.conf` sends `X-Robots-Tag: noindex` and doesn't cache `index.html`. Built assets are cached for good.
+- **Image:** about 75 MB.
+
 ## Drip Mine
 
 1. Pick **chipnet** or **mainnet**. The page lists the coins at the Drip Mine address from public Electrum servers. It uses listunspent, not the address history, so the busy mainnet address is fine.
