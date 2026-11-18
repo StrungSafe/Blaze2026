@@ -41,7 +41,7 @@ const checkIcon = (status: CheckResult["status"]) =>
     <MinusCircle size={17} className="text-slate-500" />
   );
 
-const card = "rounded-3xl border border-white/[0.08] bg-gradient-to-br from-[#121522] to-[#0a0c13] p-6 sm:p-7";
+const card = "rounded-3xl border border-white/[0.08] bg-gradient-to-br from-[#121522] to-[#0a0c13] p-6 sm:p-7 2xl:p-9";
 const heading = "text-xs font-semibold uppercase tracking-[.16em] text-slate-500";
 const when = (iso: string) => new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 
@@ -70,8 +70,8 @@ function TemplateDetail() {
 
   return (
     <main className="min-h-screen bg-[#05070b] text-white">
-      <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8">
-        <header className="mb-10 flex items-center justify-between">
+      <div className="mx-auto max-w-5xl px-5 py-8 sm:px-8 2xl:max-w-[1500px] 2xl:px-10 2xl:py-10">
+        <header className="mb-10 flex items-center justify-between 2xl:mb-14">
           <Link to="/" className="flex items-center gap-3">
             <img src={xogridlogo} alt="XOGrid" className="h-9 w-auto" />
           </Link>
@@ -92,16 +92,16 @@ function TemplateDetail() {
         )}
 
         {detail && (
-          <div className="space-y-6">
+          <div className="space-y-6 2xl:space-y-8">
             <section className={card}>
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-400/15 bg-orange-500/[0.08] text-orange-300">
+              <div className="flex flex-wrap items-start justify-between gap-4 2xl:gap-8">
+                <div className="flex items-center gap-4 2xl:gap-6">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-400/15 bg-orange-500/[0.08] text-orange-300 2xl:h-16 2xl:w-16">
                     <FileCode2 size={26} />
                   </div>
                   <div>
                     <p className="text-xs font-medium uppercase tracking-[.15em] text-violet-300">{detail.publisher}</p>
-                    <h1 className="text-3xl font-bold tracking-tight">{detail.name}</h1>
+                    <h1 className="text-3xl font-bold tracking-tight 2xl:text-4xl">{detail.name}</h1>
                   </div>
                 </div>
                 <span
@@ -118,9 +118,9 @@ function TemplateDetail() {
                 </p>
               )}
 
-              <p className="mt-5 text-slate-300">{detail.description}</p>
+              <p className="mt-5 text-slate-300 2xl:mt-7 2xl:text-base">{detail.description}</p>
 
-              <div className="mt-6 flex flex-wrap items-center gap-5 text-sm text-slate-400">
+              <div className="mt-6 flex flex-wrap items-center gap-5 text-sm text-slate-400 2xl:mt-8 2xl:gap-8">
                 {detail.averageRating !== null ? (
                   <span className="flex items-center gap-2">
                     <Stars value={detail.averageRating} />
@@ -134,7 +134,7 @@ function TemplateDetail() {
                 {detail.openFlags > 0 && <span className="text-rose-300">{detail.openFlags} open flag(s)</span>}
               </div>
 
-              <div className="mt-6 rounded-2xl border border-white/[0.06] bg-black/20 p-4">
+              <div className="mt-6 rounded-2xl border border-white/[0.06] bg-black/20 p-4 2xl:mt-8 2xl:p-6">
                 <p className={heading}>Template identifier</p>
                 <div className="mt-1 flex items-start justify-between gap-3">
                   <p className="break-all font-mono text-sm text-slate-300">{detail.identifier}</p>
@@ -207,7 +207,7 @@ function TemplateDetail() {
             {detail.auditReport && (
               <section className={card}>
                 <p className={heading}>Automated checks (version {detail.auditReport.checkerVersion})</p>
-                <ul className="mt-4 space-y-3">
+                <ul className="mt-4 space-y-3 2xl:mt-6 2xl:space-y-4">
                   {detail.auditReport.results.map((check) => (
                     <li key={check.id} className="flex gap-3">
                       <span className="mt-0.5">{checkIcon(check.status)}</span>
@@ -230,7 +230,7 @@ function TemplateDetail() {
             {detail.reviews.length > 0 && (
               <section className={card}>
                 <p className={heading}>Moderator reviews</p>
-                <ul className="mt-4 space-y-4">
+                <ul className="mt-4 space-y-4 2xl:mt-6 2xl:space-y-6">
                   {detail.reviews.map((review) => (
                     <li key={review.id} className="border-l-2 border-violet-400/40 pl-4">
                       <p className="text-sm text-slate-200">{review.note}</p>
@@ -267,9 +267,9 @@ function TemplateDetail() {
                 <p className="mt-4 text-sm text-slate-400">No reviews yet. Be the first.</p>
               )}
 
-              <ul className="mt-5 space-y-5">
+              <ul className="mt-5 space-y-5 2xl:mt-7 2xl:space-y-6">
                 {reviews.data?.items.map((review) => (
-                  <li key={review.id} className="rounded-2xl border border-white/[0.06] bg-black/20 p-4">
+                  <li key={review.id} className="rounded-2xl border border-white/[0.06] bg-black/20 p-4 2xl:p-6">
                     <div className="flex items-center justify-between gap-3">
                       <Stars value={review.rating} />
                       <span className="text-xs text-slate-500">{when(review.createdAt)}</span>
