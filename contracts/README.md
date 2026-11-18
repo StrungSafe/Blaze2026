@@ -8,6 +8,7 @@ The method follows the guide [Building a BCH XO Template for a Smart Contract](h
 
 | System | Status | Template identifier | Based on | Credits |
 | --- | --- | --- | --- | --- |
+| [drip-mine](drip-mine/) | Chipnet verified (fund, drip, terminate); 26 offline tests | `6bb0264bc0b34a131ede0b90f77aeebc43f31f1a4ec600a61d7cc75d806d74bc` | [`drip-mine.cash`](https://gitlab.com/0353F40E/drip-mine/-/blob/5893d50ee9a531e0a31c6a637c3f2213509e8c02/drip-mine.cash) (0353F40E/drip-mine `5893d50e`, MIT-0), used unchanged; live at [vox.cash/drip](https://vox.cash/drip) ([2qx/vox](https://github.com/2qx/vox), Unlicense) | bitcoincashautist; 2qx (vox app) |
 | [revenue-split](revenue-split/) | Chipnet verified (fund + payout, earlier identifier `9674cee2…`); 23 offline tests | `c2f2492c2ef122b33262525efadb249d1664175968d0b86bc85214b193d3d987` | Draft [`RevenueSplit.cash`](https://github.com/XOGrid-Cash/Blaze2026_XOGrid/blob/8267aec7042fac07662ec5b2e765643d834fa127/contracts/RevenueSplit.cash) (XOGrid commit `8267aec`) | angelnath |
 | [token-burner](token-burner/) | Chipnet verified (deposits of tokens and BCH, single and batch burns); 21 offline tests | `9ab922f238d2d0a52c870a8c30afa88da6484143c6a24d0ddd82c311d7d62d5d` | [`burner.cash`](https://gitlab.com/dagurval/contract-burner/-/blob/f20240756800e07c091f35e0227967e7db8727d3/burner.cash) (dagurval/contract-burner `f2024075`, MIT per its README), used unchanged; live at [tokenburner.cash](https://www.tokenburner.cash/) | Dagur Valberg Johannsson |
 
@@ -32,7 +33,7 @@ Start a new system by copying [`_skeleton/`](_skeleton/).
 
 ```bash
 npm install                          # once
-npm run compile                      # .cash -> artifact/*.json with the cashc version its pragma asks for (0.9.3 or 0.14.0)
+npm run compile                      # .cash -> artifact/*.json with the cashc version its pragma asks for (0.9.3 or 0.14.0; files without a pragma are pinned in shared/compile.ts)
 npm run template:json                # template.ts -> template.json, prints the identifier
 npm test                             # every system's tests
 npm run typecheck
@@ -58,8 +59,9 @@ Before adapting third-party code, check that its licence allows it, and keep any
 
 ## Notes
 
-- Tooling versions are pinned to match `server/` (XO engine, utils, templates and Libauth) and to cashc and CashScript 0.14.0. Contracts adopted from other projects are rebuilt with their original compiler, so their deployed bytecode and address stay the same: `cashc-0.9` is cashc 0.9.3, and an npm override points its Libauth at our pinned 3.1, because its own Libauth 2 no longer loads in Node 22+. TokenBurner’s test proves the rebuilt bytecode matches upstream.
+- Tooling versions are pinned to match `server/` (XO engine, utils, templates and Libauth) and to cashc and CashScript 0.14.0. Contracts adopted from other projects are rebuilt with their original compiler, so their deployed bytecode and address stay the same: `cashc-0.9` is cashc 0.9.3, and an npm override points its Libauth at our pinned 3.1, because its own Libauth 2 no longer loads in Node 22+. TokenBurner’s and Drip Mine’s tests prove the rebuilt bytecode matches upstream. A verbatim file with no `pragma` (Drip Mine) is pinned to its compiler in `shared/compile.ts`, and sources are compiled with LF line endings so artifacts are the same on every OS.
 - Templates are passed to `parseTemplate` as objects, never through our own `JSON.stringify`: XO’s extended JSON writes bigints as `<bigint: 0n>`, and a plain `"0n"` string is not read as a number. Each system’s tests check that the committed `template.json` is current.
+- The shared chipnet test wallet in `.xo-demo` now watches the Drip Mine address, whose chipnet history is about 45,000 transactions, so engine start-up is slower and may need its retries. See drip-mine/README.md, "XO engine notes".
 - `shared/chipnet-tokens.ts` mints test CashTokens on chipnet for systems that need them.
 - npm only runs install scripts that `allowScripts` in `package.json` lists. `sqlite3` is allowed because the XO engine's state package loads it.
 - The tests import the registry audit from `../server/src/audit`. `vitest.config.ts` resolves its packages from this workspace, so `server/` needs no install of its own.

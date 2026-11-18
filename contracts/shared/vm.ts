@@ -98,6 +98,8 @@ export interface SpentCoin {
     valueSatoshis: bigint;
     /** CashTokens carried by the coin, in Libauth's Output token shape. */
     token?: Output['token'];
+    /** The spending input's sequence number. Defaults to 0xffffffff (final: no relative timelock). */
+    sequenceNumber?: number;
 }
 
 /**
@@ -120,7 +122,7 @@ export function verifySpend(coins: SpentCoin[], outputs: Output[]): true | strin
     const inputs: Input[] = coins.map((coin, index) => ({
         outpointTransactionHash: new Uint8Array(32).fill(index + 1),
         outpointIndex: 0,
-        sequenceNumber: 0xffffffff,
+        sequenceNumber: coin.sequenceNumber ?? 0xffffffff,
         unlockingBytecode: coin.unlockingBytecode,
     }));
     const sourceOutputs: Output[] = coins.map((coin) => ({
