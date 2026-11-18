@@ -22,12 +22,10 @@ docker run --rm -p 8080:8080 xogrid-template-tools    # http://localhost:8080
 
 From the repo root, use `docker build -t xogrid-template-tools templates`.
 
-- **Build context:** `templates/.dockerignore` is an allow-list that lets in only these:
-  - `package.json` and `package-lock.json`
-  - each system's `template.json`
-  - `web/`
-
-  So the chipnet test wallet in `templates/.xo-demo` never reaches the build.
+- **Build context:** `templates/.dockerignore` keeps out the chipnet test wallet (`.xo-demo`, mnemonic, keys, `.sqlite` files), `.env` files, `node_modules` and `dist`.
+  - It is a deny-list on purpose. Vercel builds with buildah, which doesn't look inside folders an allow-list's `*` excluded, so the systems' `template.json` files went missing.
+  - The Dockerfile uses fully qualified image names (`docker.io/...`), which buildah needs without a prompt.
+  - Both Docker and buildah build it.
 - **Logo:** `web/src/assets/xogridlogo.png` is a copy of `frontend/src/assets/images/xogridlogo.png`, so `templates/` builds on its own. A test fails if the two differ; to update, copy the file again.
 - **Page headers:** `web/nginx.conf` sends `X-Robots-Tag: noindex` and doesn't cache `index.html`. Built assets are cached for good.
 - **Image:** about 75 MB.
