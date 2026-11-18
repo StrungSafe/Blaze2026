@@ -1,5 +1,6 @@
 import { Wrench } from 'lucide-react';
-import logo from '../../../frontend/src/assets/images/xogridlogo.png';
+// A copy of frontend/src/assets/images/xogridlogo.png, so templates/ builds on its own (a test checks they match).
+import logo from './assets/xogridlogo.png';
 import { DripMinePanel } from './components/DripMinePanel';
 import { Pill, cardClass } from './components/ui';
 

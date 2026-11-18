@@ -31,8 +31,8 @@ export default defineConfig({
         host: '127.0.0.1',
         port: 5180,
         strictPort: true,
-        // The app reads template.json files from the system folders and the logo from frontend/.
-        fs: { allow: [here('..'), here('../../frontend/src/assets')] },
+        // The app reads template.json files from the system folders next to web/.
+        fs: { allow: [here('..')] },
     },
     build: {
         outDir: here('dist'),
