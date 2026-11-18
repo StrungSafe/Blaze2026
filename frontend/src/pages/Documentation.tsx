@@ -933,6 +933,166 @@ function Documentation() {
           .xg-docs-footer { flex-direction: column; }
         }
 
+        /* Large desktop monitors only */
+        @media (min-width: 1920px) {
+          .xg-docs-header {
+            height: 86px;
+            padding-left: max(6%, calc((100vw - 1900px) / 2));
+            padding-right: max(6%, calc((100vw - 1900px) / 2));
+          }
+
+          .xg-docs-layout {
+            max-width: 1900px;
+            min-height: calc(100vh - 86px);
+          }
+
+          .xg-docs-sidebar {
+            top: calc(86px + var(--banner-offset, 0px));
+            left: max(0px, calc((100vw - 1900px) / 2));
+            width: 310px;
+            padding: 45px 26px 70px;
+          }
+
+          .xg-docs-main {
+            width: calc(100% - 310px);
+            max-width: 1590px;
+            margin-left: 310px;
+            padding: 70px 90px 120px;
+          }
+
+          .xg-docs-hero {
+            padding: 60px;
+            border-radius: 20px;
+          }
+
+          .xg-docs-hero h1 {
+            max-width: 800px;
+          }
+
+          .xg-docs-hero p {
+            max-width: 720px;
+          }
+
+          .xg-docs-section {
+            padding-top: 90px;
+          }
+
+          .xg-docs-section-intro {
+            max-width: 850px;
+            margin-bottom: 34px;
+          }
+
+          .xg-docs-card-grid {
+            gap: 20px;
+          }
+
+          .xg-docs-card {
+            padding: 30px;
+          }
+
+          .xg-docs-steps {
+            gap: 16px;
+          }
+
+          .xg-docs-step {
+            padding: 24px;
+            gap: 20px;
+          }
+
+          .xg-docs-callout {
+            padding: 22px;
+          }
+
+          .xg-docs-code {
+            padding: 26px;
+          }
+
+          .xg-docs-faq-list {
+            gap: 14px;
+          }
+
+          .xg-docs-faq button {
+            padding: 22px;
+          }
+
+          .xg-docs-faq-answer p {
+            padding: 0 22px 22px;
+          }
+
+          .xg-docs-bottom-cta {
+            margin-top: 100px;
+            padding: 48px;
+          }
+
+          .xg-docs-footer {
+            margin-top: 70px;
+            padding-top: 36px;
+          }
+        }
+
+        /* Extra-wide monitors */
+        @media (min-width: 2560px) {
+          .xg-docs-header {
+            height: 92px;
+          }
+
+          .xg-docs-layout {
+            max-width: 2200px;
+            min-height: calc(100vh - 92px);
+          }
+
+          .xg-docs-sidebar {
+            top: calc(92px + var(--banner-offset, 0px));
+            left: max(0px, calc((100vw - 2200px) / 2));
+            width: 350px;
+            padding: 52px 30px 80px;
+          }
+
+          .xg-docs-main {
+            width: calc(100% - 350px);
+            max-width: 1850px;
+            margin-left: 350px;
+            padding: 85px 110px 140px;
+          }
+
+          .xg-docs-hero {
+            padding: 72px;
+          }
+
+          .xg-docs-section {
+            padding-top: 105px;
+          }
+
+          .xg-docs-card-grid {
+            gap: 24px;
+          }
+
+          .xg-docs-card {
+            padding: 36px;
+          }
+
+          .xg-docs-steps {
+            gap: 19px;
+          }
+
+          .xg-docs-step {
+            padding: 28px;
+          }
+
+          .xg-docs-callout {
+            padding: 26px;
+          }
+
+          .xg-docs-code {
+            padding: 32px;
+          }
+
+          .xg-docs-bottom-cta {
+            padding: 58px;
+            margin-top: 115px;
+          }
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .xg-docs *,
           .xg-docs *::before,

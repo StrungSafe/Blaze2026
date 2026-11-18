@@ -182,14 +182,14 @@ function ConnectWalletModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="connect-wallet-title"
-        className="wallet-modal relative w-full max-w-[340px] rounded-[19px] p-[1px] sm:max-w-[390px] lg:max-w-[690px]"
+        className="wallet-modal relative w-full max-w-[340px] rounded-[19px] p-[1px] sm:max-w-[390px] lg:max-w-[690px] 2xl:max-w-[820px] 3xl:max-w-[940px] 4xl:max-w-[1050px]"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="wallet-modal-border absolute inset-0 rounded-[19px]">
           <div className="wallet-modal-border-glow" />
         </div>
 
-        <div className="relative overflow-hidden rounded-[18px] border border-white/[0.06] bg-[#080A12] p-4 sm:p-5 lg:p-6">
+        <div className="relative overflow-hidden rounded-[18px] border border-white/[0.06] bg-[#080A12] p-4 sm:p-5 lg:p-6 2xl:rounded-[22px] 2xl:p-8 3xl:p-10 4xl:p-12">
           <div className="pointer-events-none absolute -left-20 -top-20 h-40 w-40 rounded-full bg-violet-600/15 blur-[75px]" />
           <div className="pointer-events-none absolute -right-20 bottom-0 h-40 w-40 rounded-full bg-orange-500/10 blur-[75px]" />
 
@@ -436,60 +436,60 @@ function ConnectWalletModal({
                 type="button"
                 onClick={closeModal}
                 aria-label="Close wallet modal"
-                className="absolute right-0 top-0 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-slate-400 transition hover:rotate-90 hover:border-orange-500/40 hover:text-orange-400"
+                className="absolute right-0 top-0 z-20 flex h-7 w-7 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-slate-400 transition hover:rotate-90 hover:border-orange-500/40 hover:text-orange-400 2xl:h-9 2xl:w-9"
               >
-                <X size={15} />
+                <X size={15} className="2xl:h-5 2xl:w-5" />
               </button>
 
-              <div className="flex flex-row items-center gap-6">
+              <div className="flex flex-row items-center gap-6 2xl:gap-10 3xl:gap-14">
                 <div className="min-w-0 flex-1">
-                  <div className="wallet-icon-animation relative mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-orange-400 lg:mx-0">
+                  <div className="wallet-icon-animation relative mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-orange-400 lg:mx-0 2xl:h-14 2xl:w-14 2xl:rounded-2xl 3xl:h-16 3xl:w-16">
                     <div className="wallet-icon-ring absolute inset-0 rounded-xl border border-orange-400/30" />
-                    <Wallet size={21} />
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-[#080A12] bg-orange-500 text-white">
-                      <Sparkles size={8} />
+                    <Wallet size={21} className="2xl:h-7 2xl:w-7" />
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-[#080A12] bg-orange-500 text-white 2xl:h-5 2xl:w-5">
+                      <Sparkles size={8} className="2xl:h-3 2xl:w-3" />
                     </span>
                   </div>
 
-                  <div className="mt-3 text-center lg:text-left">
-                    <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full border border-orange-500/15 bg-orange-500/[0.07] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-orange-400">
+                  <div className="mt-3 text-center lg:text-left 2xl:mt-5">
+                    <div className="mb-1.5 inline-flex items-center gap-1.5 rounded-full border border-orange-500/15 bg-orange-500/[0.07] px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-orange-400 2xl:px-3.5 2xl:py-1.5 2xl:text-[11px]">
                       <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-orange-400" />
                       Secure connection
                     </div>
 
-                    <h2 className="text-xl font-bold tracking-tight text-white">
+                    <h2 className="text-xl font-bold tracking-tight text-white 2xl:text-2xl 3xl:text-3xl">
                       Connect your wallet
                     </h2>
 
-                    <p className="mx-auto mt-1 max-w-[270px] text-xs leading-5 text-slate-400 lg:mx-0">
+                    <p className="mx-auto mt-1 max-w-[270px] text-xs leading-5 text-slate-400 lg:mx-0 2xl:mt-2 2xl:max-w-[380px] 2xl:text-sm 2xl:leading-7 3xl:text-base">
                       Connect your Bitcoin Cash wallet to access XOGrid.
                     </p>
                   </div>
 
-                  <div className="wallet-option-card mt-4 rounded-xl border border-white/[0.08] bg-white/[0.035] p-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-orange-500/15 bg-orange-500/10 text-orange-400">
-                        <Wallet size={19} />
+                  <div className="wallet-option-card mt-4 rounded-xl border border-white/[0.08] bg-white/[0.035] p-3 2xl:mt-6 2xl:rounded-2xl 2xl:p-5 3xl:p-6">
+                    <div className="flex items-center gap-2.5 2xl:gap-4">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-orange-500/15 bg-orange-500/10 text-orange-400 2xl:h-12 2xl:w-12 2xl:rounded-xl">
+                        <Wallet size={19} className="2xl:h-6 2xl:w-6" />
                       </div>
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="text-xs font-bold text-white">
+                          <p className="text-xs font-bold text-white 2xl:text-base">
                             WizardConnect
                           </p>
-                          <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[8px] font-semibold text-emerald-400">
+                          <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[8px] font-semibold text-emerald-400 2xl:px-2.5 2xl:py-1 2xl:text-[10px]">
                             Supported
                           </span>
                         </div>
 
-                        <p className="mt-0.5 text-[10px] text-slate-400">
+                        <p className="mt-0.5 text-[10px] text-slate-400 2xl:text-xs">
                           Compatible Bitcoin Cash HD wallets
                         </p>
                       </div>
                     </div>
 
-                    <div className="mt-3 border-t border-white/[0.07] pt-3">
-                      <p className="text-[11px] leading-5 text-slate-400">
+                    <div className="mt-3 border-t border-white/[0.07] pt-3 2xl:mt-5 2xl:pt-5">
+                      <p className="text-[11px] leading-5 text-slate-400 2xl:text-sm 2xl:leading-7">
                         Connect an HD wallet that supports{" "}
                         <span className="font-semibold text-orange-400">
                           WizardConnect
@@ -503,7 +503,7 @@ function ConnectWalletModal({
                         type="button"
                         onClick={connectWallet}
                         disabled={connecting}
-                        className="wallet-connect-button mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3 text-xs font-bold text-white shadow-lg shadow-orange-500/15 transition hover:-translate-y-0.5 hover:from-orange-400 hover:to-orange-300 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="wallet-connect-button mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3 text-xs font-bold text-white shadow-lg shadow-orange-500/15 transition hover:-translate-y-0.5 hover:from-orange-400 hover:to-orange-300 disabled:cursor-not-allowed disabled:opacity-60 2xl:mt-5 2xl:rounded-xl 2xl:px-6 2xl:py-4 2xl:text-sm"
                       >
                         {connecting ? (
                           <Loader2 size={15} className="animate-spin" />
@@ -517,85 +517,84 @@ function ConnectWalletModal({
                     )}
 
                     {connected && (
-                      <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.07] p-3">
-                        <Check size={17} className="text-emerald-400" />
-                        <p className="text-xs font-semibold text-emerald-400">
+                      <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.07] p-3 2xl:mt-5 2xl:rounded-xl 2xl:p-4">
+                        <Check size={17} className="text-emerald-400 2xl:h-5 2xl:w-5" />
+                        <p className="text-xs font-semibold text-emerald-400 2xl:text-sm">
                           Connected to {walletName}
                         </p>
                       </div>
                     )}
 
                     {status && !connected && (
-                      <div className="mt-2 flex items-start gap-2 rounded-lg border border-orange-500/10 bg-orange-500/[0.05] p-2">
+                      <div className="mt-2 flex items-start gap-2 rounded-lg border border-orange-500/10 bg-orange-500/[0.05] p-2 2xl:mt-3 2xl:rounded-xl 2xl:p-3">
                         <span className="mt-1 h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-orange-400" />
-                        <p className="text-[10px] leading-4 text-orange-300">
+                        <p className="text-[10px] leading-4 text-orange-300 2xl:text-xs 2xl:leading-5">
                           {status}
                         </p>
                       </div>
                     )}
                   </div>
-
                 </div>
 
                 <div className="min-w-0 flex-1">
                   {connected ? (
-                    <div className="flex min-h-[290px] flex-col items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-5 text-center">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
-                        <Check size={25} />
+                    <div className="flex min-h-[290px] flex-col items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/[0.04] p-5 text-center 2xl:min-h-[390px] 2xl:rounded-2xl 2xl:p-8 3xl:min-h-[440px]">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 2xl:h-16 2xl:w-16 2xl:rounded-2xl">
+                        <Check size={25} className="2xl:h-8 2xl:w-8" />
                       </div>
-                      <p className="mt-3 text-sm font-bold text-white">
+                      <p className="mt-3 text-sm font-bold text-white 2xl:mt-5 2xl:text-lg">
                         Wallet connected
                       </p>
                       {address && (
                         <p
                           title={address}
-                          className="mt-1 font-mono text-[11px] text-slate-300"
+                          className="mt-1 font-mono text-[11px] text-slate-300 2xl:text-sm"
                         >
                           {shortenAddress(address)}
                         </p>
                       )}
-                      <p className="mt-1 text-[10px] text-slate-400">
+                      <p className="mt-1 text-[10px] text-slate-400 2xl:text-xs">
                         {walletName} is used across XOGrid until you disconnect.
                       </p>
                       <button
                         type="button"
                         onClick={disconnectWallet}
-                        className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold text-slate-300 transition hover:border-rose-400/40 hover:text-rose-300"
+                        className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold text-slate-300 transition hover:border-rose-400/40 hover:text-rose-300 2xl:mt-6 2xl:rounded-xl 2xl:px-5 2xl:py-3 2xl:text-sm"
                       >
                         Disconnect
                       </button>
                     </div>
                   ) : qr ? (
-                    <div className="wallet-qr-panel flex flex-col items-center rounded-xl border border-white/[0.08] bg-black/30 p-4 text-center">
-                      <div className="mb-3 flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/[0.07] px-2.5 py-1">
+                    <div className="wallet-qr-panel flex flex-col items-center rounded-xl border border-white/[0.08] bg-black/30 p-4 text-center 2xl:rounded-2xl 2xl:p-7 3xl:p-9">
+                      <div className="mb-3 flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/[0.07] px-2.5 py-1 2xl:mb-5 2xl:px-3.5 2xl:py-1.5">
                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                        <span className="text-[9px] font-semibold uppercase tracking-wider text-emerald-400">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-emerald-400 2xl:text-[11px]">
                           Ready to connect
                         </span>
                       </div>
 
                       <div className="flex items-center gap-2">
-                        <ScanLine size={16} className="text-orange-400" />
-                        <p className="text-sm font-bold text-white">
+                        <ScanLine size={16} className="text-orange-400 2xl:h-5 2xl:w-5" />
+                        <p className="text-sm font-bold text-white 2xl:text-lg">
                           Scan to connect
                         </p>
                       </div>
 
-                      <p className="mt-1.5 max-w-[220px] text-[10px] leading-4 text-slate-400">
+                      <p className="mt-1.5 max-w-[220px] text-[10px] leading-4 text-slate-400 2xl:mt-2 2xl:max-w-[300px] 2xl:text-xs 2xl:leading-6">
                         Scan with Selene, Paytaca or another compatible wallet.
                       </p>
 
-                      <div className="mt-3 rounded-xl bg-white p-2 shadow-[0_0_30px_rgba(249,115,22,0.10)]">
+                      <div className="mt-3 rounded-xl bg-white p-2 shadow-[0_0_30px_rgba(249,115,22,0.10)] 2xl:mt-5 2xl:rounded-2xl 2xl:p-3">
                         <img
                           src={qr}
                           alt="WizardConnect wallet QR code"
                           width={190}
                           height={190}
-                          className="h-[170px] w-[170px] rounded-md"
+                          className="h-[170px] w-[170px] rounded-md 2xl:h-[220px] 2xl:w-[220px] 3xl:h-[250px] 3xl:w-[250px]"
                         />
                       </div>
 
-                      <p className="mt-2 text-[10px] text-orange-400">
+                      <p className="mt-2 text-[10px] text-orange-400 2xl:mt-3 2xl:text-xs">
                         {status || "Waiting for wallet connection..."}
                       </p>
 
@@ -603,7 +602,7 @@ function ConnectWalletModal({
                         <button
                           type="button"
                           onClick={copyWalletLink}
-                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 text-[10px] font-semibold text-slate-300 transition hover:border-orange-500/30 hover:text-white"
+                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2.5 text-[10px] font-semibold text-slate-300 transition hover:border-orange-500/30 hover:text-white 2xl:mt-5 2xl:rounded-xl 2xl:px-5 2xl:py-3.5 2xl:text-xs"
                         >
                           {copied ? (
                             <Check size={13} className="text-emerald-400" />
@@ -615,18 +614,18 @@ function ConnectWalletModal({
                       )}
                     </div>
                   ) : (
-                    <div className="flex min-h-[290px] flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-5 text-center">
-                      <div className="qr-placeholder-icon flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/[0.08] text-orange-400">
-                        <ScanLine size={22} />
+                    <div className="flex min-h-[290px] flex-col items-center justify-center rounded-xl border border-dashed border-white/10 bg-white/[0.02] p-5 text-center 2xl:min-h-[390px] 2xl:rounded-2xl 2xl:p-8 3xl:min-h-[440px]">
+                      <div className="qr-placeholder-icon flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/[0.08] text-orange-400 2xl:h-16 2xl:w-16 2xl:rounded-2xl">
+                        <ScanLine size={22} className="2xl:h-7 2xl:w-7" />
                       </div>
-                      <p className="mt-3 text-sm font-semibold text-white">
+                      <p className="mt-3 text-sm font-semibold text-white 2xl:mt-5 2xl:text-lg">
                         Desktop wallet connection
                       </p>
-                      <p className="mt-1 max-w-[220px] text-[10px] leading-5 text-slate-500">
+                      <p className="mt-1 max-w-[220px] text-[10px] leading-5 text-slate-500 2xl:mt-2 2xl:max-w-[300px] 2xl:text-xs 2xl:leading-6">
                         Generate a QR code and scan it using your compatible
                         Bitcoin Cash wallet.
                       </p>
-                      <div className="mt-3 flex items-center gap-1.5 text-[9px] uppercase tracking-wider text-slate-600">
+                      <div className="mt-3 flex items-center gap-1.5 text-[9px] uppercase tracking-wider text-slate-600 2xl:mt-5 2xl:text-[11px]">
                         <ShieldCheck size={12} />
                         Secure connection
                       </div>
@@ -639,22 +638,22 @@ function ConnectWalletModal({
             {error && (
               <div
                 role="alert"
-                className="mt-3 rounded-lg border border-rose-500/20 bg-rose-500/[0.08] p-2.5 text-center text-[11px] leading-5 text-rose-300"
+                className="mt-3 rounded-lg border border-rose-500/20 bg-rose-500/[0.08] p-2.5 text-center text-[11px] leading-5 text-rose-300 2xl:mt-5 2xl:rounded-xl 2xl:p-4 2xl:text-sm"
               >
                 {error}
               </div>
             )}
 
-            <div className="mt-4 hidden items-start gap-2.5 border-t border-white/[0.07] pt-3 lg:flex">
+            <div className="mt-4 hidden items-start gap-2.5 border-t border-white/[0.07] pt-3 lg:flex 2xl:mt-6 2xl:gap-4 2xl:pt-5">
               <ShieldCheck
                 size={15}
-                className="mt-0.5 shrink-0 text-emerald-400"
+                className="mt-0.5 shrink-0 text-emerald-400 2xl:h-5 2xl:w-5"
               />
               <div>
-                <p className="text-[10px] font-semibold text-slate-300">
+                <p className="text-[10px] font-semibold text-slate-300 2xl:text-xs">
                   Your wallet. Your control.
                 </p>
-                <p className="mt-0.5 text-[9px] leading-4 text-slate-500">
+                <p className="mt-0.5 text-[9px] leading-4 text-slate-500 2xl:text-[11px] 2xl:leading-5">
                   XOGrid will never ask for your recovery phrase or private
                   keys.
                 </p>

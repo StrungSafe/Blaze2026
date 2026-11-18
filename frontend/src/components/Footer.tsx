@@ -205,29 +205,29 @@ function Footer() {
       <div className="pointer-events-none absolute -top-32 left-1/4 h-72 w-72 rounded-full bg-purple-600/[0.07] blur-[120px]" />
       <div className="pointer-events-none absolute -right-20 bottom-0 h-64 w-64 rounded-full bg-orange-500/[0.05] blur-[110px]" />
 
-      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-8 pt-16 sm:px-8 lg:px-12">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 pb-8 pt-16 sm:px-8 lg:px-12 2xl:max-w-[1600px] 2xl:px-16 2xl:pb-10 2xl:pt-20 3xl:max-w-[1850px] 3xl:px-20 3xl:pb-12 3xl:pt-24 4xl:max-w-[2100px] 4xl:px-24">
         {/* Main footer */}
-        <div className="grid grid-cols-1 gap-12 border-b border-white/[0.08] pb-14 md:grid-cols-2 lg:grid-cols-4 lg:gap-10">
+        <div className="grid grid-cols-1 gap-12 border-b border-white/[0.08] pb-14 md:grid-cols-2 lg:grid-cols-4 lg:gap-10 2xl:gap-14 2xl:pb-16 3xl:gap-16 3xl:pb-20">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="inline-flex items-center gap-3">
               <img
                 src={xogridlogo}
                 alt="XOGrid logo"
-                className="h-10 w-auto object-contain"
+                className="h-10 w-auto object-contain 2xl:h-12 3xl:h-14"
               />
             </Link>
 
-            <p className="mt-6 max-w-md text-sm leading-7 text-white/45">
+            <p className="mt-6 max-w-md text-sm leading-7 text-white/45 2xl:mt-8 2xl:max-w-2xl 2xl:text-base 2xl:leading-8 3xl:text-lg 3xl:leading-9">
               Discover, publish, and evaluate XO wallet templates.
               XOGrid gives developers a transparent registry for
               exploring template identities, automated checks, and
               community accountability.
             </p>
 
-            <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span className="text-xs text-white/55">
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-2 2xl:mt-8 2xl:gap-3 2xl:px-4 2xl:py-2.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 2xl:h-2.5 2xl:w-2.5" />
+              <span className="text-xs text-white/55 2xl:text-sm">
                 Built for the Bitcoin Cash ecosystem
               </span>
             </div>
@@ -235,42 +235,46 @@ function Footer() {
 
           {/* Platform */}
           <div>
-            <h3 className="text-sm font-semibold text-white">Platform</h3>
-            <ul className="mt-6 space-y-5">
+            <h3 className="text-sm font-semibold text-white 2xl:text-base 3xl:text-lg">
+              Platform
+            </h3>
+            <ul className="mt-6 space-y-5 2xl:mt-8 2xl:space-y-6">
               {renderLinks(footerLinks.Platform)}
             </ul>
           </div>
 
           {/* Resources */}
           <div>
-            <h3 className="text-sm font-semibold text-white">Resources</h3>
-            <ul className="mt-6 space-y-5">
+            <h3 className="text-sm font-semibold text-white 2xl:text-base 3xl:text-lg">
+              Resources
+            </h3>
+            <ul className="mt-6 space-y-5 2xl:mt-8 2xl:space-y-6">
               {renderLinks(footerLinks.Resources)}
             </ul>
           </div>
         </div>
 
         {/* Bottom section */}
-        <div className="flex flex-col gap-6 pt-8 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-white/35">
+        <div className="flex flex-col gap-6 pt-8 sm:flex-row sm:items-center sm:justify-between 2xl:gap-10 2xl:pt-10 3xl:pt-12">
+          <p className="text-xs text-white/35 2xl:text-sm">
             © {currentYear} XOGrid. All rights reserved.
           </p>
 
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4 2xl:gap-6">
             <a
-              href={GITHUB_URL}
+              href="https://github.com/XOGrid-Cash/Blaze2026_XOGrid"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="XOGrid GitHub"
               title="GitHub"
-              className="xogrid-footer-social"
+              className="xogrid-footer-social 2xl:!h-11 2xl:!w-11"
             >
               <SiGithub size={17} />
             </a>
 
             <Link
               to="/policy"
-              className={`xogrid-footer-policy text-xs ${
+              className={`xogrid-footer-policy text-xs 2xl:text-sm ${
                 location.pathname === "/policy" ? "is-active" : ""
               }`}
             >
@@ -283,24 +287,24 @@ function Footer() {
                 window.scrollTo({ top: 0, behavior: "smooth" })
               }
               aria-label="Back to top"
-              className="group flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-white/50 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/40 hover:bg-orange-500/10 hover:text-orange-500"
+              className="group flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-white/50 transition-all duration-300 hover:-translate-y-1 hover:border-orange-500/40 hover:bg-orange-500/10 hover:text-orange-500 2xl:h-11 2xl:w-11"
             >
               <ArrowUp
                 size={16}
-                className="transition-transform duration-300 group-hover:-translate-y-1"
+                className="transition-transform duration-300 group-hover:-translate-y-1 2xl:h-5 2xl:w-5"
               />
             </button>
           </div>
         </div>
 
         {/* Disclaimer */}
-        <div className="mt-8 flex items-start gap-3 border-t border-white/[0.06] pt-6">
+        <div className="mt-8 flex items-start gap-3 border-t border-white/[0.06] pt-6 2xl:mt-10 2xl:gap-4 2xl:pt-8 3xl:mt-12">
           <ShieldCheck
             size={16}
-            className="mt-0.5 shrink-0 text-orange-500/70"
+            className="mt-0.5 shrink-0 text-orange-500/70 2xl:h-5 2xl:w-5"
           />
 
-          <p className="max-w-3xl text-[11px] leading-6 text-white/30">
+          <p className="max-w-3xl text-[11px] leading-6 text-white/30 2xl:max-w-5xl 2xl:text-xs 2xl:leading-7">
             XOGrid is a template registry, not a wallet or security
             certification service. Automated checks and community
             reviews provide information to help users make their own
@@ -310,7 +314,7 @@ function Footer() {
       </div>
 
       {/* Animated waves */}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 overflow-hidden sm:h-48 lg:h-60">
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 overflow-hidden sm:h-48 lg:h-60 2xl:h-72 3xl:h-80">
         {/* Purple wave */}
         <svg
           className="absolute bottom-0 left-0 h-full w-[200%] animate-wave"
