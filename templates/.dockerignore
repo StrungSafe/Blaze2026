@@ -1,12 +1,20 @@
 # Build context for templates/Dockerfile (context: templates/).
-# Allow-list: only what the template tools page needs.
-*
-!package.json
-!package-lock.json
-!*/template.json
-!web/**
+#
+# A deny-list on purpose. An allow-list (`*` then `!*/template.json`) works in Docker, but buildah (used by Vercel) does
+# not look inside folders that `*` excluded, so the systems' template.json files went missing from the build.
 
-# Never send these, even inside allowed folders.
+# Chipnet test wallets and engine databases: mnemonic, keys, invitations. Never in an image.
+.xo-demo
+**/.xo-demo
+**/*.sqlite
+**/mnemonic*.txt
+**/minter-key*.txt
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Installed and built output; the image installs and builds its own.
 **/node_modules
 **/dist
-.xo-demo
+*.log
