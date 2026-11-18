@@ -54,6 +54,9 @@ The invitation is complete: it holds the coin as its input, the input's unlockin
 ## Token Burner (`#token-burner`)
 
 1. Pick **chipnet** or **mainnet**. The page lists the coins at the shared TokenBurner address, with their tokens: fungible amount, NFT capability and commitment, and category.
+   - Fulcrum's `listunspent` leaves out token-carrying coins unless asked, so the page requests `include_tokens`.
+   - If a server refuses that filter, the page falls back to the plain request and warns that token coins may be missing.
+   - Unconfirmed coins are listed too.
 2. Tick the coins to burn. **Select all** sweeps the whole address. Unconfirmed coins are fine, because the contract has no age check.
 3. Optionally type a farewell message, then click **Burn N coins**.
 4. Click **Copy invitation** and import it in your XO wallet.
@@ -97,7 +100,12 @@ Deposits aren't built here. They spend the wallet's own coins, so the XO wallet 
   - the message limit
   - that the copied JSON carries every input's tokens and unlocking bytecode
 - On 2026-11-18, the page built a chipnet burn of both coins then at the burner (4,812 and 2,000 sats, BCH only). XO in Node rebuilt the identical transaction from the copied JSON, and chipnet accepted it: `dfa10d4f704104cd58fea0c87fe7ca55a6700e75d6f0b521d8ab09c6a0b1a4fa`.
-- A chipnet burn with tokens on-chain is still to do. The test wallet's spendable BCH is too low to deposit test tokens first; the token inputs are covered by the tests above.
+- **Token coins were missing from the list at first.** The page called `listunspent` without a token filter, so Fulcrum left out every token coin: mainnet showed none, and chipnet only plain-BCH coins. With `include_tokens`:
+  - mainnet lists its 3 waiting token coins
+  - chipnet lists 9
+  - `test/electrum.test.ts` parses the real mainnet response
+- On 2026-11-18, the page built a chipnet burn of a token coin: `a55beff1…c6b1:0`, holding 1 unit of `00929d9c…d17f`. XO in Node rebuilt the identical transaction from the copied JSON, and chipnet accepted it: `e34d7f31efe22bb0a802b5d09eb5ed5e5b73fce4cbc4a1018ae57ccf3683962d`.
+- Mainnet: the page builds an `xpub`-signed burn of the 3 waiting token coins that passes XO validation and the VM check. Nothing was broadcast.
 
 ## Adding a template
 

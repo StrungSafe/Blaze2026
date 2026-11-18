@@ -30,7 +30,7 @@ export interface UnspentCoin {
     token?: CoinToken;
 }
 
-interface ElectrumUnspent {
+export interface ElectrumUnspent {
     tx_hash: string;
     tx_pos: number;
     value: number;
@@ -38,11 +38,27 @@ interface ElectrumUnspent {
     token_data?: { category: string; amount?: string | number; nft?: { capability: NftCapability; commitment?: string } };
 }
 
-const toCoinToken = (data: NonNullable<ElectrumUnspent['token_data']>): CoinToken => ({
+export const toCoinToken = (data: NonNullable<ElectrumUnspent['token_data']>): CoinToken => ({
     category: data.category,
     amount: BigInt(data.amount ?? 0),
     ...(data.nft ? { nft: { capability: data.nft.capability, commitment: data.nft.commitment ?? '' } } : {}),
 });
+
+export const toUnspentCoin = (coin: ElectrumUnspent): UnspentCoin => ({
+    transactionHash: coin.tx_hash,
+    outputIndex: coin.tx_pos,
+    valueSatoshis: BigInt(coin.value),
+    height: coin.height > 0 ? coin.height : 0,
+    hasTokens: coin.token_data !== undefined,
+    ...(coin.token_data ? { token: toCoinToken(coin.token_data) } : {}),
+});
+
+export interface UnspentCoinList {
+    coins: UnspentCoin[];
+    tipHeight: number;
+    /** The server refused the token filter, so it may have left out coins that carry tokens. */
+    tokensMayBeHidden: boolean;
+}
 
 /** Electrum's script hash: sha256 of the locking bytecode, byte-reversed. */
 export const electrumScriptHash = (lockingBytecode: Uint8Array): string => binToHex(sha256.hash(lockingBytecode).reverse());
@@ -78,20 +94,35 @@ async function withClient<Result>(network: Network, use: (request: (method: stri
     throw new Error(`No ${network} Electrum server reachable. ${failures.join('; ')}`);
 }
 
-/** Unspent coins at a locking bytecode, plus the current tip height. Uses listunspent, never the address history. */
-export async function listUnspentCoins(network: Network, lockingBytecode: Uint8Array): Promise<{ coins: UnspentCoin[]; tipHeight: number }> {
-    return withClient(network, async (request) => {
-        const unspent = (await request('blockchain.scripthash.listunspent', electrumScriptHash(lockingBytecode))) as ElectrumUnspent[];
-        const tip = (await request('blockchain.headers.get_tip')) as { height: number };
-        const coins = unspent.map((coin) => ({
-            transactionHash: coin.tx_hash,
-            outputIndex: coin.tx_pos,
-            valueSatoshis: BigInt(coin.value),
-            height: coin.height > 0 ? coin.height : 0,
-            hasTokens: coin.token_data !== undefined,
-            ...(coin.token_data ? { token: toCoinToken(coin.token_data) } : {}),
-        }));
+/**
+ * Unspent coins at a locking bytecode, including unconfirmed ones, plus the current tip height. Uses listunspent, never
+ * the address history.
+ *
+ * Fulcrum leaves out coins that carry CashTokens unless listunspent gets a token filter, so this asks for
+ * `include_tokens`. A server that doesn't know the filter gets the plain request, and the result says tokens may be
+ * hidden.
+ */
+export async function listUnspentCoins(network: Network, lockingBytecode: Uint8Array): Promise<UnspentCoinList> {
+    const scriptHash = electrumScriptHash(lockingBytecode);
 
-        return { coins: coins.sort((a, b) => (b.valueSatoshis > a.valueSatoshis ? 1 : b.valueSatoshis < a.valueSatoshis ? -1 : 0)), tipHeight: tip.height };
+    return withClient(network, async (request) => {
+        let unspent: ElectrumUnspent[];
+        let tokensMayBeHidden = false;
+
+        try {
+            unspent = (await request('blockchain.scripthash.listunspent', scriptHash, 'include_tokens')) as ElectrumUnspent[];
+        } catch {
+            unspent = (await request('blockchain.scripthash.listunspent', scriptHash)) as ElectrumUnspent[];
+            tokensMayBeHidden = true;
+        }
+
+        const tip = (await request('blockchain.headers.get_tip')) as { height: number };
+        const coins = unspent.map(toUnspentCoin);
+
+        return {
+            coins: coins.sort((a, b) => (b.valueSatoshis > a.valueSatoshis ? 1 : b.valueSatoshis < a.valueSatoshis ? -1 : 0)),
+            tipHeight: tip.height,
+            tokensMayBeHidden,
+        };
     });
 }
