@@ -1,19 +1,37 @@
 import { Wrench } from 'lucide-react';
 // A copy of frontend/src/assets/images/xogridlogo.png, so templates/ builds on its own (a test checks they match).
 import logo from './assets/xogridlogo.png';
+import { useEffect, useState, type ReactNode } from 'react';
 import { DripMinePanel } from './components/DripMinePanel';
+import { TokenBurnerPanel } from './components/TokenBurnerPanel';
 import { Pill, cardClass } from './components/ui';
 
-/** Templates in this workspace. Only those with a panel can make invitations so far. */
-const TEMPLATES = [
-    { name: 'Drip Mine', folder: 'drip-mine', ready: true },
-    { name: 'Block Points', folder: 'block-points', ready: false },
-    { name: 'Badgers Stake', folder: 'badgers-stake', ready: false },
-    { name: 'Token Burner', folder: 'token-burner', ready: false },
-    { name: 'Revenue Split', folder: 'revenue-split', ready: false },
+/** Templates in this workspace. Those with a panel can make invitations; the URL hash (#drip-mine) picks one. */
+const TEMPLATES: { name: string; folder: string; panel?: () => ReactNode }[] = [
+    { name: 'Drip Mine', folder: 'drip-mine', panel: () => <DripMinePanel /> },
+    { name: 'Token Burner', folder: 'token-burner', panel: () => <TokenBurnerPanel /> },
+    { name: 'Block Points', folder: 'block-points' },
+    { name: 'Badgers Stake', folder: 'badgers-stake' },
+    { name: 'Revenue Split', folder: 'revenue-split' },
 ];
 
+const fromHash = (): string => {
+    const folder = window.location.hash.slice(1);
+
+    return TEMPLATES.some((template) => template.folder === folder && template.panel) ? folder : TEMPLATES[0]!.folder;
+};
+
 export function App() {
+    const [current, setCurrent] = useState(fromHash);
+    const active = TEMPLATES.find((template) => template.folder === current) ?? TEMPLATES[0]!;
+
+    useEffect(() => {
+        const onHashChange = (): void => setCurrent(fromHash());
+
+        window.addEventListener('hashchange', onHashChange);
+        return () => window.removeEventListener('hashchange', onHashChange);
+    }, []);
+
     return (
         <main className="relative min-h-screen overflow-hidden bg-[#05070B] pb-24 text-white">
             <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -59,21 +77,30 @@ export function App() {
                         <ul className="space-y-1">
                             {TEMPLATES.map((template) => (
                                 <li key={template.folder}>
-                                    <div
-                                        className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm ${
-                                            template.ready ? 'border border-orange-500/25 bg-orange-500/10 font-semibold text-white' : 'text-gray-500'
-                                        }`}
-                                        aria-current={template.ready ? 'page' : undefined}
-                                    >
-                                        {template.name}
-                                        {!template.ready && <span className="text-[10px] uppercase tracking-wider text-gray-600">not yet</span>}
-                                    </div>
+                                    {template.panel ? (
+                                        <a
+                                            href={`#${template.folder}`}
+                                            className={`flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition ${
+                                                template.folder === active.folder
+                                                    ? 'border-orange-500/25 bg-orange-500/10 font-semibold text-white'
+                                                    : 'border-transparent text-gray-300 hover:border-white/10 hover:bg-white/[0.03] hover:text-white'
+                                            }`}
+                                            aria-current={template.folder === active.folder ? 'page' : undefined}
+                                        >
+                                            {template.name}
+                                        </a>
+                                    ) : (
+                                        <div className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm text-gray-500">
+                                            {template.name}
+                                            <span className="text-[10px] uppercase tracking-wider text-gray-600">not yet</span>
+                                        </div>
+                                    )}
                                 </li>
                             ))}
                         </ul>
                     </nav>
 
-                    <DripMinePanel />
+                    <div key={active.folder}>{active.panel?.()}</div>
                 </div>
             </div>
         </main>

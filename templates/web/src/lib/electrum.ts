@@ -11,6 +11,15 @@ const HOSTS: Record<Network, string[]> = {
     mainnet: ['bch.imaginary.cash', 'electrum.imaginary.cash', 'cashnode.bch.ninja', 'fulcrum.greyh.at'],
 };
 
+export type NftCapability = 'none' | 'mutable' | 'minting';
+
+/** CashTokens on a coin, as Electrum reports them: category in display (big-endian) hex, commitment in hex. */
+export interface CoinToken {
+    category: string;
+    amount: bigint;
+    nft?: { capability: NftCapability; commitment: string };
+}
+
 export interface UnspentCoin {
     transactionHash: string;
     outputIndex: number;
@@ -18,6 +27,7 @@ export interface UnspentCoin {
     /** Block height, or 0 while unconfirmed. */
     height: number;
     hasTokens: boolean;
+    token?: CoinToken;
 }
 
 interface ElectrumUnspent {
@@ -25,8 +35,14 @@ interface ElectrumUnspent {
     tx_pos: number;
     value: number;
     height: number;
-    token_data?: unknown;
+    token_data?: { category: string; amount?: string | number; nft?: { capability: NftCapability; commitment?: string } };
 }
+
+const toCoinToken = (data: NonNullable<ElectrumUnspent['token_data']>): CoinToken => ({
+    category: data.category,
+    amount: BigInt(data.amount ?? 0),
+    ...(data.nft ? { nft: { capability: data.nft.capability, commitment: data.nft.commitment ?? '' } } : {}),
+});
 
 /** Electrum's script hash: sha256 of the locking bytecode, byte-reversed. */
 export const electrumScriptHash = (lockingBytecode: Uint8Array): string => binToHex(sha256.hash(lockingBytecode).reverse());
@@ -73,6 +89,7 @@ export async function listUnspentCoins(network: Network, lockingBytecode: Uint8A
             valueSatoshis: BigInt(coin.value),
             height: coin.height > 0 ? coin.height : 0,
             hasTokens: coin.token_data !== undefined,
+            ...(coin.token_data ? { token: toCoinToken(coin.token_data) } : {}),
         }));
 
         return { coins: coins.sort((a, b) => (b.valueSatoshis > a.valueSatoshis ? 1 : b.valueSatoshis < a.valueSatoshis ? -1 : 0)), tipHeight: tip.height };
