@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -142,7 +141,6 @@ const faqs = [
   },
 ];
 
-// TypeScript props for the reusable SectionHeading component.
 interface SectionHeadingProps {
   eyebrow: string;
   title: string;
@@ -155,17 +153,17 @@ function SectionHeading({
   description,
 }: SectionHeadingProps) {
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl 2xl:max-w-3xl">
       <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-orange-500">
         {eyebrow}
       </p>
 
-      <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
+      <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl 2xl:text-5xl">
         {title}
       </h2>
 
       {description && (
-        <p className="mt-4 text-sm leading-7 text-slate-400 sm:text-base">
+        <p className="mt-4 text-sm leading-7 text-slate-400 sm:text-base 2xl:text-lg 2xl:leading-8">
           {description}
         </p>
       )}
@@ -176,7 +174,6 @@ function SectionHeading({
 function Policy() {
   const [openFaq, setOpenFaq] = useState<number>(0);
 
-  // Reveal sections as they enter the viewport.
   useEffect(() => {
     const elements = document.querySelectorAll<HTMLElement>(".policy-reveal");
 
@@ -225,12 +222,12 @@ function Policy() {
         />
       </div>
 
-      <div className="policy-content relative z-10 mx-auto max-w-7xl px-5 pb-24 pt-8 sm:px-8 lg:px-12">
+      <div className="policy-content relative z-10 mx-auto max-w-7xl px-5 pb-24 pt-8 sm:px-8 lg:px-12 2xl:max-w-[1800px] 2xl:px-16 2xl:pb-32 2xl:pt-12">
         {/* Back navigation */}
-        <div className="mb-16">
+        <div className="mb-16 2xl:mb-20">
           <Link
             to="/"
-            className="group inline-flex items-center gap-2 text-sm font-medium text-slate-400 transition-colors hover:text-orange-500"
+            className="group inline-flex items-center gap-2 text-sm font-medium text-slate-400 transition-colors hover:text-orange-500 2xl:text-base"
           >
             <ArrowLeft
               size={17}
@@ -241,31 +238,31 @@ function Policy() {
         </div>
 
         {/* Hero */}
-        <section className="policy-reveal relative mb-28 grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
+        <section className="policy-reveal relative mb-28 grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr] 2xl:mb-36 2xl:gap-20">
           <div className="animate-[fadeUp_0.7s_ease-out_both]">
-            <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/[0.07] px-4 py-2 text-xs font-semibold text-violet-300">
+            <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/[0.07] px-4 py-2 text-xs font-semibold text-violet-300 2xl:px-5 2xl:py-2.5 2xl:text-sm">
               <ShieldCheck size={15} />
               XOGrid registry principles
             </div>
 
-            <h1 className="max-w-3xl text-4xl font-bold leading-[1.12] tracking-tight sm:text-5xl md:text-6xl">
+            <h1 className="max-w-3xl text-4xl font-bold leading-[1.12] tracking-tight sm:text-5xl md:text-6xl 2xl:max-w-5xl 2xl:text-7xl">
               Understand the rules behind{" "}
               <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
                 template trust.
               </span>
             </h1>
 
-            <p className="mt-7 max-w-2xl text-base leading-8 text-slate-400 sm:text-lg">
+            <p className="mt-7 max-w-2xl text-base leading-8 text-slate-400 sm:text-lg 2xl:mt-9 2xl:max-w-3xl 2xl:text-xl 2xl:leading-9">
               XOGrid makes wallet templates easier to inspect and evaluate.
               Understand how template identities, automated checks, community
               reports, and human reviews work together before making your own
               decision.
             </p>
 
-            <div className="mt-9 flex flex-wrap gap-4">
+            <div className="mt-9 flex flex-wrap gap-4 2xl:mt-11 2xl:gap-5">
               <Link
                 to="/publish"
-                className="group inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 text-sm font-bold text-white transition-all hover:bg-orange-600 hover:shadow-[0_0_30px_rgba(249,115,22,0.2)]"
+                className="group inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 text-sm font-bold text-white transition-all hover:bg-orange-600 hover:shadow-[0_0_30px_rgba(249,115,22,0.2)] 2xl:px-8 2xl:py-4 2xl:text-base"
               >
                 Publish a template
                 <ArrowRight
@@ -276,7 +273,7 @@ function Policy() {
 
               <Link
                 to="/"
-                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-6 py-3.5 text-sm font-semibold text-slate-300 transition-colors hover:border-white/20 hover:text-white"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-6 py-3.5 text-sm font-semibold text-slate-300 transition-colors hover:border-white/20 hover:text-white 2xl:px-8 2xl:py-4 2xl:text-base"
               >
                 Explore XOGrid
               </Link>
@@ -284,24 +281,26 @@ function Policy() {
           </div>
 
           {/* Hero visual */}
-          <div className="policy-hero-visual relative mx-auto w-full max-w-md">
+          <div className="policy-hero-visual relative mx-auto w-full max-w-md 2xl:max-w-xl">
             <div className="absolute inset-0 rounded-[2rem] bg-violet-500/10 blur-3xl" />
 
-            <div className="relative rounded-[2rem] border border-white/10 bg-white/[0.035] p-6 shadow-2xl backdrop-blur-xl sm:p-8">
-              <div className="flex items-center justify-between border-b border-white/[0.08] pb-5">
+            <div className="relative rounded-[2rem] border border-white/10 bg-white/[0.035] p-6 shadow-2xl backdrop-blur-xl sm:p-8 2xl:rounded-[2.5rem] 2xl:p-10">
+              <div className="flex items-center justify-between border-b border-white/[0.08] pb-5 2xl:pb-7">
                 <div>
                   <p className="text-xs font-medium text-slate-500">
                     REGISTRY OVERVIEW
                   </p>
-                  <h3 className="mt-1 text-lg font-bold">Trust signals</h3>
+                  <h3 className="mt-1 text-lg font-bold 2xl:text-xl">
+                    Trust signals
+                  </h3>
                 </div>
 
-                <div className="rounded-xl border border-violet-400/20 bg-violet-500/10 p-3 text-violet-300">
+                <div className="rounded-xl border border-violet-400/20 bg-violet-500/10 p-3 text-violet-300 2xl:p-4">
                   <ShieldCheck size={22} />
                 </div>
               </div>
 
-              <div className="space-y-4 py-6">
+              <div className="space-y-4 py-6 2xl:space-y-5 2xl:py-8">
                 {[
                   {
                     icon: Fingerprint,
@@ -327,17 +326,17 @@ function Policy() {
                   return (
                     <div
                       key={item.label}
-                      className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] p-4"
+                      className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] p-4 2xl:p-5"
                     >
                       <div className="flex items-center gap-3">
                         <Icon size={19} className={item.color} />
 
-                        <span className="text-sm font-medium text-slate-200">
+                        <span className="text-sm font-medium text-slate-200 2xl:text-base">
                           {item.label}
                         </span>
                       </div>
 
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-slate-500 2xl:text-sm">
                         {item.status}
                       </span>
                     </div>
@@ -345,14 +344,14 @@ function Policy() {
                 })}
               </div>
 
-              <div className="rounded-xl border border-orange-500/15 bg-orange-500/[0.06] p-4">
+              <div className="rounded-xl border border-orange-500/15 bg-orange-500/[0.06] p-4 2xl:p-5">
                 <div className="flex items-start gap-3">
                   <Info
                     size={18}
                     className="mt-0.5 shrink-0 text-orange-400"
                   />
 
-                  <p className="text-xs leading-6 text-slate-400">
+                  <p className="text-xs leading-6 text-slate-400 2xl:text-sm 2xl:leading-7">
                     Trust signals provide information for evaluation. They are
                     not a guarantee of safety.
                   </p>
@@ -363,25 +362,25 @@ function Policy() {
         </section>
 
         {/* Principles */}
-        <section className="policy-reveal mb-28">
+        <section className="policy-reveal mb-28 2xl:mb-36">
           <SectionHeading
             eyebrow="The evaluation process"
             title="Four layers of transparency."
             description="XOGrid brings together several independent signals to help users understand a template before deciding whether to use it."
           />
 
-          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4 2xl:mt-16 2xl:gap-7">
             {policySteps.map((step) => {
               const Icon = step.icon;
 
               return (
                 <div
                   key={step.number}
-                  className="policy-card group relative rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-violet-400/30 hover:bg-white/[0.045]"
+                  className="policy-card group relative rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-violet-400/30 hover:bg-white/[0.045] 2xl:rounded-3xl 2xl:p-8"
                 >
-                  <div className="mb-8 flex items-center justify-between">
+                  <div className="mb-8 flex items-center justify-between 2xl:mb-10">
                     <div
-                      className={`rounded-xl p-3 ${step.background} ${step.color}`}
+                      className={`rounded-xl p-3 ${step.background} ${step.color} 2xl:p-4`}
                     >
                       <Icon size={22} />
                     </div>
@@ -391,11 +390,11 @@ function Policy() {
                     </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className="text-lg font-bold text-white 2xl:text-xl">
                     {step.title}
                   </h3>
 
-                  <p className="mt-3 text-sm leading-7 text-slate-400">
+                  <p className="mt-3 text-sm leading-7 text-slate-400 2xl:mt-4 2xl:text-base 2xl:leading-8">
                     {step.description}
                   </p>
                 </div>
@@ -405,7 +404,7 @@ function Policy() {
         </section>
 
         {/* Template identity */}
-        <section className="policy-reveal mb-28 grid items-center gap-12 lg:grid-cols-2">
+        <section className="policy-reveal mb-28 grid items-center gap-12 lg:grid-cols-2 2xl:mb-36 2xl:gap-20">
           <div>
             <SectionHeading
               eyebrow="01 / Template identity"
@@ -413,17 +412,17 @@ function Policy() {
               description="XOGrid uses content-addressed identifiers to make template identity traceable. The identifier is generated from the canonical representation of the template."
             />
 
-            <div className="mt-8 space-y-5">
+            <div className="mt-8 space-y-5 2xl:mt-10 2xl:space-y-7">
               <div className="flex gap-4">
-                <div className="mt-1 rounded-lg bg-violet-500/10 p-2 text-violet-400">
+                <div className="mt-1 rounded-lg bg-violet-500/10 p-2 text-violet-400 2xl:p-3">
                   <FileCheck2 size={19} />
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-white">
+                  <h3 className="font-semibold text-white 2xl:text-lg">
                     Canonical representation
                   </h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-400">
+                  <p className="mt-1 text-sm leading-6 text-slate-400 2xl:text-base 2xl:leading-7">
                     Templates are parsed and normalized before their identifiers
                     are generated.
                   </p>
@@ -431,15 +430,15 @@ function Policy() {
               </div>
 
               <div className="flex gap-4">
-                <div className="mt-1 rounded-lg bg-orange-500/10 p-2 text-orange-400">
+                <div className="mt-1 rounded-lg bg-orange-500/10 p-2 text-orange-400 2xl:p-3">
                   <Fingerprint size={19} />
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-white">
+                  <h3 className="font-semibold text-white 2xl:text-lg">
                     Content-based identity
                   </h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-400">
+                  <p className="mt-1 text-sm leading-6 text-slate-400 2xl:text-base 2xl:leading-7">
                     Identical canonical template content produces the same
                     identifier.
                   </p>
@@ -447,15 +446,15 @@ function Policy() {
               </div>
 
               <div className="flex gap-4">
-                <div className="mt-1 rounded-lg bg-blue-500/10 p-2 text-blue-400">
+                <div className="mt-1 rounded-lg bg-blue-500/10 p-2 text-blue-400 2xl:p-3">
                   <Sparkles size={19} />
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-white">
+                  <h3 className="font-semibold text-white 2xl:text-lg">
                     Changes create a new identity
                   </h3>
-                  <p className="mt-1 text-sm leading-6 text-slate-400">
+                  <p className="mt-1 text-sm leading-6 text-slate-400 2xl:text-base 2xl:leading-7">
                     Changing the template content creates a new identifier.
                     Existing reviews and audit results remain tied to the
                     original identity.
@@ -465,12 +464,12 @@ function Policy() {
             </div>
           </div>
 
-          <div className="policy-card rounded-2xl border border-white/10 bg-white/[0.025] p-6 sm:p-8">
+          <div className="policy-card rounded-2xl border border-white/10 bg-white/[0.025] p-6 sm:p-8 2xl:rounded-3xl 2xl:p-10">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
               Identity lifecycle
             </p>
 
-            <div className="mt-8 space-y-3">
+            <div className="mt-8 space-y-3 2xl:mt-10 2xl:space-y-4">
               {[
                 {
                   title: "Template submitted",
@@ -497,16 +496,16 @@ function Policy() {
 
                 return (
                   <div key={item.title}>
-                    <div className="flex items-center gap-4 rounded-xl border border-white/[0.07] bg-white/[0.025] p-4">
-                      <div className="rounded-lg bg-violet-500/10 p-2.5 text-violet-400">
+                    <div className="flex items-center gap-4 rounded-xl border border-white/[0.07] bg-white/[0.025] p-4 2xl:p-5">
+                      <div className="rounded-lg bg-violet-500/10 p-2.5 text-violet-400 2xl:p-3">
                         <Icon size={19} />
                       </div>
 
                       <div>
-                        <h4 className="text-sm font-semibold text-white">
+                        <h4 className="text-sm font-semibold text-white 2xl:text-base">
                           {item.title}
                         </h4>
-                        <p className="mt-1 text-xs text-slate-500">
+                        <p className="mt-1 text-xs text-slate-500 2xl:text-sm">
                           {item.description}
                         </p>
                       </div>
@@ -527,14 +526,14 @@ function Policy() {
         </section>
 
         {/* Automated checks */}
-        <section className="policy-reveal mb-28">
+        <section className="policy-reveal mb-28 2xl:mb-36">
           <SectionHeading
             eyebrow="02 / Automated checks"
             title="What does XOGrid check?"
             description="Automated audits help identify structural and technical issues. They provide useful signals, but they cannot establish that a template is safe for every situation."
           />
 
-          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:mt-16 2xl:gap-7">
             {[
               {
                 title: "Schema validation",
@@ -578,15 +577,17 @@ function Policy() {
               return (
                 <div
                   key={item.title}
-                  className="policy-card rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6 transition-colors hover:border-orange-500/20"
+                  className="policy-card rounded-2xl border border-white/[0.08] bg-white/[0.025] p-6 transition-colors hover:border-orange-500/20 2xl:rounded-3xl 2xl:p-8"
                 >
-                  <div className="mb-5 inline-flex rounded-xl bg-orange-500/10 p-3 text-orange-400">
+                  <div className="mb-5 inline-flex rounded-xl bg-orange-500/10 p-3 text-orange-400 2xl:mb-7 2xl:p-4">
                     <Icon size={21} />
                   </div>
 
-                  <h3 className="font-bold text-white">{item.title}</h3>
+                  <h3 className="font-bold text-white 2xl:text-lg">
+                    {item.title}
+                  </h3>
 
-                  <p className="mt-2 text-sm leading-7 text-slate-400">
+                  <p className="mt-2 text-sm leading-7 text-slate-400 2xl:mt-3 2xl:text-base 2xl:leading-8">
                     {item.description}
                   </p>
                 </div>
@@ -594,17 +595,17 @@ function Policy() {
             })}
           </div>
 
-          <div className="mt-7 flex gap-4 rounded-2xl border border-orange-500/20 bg-orange-500/[0.05] p-5 sm:p-6">
+          <div className="mt-7 flex gap-4 rounded-2xl border border-orange-500/20 bg-orange-500/[0.05] p-5 sm:p-6 2xl:mt-9 2xl:gap-5 2xl:p-8">
             <AlertTriangle
               className="mt-1 shrink-0 text-orange-400"
               size={21}
             />
 
             <div>
-              <h3 className="font-semibold text-orange-300">
+              <h3 className="font-semibold text-orange-300 2xl:text-lg">
                 Important limitation
               </h3>
-              <p className="mt-2 text-sm leading-7 text-slate-400">
+              <p className="mt-2 text-sm leading-7 text-slate-400 2xl:text-base 2xl:leading-8">
                 Passing automated checks does not mean a template is safe,
                 secure, audited by a human, or suitable for your intended use.
                 Always inspect the template and make your own decision.
@@ -614,38 +615,40 @@ function Policy() {
         </section>
 
         {/* Registry badges */}
-        <section className="policy-reveal mb-28">
+        <section className="policy-reveal mb-28 2xl:mb-36">
           <SectionHeading
             eyebrow="03 / Registry badges"
             title="Understand every registry status."
             description="Badges communicate the current information available about a template. Each status has a specific meaning and should be interpreted carefully."
           />
 
-          <div className="mt-12 space-y-4">
+          <div className="mt-12 space-y-4 2xl:mt-16 2xl:space-y-5">
             {badges.map((badge) => {
               const Icon = badge.icon;
 
               return (
                 <div
                   key={badge.title}
-                  className={`policy-card flex flex-col gap-4 rounded-2xl border ${badge.border} bg-white/[0.025] p-5 transition-colors hover:bg-white/[0.045] sm:flex-row sm:items-center sm:p-6`}
+                  className={`policy-card flex flex-col gap-4 rounded-2xl border ${badge.border} bg-white/[0.025] p-5 transition-colors hover:bg-white/[0.045] sm:flex-row sm:items-center sm:p-6 2xl:gap-6 2xl:rounded-3xl 2xl:p-8`}
                 >
                   <div
-                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${badge.background} ${badge.color}`}
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${badge.background} ${badge.color} 2xl:h-14 2xl:w-14`}
                   >
                     <Icon size={22} />
                   </div>
 
                   <div className="flex-1">
-                    <h3 className="font-bold text-white">{badge.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-slate-400">
+                    <h3 className="font-bold text-white 2xl:text-lg">
+                      {badge.title}
+                    </h3>
+                    <p className="mt-1 text-sm leading-6 text-slate-400 2xl:text-base 2xl:leading-7">
                       {badge.description}
                     </p>
                   </div>
 
                   <div className="sm:min-w-44 sm:text-right">
                     <span
-                      className={`inline-flex rounded-full px-3 py-1.5 text-xs font-semibold ${badge.background} ${badge.color}`}
+                      className={`inline-flex rounded-full px-3 py-1.5 text-xs font-semibold ${badge.background} ${badge.color} 2xl:px-4 2xl:py-2 2xl:text-sm`}
                     >
                       {badge.detail}
                     </span>
@@ -655,28 +658,28 @@ function Policy() {
             })}
           </div>
 
-          <p className="mt-6 text-xs leading-6 text-slate-500">
+          <p className="mt-6 text-xs leading-6 text-slate-500 2xl:mt-8 2xl:text-sm 2xl:leading-7">
             Registry status is informational. It does not replace independent
             inspection or your own risk assessment.
           </p>
         </section>
 
         {/* Policy evaluation */}
-        <section className="policy-reveal mb-28">
-          <div className="relative overflow-hidden rounded-3xl border border-violet-400/20 bg-violet-500/[0.045] p-7 sm:p-10 lg:p-12">
+        <section className="policy-reveal mb-28 2xl:mb-36">
+          <div className="relative overflow-hidden rounded-3xl border border-violet-400/20 bg-violet-500/[0.045] p-7 sm:p-10 lg:p-12 2xl:rounded-[2.5rem] 2xl:p-16">
             <div className="absolute -right-20 -top-24 h-72 w-72 rounded-full bg-violet-500/10 blur-[90px]" />
 
-            <div className="relative z-10 grid items-center gap-10 lg:grid-cols-[1fr_0.8fr]">
+            <div className="relative z-10 grid items-center gap-10 lg:grid-cols-[1fr_0.8fr] 2xl:gap-16">
               <div>
                 <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-orange-500">
                   04 / Your policy
                 </p>
 
-                <h2 className="max-w-xl text-3xl font-bold leading-tight sm:text-4xl">
+                <h2 className="max-w-xl text-3xl font-bold leading-tight sm:text-4xl 2xl:max-w-2xl 2xl:text-5xl">
                   Transparency helps you make better decisions.
                 </h2>
 
-                <p className="mt-5 max-w-xl text-sm leading-7 text-slate-400 sm:text-base">
+                <p className="mt-5 max-w-xl text-sm leading-7 text-slate-400 sm:text-base 2xl:mt-7 2xl:max-w-2xl 2xl:text-lg 2xl:leading-8">
                   XOGrid provides the information. Your own policy determines
                   what you accept, reject, or investigate further. A template
                   should never be trusted simply because it has a badge.
@@ -684,30 +687,30 @@ function Policy() {
 
                 <Link
                   to="/browse"
-                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 text-sm font-bold text-white transition-all hover:bg-orange-600"
+                  className="mt-8 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-3.5 text-sm font-bold text-white transition-all hover:bg-orange-600 2xl:mt-10 2xl:px-8 2xl:py-4 2xl:text-base"
                 >
                   Browse templates
                   <ArrowRight size={17} />
                 </Link>
               </div>
 
-              <div className="policy-card rounded-2xl border border-white/10 bg-[#05070b]/70 p-6 backdrop-blur-xl">
-                <div className="mb-6 flex items-center gap-3">
-                  <div className="rounded-xl bg-violet-500/10 p-3 text-violet-400">
+              <div className="policy-card rounded-2xl border border-white/10 bg-[#05070b]/70 p-6 backdrop-blur-xl 2xl:rounded-3xl 2xl:p-9">
+                <div className="mb-6 flex items-center gap-3 2xl:mb-8">
+                  <div className="rounded-xl bg-violet-500/10 p-3 text-violet-400 2xl:p-4">
                     <Scale size={22} />
                   </div>
 
                   <div>
-                    <h3 className="font-bold text-white">
+                    <h3 className="font-bold text-white 2xl:text-lg">
                       Policy considerations
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-500 2xl:text-sm">
                       Questions to ask before use
                     </p>
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-4 2xl:space-y-5">
                   {[
                     "Does the identifier match the template?",
                     "Have automated checks been completed?",
@@ -720,7 +723,7 @@ function Policy() {
                         {index + 1}
                       </span>
 
-                      <p className="text-sm leading-6 text-slate-300">
+                      <p className="text-sm leading-6 text-slate-300 2xl:text-base 2xl:leading-7">
                         {item}
                       </p>
                     </div>
@@ -732,26 +735,26 @@ function Policy() {
         </section>
 
         {/* Security and responsibility */}
-        <section className="policy-reveal mb-28">
+        <section className="policy-reveal mb-28 2xl:mb-36">
           <SectionHeading
             eyebrow="Trust and limitations"
             title="Know what XOGrid is — and what it isn't."
             description="Clear boundaries matter when working with wallet templates and blockchain transactions."
           />
 
-          <div className="mt-12 grid gap-5 md:grid-cols-2">
-            <div className="policy-card rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.035] p-6 sm:p-8">
-              <div className="mb-5 flex items-center gap-3">
-                <div className="rounded-xl bg-emerald-500/10 p-3 text-emerald-400">
+          <div className="mt-12 grid gap-5 md:grid-cols-2 2xl:mt-16 2xl:gap-7">
+            <div className="policy-card rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.035] p-6 sm:p-8 2xl:rounded-3xl 2xl:p-10">
+              <div className="mb-5 flex items-center gap-3 2xl:mb-7">
+                <div className="rounded-xl bg-emerald-500/10 p-3 text-emerald-400 2xl:p-4">
                   <CheckCircle2 size={22} />
                 </div>
 
-                <h3 className="text-lg font-bold text-white">
+                <h3 className="text-lg font-bold text-white 2xl:text-xl">
                   What XOGrid does
                 </h3>
               </div>
 
-              <ul className="space-y-4">
+              <ul className="space-y-4 2xl:space-y-5">
                 {[
                   "Provides a registry for wallet templates.",
                   "Generates content-addressed template identifiers.",
@@ -761,7 +764,7 @@ function Policy() {
                 ].map((item) => (
                   <li
                     key={item}
-                    className="flex gap-3 text-sm leading-6 text-slate-400"
+                    className="flex gap-3 text-sm leading-6 text-slate-400 2xl:text-base 2xl:leading-7"
                   >
                     <CheckCircle2
                       size={17}
@@ -773,18 +776,18 @@ function Policy() {
               </ul>
             </div>
 
-            <div className="policy-card rounded-2xl border border-red-500/20 bg-red-500/[0.025] p-6 sm:p-8">
-              <div className="mb-5 flex items-center gap-3">
-                <div className="rounded-xl bg-red-500/10 p-3 text-red-400">
+            <div className="policy-card rounded-2xl border border-red-500/20 bg-red-500/[0.025] p-6 sm:p-8 2xl:rounded-3xl 2xl:p-10">
+              <div className="mb-5 flex items-center gap-3 2xl:mb-7">
+                <div className="rounded-xl bg-red-500/10 p-3 text-red-400 2xl:p-4">
                   <LockKeyhole size={22} />
                 </div>
 
-                <h3 className="text-lg font-bold text-white">
+                <h3 className="text-lg font-bold text-white 2xl:text-xl">
                   What XOGrid does not do
                 </h3>
               </div>
 
-              <ul className="space-y-4">
+              <ul className="space-y-4 2xl:space-y-5">
                 {[
                   "Does not hold your private keys or funds.",
                   "Does not operate as a wallet or custodian.",
@@ -794,7 +797,7 @@ function Policy() {
                 ].map((item) => (
                   <li
                     key={item}
-                    className="flex gap-3 text-sm leading-6 text-slate-400"
+                    className="flex gap-3 text-sm leading-6 text-slate-400 2xl:text-base 2xl:leading-7"
                   >
                     <XCircle
                       size={17}
@@ -809,14 +812,14 @@ function Policy() {
         </section>
 
         {/* FAQ */}
-        <section className="policy-reveal mb-20">
+        <section className="policy-reveal mb-20 2xl:mb-28">
           <SectionHeading
             eyebrow="Frequently asked questions"
             title="Still have questions?"
             description="Here are answers to common questions about the XOGrid registry and its evaluation process."
           />
 
-          <div className="mt-10 max-w-4xl space-y-3">
+          <div className="mt-10 max-w-4xl space-y-3 2xl:mt-12 2xl:max-w-5xl 2xl:space-y-4">
             {faqs.map((faq, index) => {
               const isOpen = openFaq === index;
 
@@ -828,10 +831,10 @@ function Policy() {
                   <button
                     type="button"
                     onClick={() => setOpenFaq(isOpen ? -1 : index)}
-                    className="flex w-full items-center justify-between gap-5 p-5 text-left transition-colors hover:bg-white/[0.025] sm:p-6"
+                    className="flex w-full items-center justify-between gap-5 p-5 text-left transition-colors hover:bg-white/[0.025] sm:p-6 2xl:p-7"
                     aria-expanded={isOpen}
                   >
-                    <span className="text-sm font-semibold text-white sm:text-base">
+                    <span className="text-sm font-semibold text-white sm:text-base 2xl:text-lg">
                       {faq.question}
                     </span>
 
@@ -851,7 +854,7 @@ function Policy() {
                     }`}
                   >
                     <div className="overflow-hidden">
-                      <p className="px-5 pb-6 text-sm leading-7 text-slate-400 sm:px-6">
+                      <p className="px-5 pb-6 text-sm leading-7 text-slate-400 sm:px-6 2xl:px-7 2xl:text-base 2xl:leading-8">
                         {faq.answer}
                       </p>
                     </div>
@@ -863,26 +866,26 @@ function Policy() {
         </section>
 
         {/* Bottom CTA */}
-        <section className="policy-reveal relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.025] px-6 py-12 text-center sm:px-10">
+        <section className="policy-reveal relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.025] px-6 py-12 text-center sm:px-10 2xl:rounded-[2.5rem] 2xl:px-16 2xl:py-16">
           <div className="absolute left-1/2 top-0 h-40 w-72 -translate-x-1/2 rounded-full bg-orange-500/10 blur-[80px]" />
 
           <div className="relative z-10">
-            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10 text-orange-400">
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10 text-orange-400 2xl:mb-7 2xl:h-16 2xl:w-16">
               <ShieldCheck size={27} />
             </div>
 
-            <h2 className="text-2xl font-bold sm:text-3xl">
+            <h2 className="text-2xl font-bold sm:text-3xl 2xl:text-4xl">
               Build with transparency.
             </h2>
 
-            <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-slate-400">
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-slate-400 2xl:mt-5 2xl:max-w-2xl 2xl:text-base 2xl:leading-8">
               Explore wallet templates, inspect their registry information, and
               make informed decisions with XOGrid.
             </p>
 
             <Link
               to="/publish"
-              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-7 py-3.5 text-sm font-bold text-white transition-all hover:bg-orange-600"
+              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-7 py-3.5 text-sm font-bold text-white transition-all hover:bg-orange-600 2xl:mt-10 2xl:px-9 2xl:py-4 2xl:text-base"
             >
               Publish your template
               <ArrowRight size={17} />

@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import {
@@ -7,7 +6,6 @@ import {
   Upload,
   ShieldCheck,
   LayoutDashboard,
-  CircleHelp,
   Menu,
   X,
   LogOut,
@@ -185,20 +183,6 @@ export default function DashboardLayout() {
               </NavLink>
             )}
           </nav>
-
-          <div className="my-7 border-t border-white/[0.07] 2xl:my-9 3xl:my-11" />
-
-          <p className="mb-3 px-4 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-600 2xl:text-[11px] 3xl:text-xs">
-            Support
-          </p>
-
-          <a
-            href="mailto:hello@xogrid.com"
-            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-slate-400 transition hover:bg-white/[0.04] hover:text-white"
-          >
-            <CircleHelp size={18} />
-            <span>Help & Support</span>
-          </a>
         </div>
 
         {/* Bottom sidebar section */}

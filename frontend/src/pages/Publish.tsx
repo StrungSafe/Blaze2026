@@ -1,4 +1,3 @@
-
 import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -275,7 +274,7 @@ function Publish() {
     : "";
 
   return (
-    <main className="publish-page relative min-h-screen overflow-hidden bg-[#05070b] px-4 pb-20 pt-28 text-white sm:px-6">
+    <main className="publish-page relative min-h-screen overflow-hidden bg-[#05070b] px-4 pb-20 pt-28 text-white sm:px-6 2xl:px-10 2xl:pb-28 2xl:pt-32">
       {/* BACKGROUND */}
       <div className="publish-background pointer-events-none absolute inset-0 overflow-hidden">
         <div className="publish-glow publish-glow-one absolute -left-48 -top-40 h-[550px] w-[550px] rounded-full bg-violet-600/[0.15] blur-[150px]" />
@@ -289,9 +288,9 @@ function Publish() {
         <div className="absolute left-1/2 top-24 h-px w-[75%] -translate-x-1/2 bg-gradient-to-r from-transparent via-violet-400/25 to-transparent" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-6xl">
+      <div className="relative z-10 mx-auto max-w-6xl 2xl:max-w-[1600px]">
         {/* BACK NAVIGATION */}
-        <div className="publish-entrance mb-12">
+        <div className="publish-entrance mb-12 2xl:mb-16">
           <Link
             to="/"
             className="group inline-flex items-center gap-2 text-sm font-medium text-white/45 transition-colors duration-300 hover:text-orange-400"
@@ -305,11 +304,11 @@ function Publish() {
         </div>
 
         {/* HERO */}
-        <section className="publish-entrance relative mb-12">
+        <section className="publish-entrance relative mb-12 2xl:mb-16">
           <div className="absolute -left-12 -top-16 h-44 w-44 rounded-full bg-violet-500/[0.10] blur-[70px]" />
 
-          <div className="relative flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
-            <div className="max-w-2xl">
+          <div className="relative flex flex-col justify-between gap-8 lg:flex-row lg:items-end 2xl:gap-16">
+            <div className="max-w-2xl 2xl:max-w-4xl">
               <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-400/[0.07] px-4 py-2 text-xs font-semibold text-violet-300">
                 <Sparkles size={14} />
                 XOGrid Registry
@@ -317,7 +316,7 @@ function Publish() {
                 Open publishing
               </div>
 
-              <h1 className="text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
+              <h1 className="text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl 2xl:text-7xl">
                 Bring your
                 <br />
                 <span className="publish-gradient-text">
@@ -325,14 +324,14 @@ function Publish() {
                 </span>
               </h1>
 
-              <p className="mt-6 max-w-xl text-sm leading-7 text-white/45 sm:text-base">
+              <p className="mt-6 max-w-xl text-sm leading-7 text-white/45 sm:text-base 2xl:max-w-3xl 2xl:text-lg 2xl:leading-8">
                 Publish your XO wallet template to the registry. Give it a
                 unique identity and make its available checks and community
                 feedback easier to discover.
               </p>
             </div>
 
-            <div className="publish-hero-card relative hidden min-w-[210px] overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.025] p-5 lg:block">
+            <div className="publish-hero-card relative hidden min-w-[210px] overflow-hidden rounded-2xl border border-white/[0.09] bg-white/[0.025] p-5 lg:block 2xl:min-w-[260px] 2xl:p-7">
               <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-violet-500/10 blur-2xl" />
 
               <div className="relative">
@@ -351,7 +350,7 @@ function Publish() {
             </div>
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8 flex flex-wrap gap-3 2xl:mt-10 2xl:gap-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.025] px-3.5 py-2 text-xs text-white/50">
               <Fingerprint size={14} className="text-violet-300" />
               Content-addressed ID
@@ -372,7 +371,7 @@ function Publish() {
         {/* SUCCESS STATE */}
         {result ? (
           <section className="publish-card overflow-hidden rounded-3xl border border-emerald-400/20 bg-[#0a0e12]/90 shadow-[0_25px_100px_rgba(0,0,0,0.3)] backdrop-blur-xl">
-            <div className="border-b border-white/[0.07] p-6 sm:p-9">
+            <div className="border-b border-white/[0.07] p-6 sm:p-9 2xl:p-12">
               <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-300">
                 <CheckCircle2 size={30} />
               </div>
@@ -383,25 +382,25 @@ function Publish() {
                   : "Existing registry entry"}
               </p>
 
-              <h2 className="mt-3 text-2xl font-bold sm:text-3xl">
+              <h2 className="mt-3 text-2xl font-bold sm:text-3xl 2xl:text-4xl">
                 {result.created
                   ? "Your template is registered."
                   : "This template already exists."}
               </h2>
 
-              <p className="mt-3 max-w-xl text-sm leading-7 text-white/45">
+              <p className="mt-3 max-w-xl text-sm leading-7 text-white/45 2xl:text-base">
                 {result.created
                   ? "The registry accepted your template and returned its unique identifier."
                   : "XOGrid found an existing entry for this template. Its identifier is available below."}
               </p>
             </div>
 
-            <div className="p-6 sm:p-9">
+            <div className="p-6 sm:p-9 2xl:p-12">
               <label className="text-xs font-semibold uppercase tracking-wider text-white/35">
                 Server-generated template identifier
               </label>
 
-              <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-white/[0.09] bg-black/30 p-4 sm:flex-row sm:items-center">
+              <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-white/[0.09] bg-black/30 p-4 sm:flex-row sm:items-center 2xl:p-6">
                 <code className="min-w-0 flex-1 break-all text-sm leading-6 text-violet-300">
                   {result.identifier}
                 </code>
@@ -438,7 +437,7 @@ function Publish() {
                 </button>
               </div>
 
-              <div className="mt-8 flex gap-3 rounded-2xl border border-amber-400/15 bg-amber-400/[0.045] p-4">
+              <div className="mt-8 flex gap-3 rounded-2xl border border-amber-400/15 bg-amber-400/[0.045] p-4 2xl:p-5">
                 <ShieldAlert
                   size={19}
                   className="mt-0.5 shrink-0 text-amber-300"
@@ -454,12 +453,12 @@ function Publish() {
         ) : (
           <form
             onSubmit={handlePublish}
-            className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px]"
+            className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] 2xl:grid-cols-[minmax(0,1fr)_380px] 2xl:gap-8"
           >
             {/* EDITOR PANEL */}
             <section className="publish-card min-w-0 overflow-hidden rounded-3xl border border-white/[0.09] bg-[#0a0d13]/85 shadow-[0_25px_100px_rgba(0,0,0,0.25)] backdrop-blur-xl">
               {/* PANEL HEADER */}
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.07] px-5 py-5 sm:px-7">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/[0.07] px-5 py-5 sm:px-7 2xl:px-10 2xl:py-7">
                 <div className="flex items-center gap-3">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-400/20 bg-violet-400/[0.08] text-violet-300">
                     <FileJson size={21} />
@@ -485,7 +484,7 @@ function Publish() {
                 </div>
               </div>
 
-              <div className="p-5 sm:p-7">
+              <div className="p-5 sm:p-7 2xl:p-10">
                 {/* UPLOAD AREA */}
                 <input
                   ref={fileInputRef}
@@ -498,7 +497,7 @@ function Publish() {
 
                 <label
                   htmlFor="template-json-file"
-                  className="publish-upload group relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-violet-400/25 bg-violet-400/[0.035] px-5 py-9 text-center transition-all duration-300 hover:border-orange-400/45 hover:bg-orange-400/[0.035] sm:py-11"
+                  className="publish-upload group relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-violet-400/25 bg-violet-400/[0.035] px-5 py-9 text-center transition-all duration-300 hover:border-orange-400/45 hover:bg-orange-400/[0.035] sm:py-11 2xl:py-14"
                 >
                   <div className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-violet-500/[0.08] blur-3xl transition duration-500 group-hover:bg-orange-500/[0.10]" />
 
@@ -543,7 +542,7 @@ function Publish() {
                 )}
 
                 {/* EDITOR TOOLBAR */}
-                <div className="mb-3 mt-7 flex flex-wrap items-center justify-between gap-3">
+                <div className="mb-3 mt-7 flex flex-wrap items-center justify-between gap-3 2xl:mb-4 2xl:mt-9">
                   <label
                     htmlFor="template-json"
                     className="flex items-center gap-2 text-xs font-semibold text-white/65"
@@ -599,12 +598,12 @@ function Publish() {
   "description": "Describe your template",
   "version": "1.0.0"
 }`}
-                    className="min-h-[350px] w-full resize-y bg-transparent p-5 font-mono text-xs leading-7 text-violet-200 outline-none placeholder:text-white/20 sm:text-sm"
+                    className="min-h-[350px] w-full resize-y bg-transparent p-5 font-mono text-xs leading-7 text-violet-200 outline-none placeholder:text-white/20 sm:text-sm 2xl:min-h-[460px] 2xl:p-7 2xl:text-base 2xl:leading-8"
                   />
                 </div>
 
                 {/* SIZE METER */}
-                <div className="mt-4">
+                <div className="mt-4 2xl:mt-5">
                   <div className="mb-2 flex items-center justify-between text-[11px]">
                     <span className="text-white/35">Template size</span>
 
@@ -651,7 +650,7 @@ function Publish() {
                     !jsonText.trim() ||
                     byteSize > MAX_FILE_SIZE
                   }
-                  className="publish-submit group relative mt-7 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-orange-500 px-6 py-4 text-sm font-bold text-black shadow-[0_8px_35px_rgba(249,115,22,0.13)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-[0_12px_40px_rgba(249,115,22,0.22)] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:translate-y-0"
+                  className="publish-submit group relative mt-7 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl bg-orange-500 px-6 py-4 text-sm font-bold text-black shadow-[0_8px_35px_rgba(249,115,22,0.13)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-[0_12px_40px_rgba(249,115,22,0.22)] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:translate-y-0 2xl:mt-9 2xl:py-5 2xl:text-base"
                 >
                   <span className="publish-button-shine absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent" />
 
@@ -681,13 +680,13 @@ function Publish() {
             </section>
 
             {/* RIGHT SIDEBAR */}
-            <aside className="space-y-5">
+            <aside className="space-y-5 2xl:space-y-7">
               {/* PUBLISHING STEPS */}
-              <section className="publish-card relative overflow-hidden rounded-3xl border border-white/[0.09] bg-[#0a0d13]/85 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.2)] backdrop-blur-xl sm:p-6">
+              <section className="publish-card relative overflow-hidden rounded-3xl border border-white/[0.09] bg-[#0a0d13]/85 p-5 shadow-[0_20px_80px_rgba(0,0,0,0.2)] backdrop-blur-xl sm:p-6 2xl:p-8">
                 <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-violet-500/[0.08] blur-3xl" />
 
                 <div className="relative">
-                  <div className="mb-8 flex items-center gap-3">
+                  <div className="mb-8 flex items-center gap-3 2xl:mb-10">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-violet-400/20 bg-violet-400/10 text-violet-300">
                       <Zap size={20} />
                     </div>
@@ -703,14 +702,14 @@ function Publish() {
                   <div className="relative ml-3">
                     <div className="absolute bottom-8 left-[10px] top-8 w-px bg-gradient-to-b from-violet-400/50 via-white/10 to-orange-400/30" />
 
-                    <div className="space-y-8">
+                    <div className="space-y-8 2xl:space-y-10">
                       {publishingSteps.map((step, index) => {
                         const StepIcon = step.icon;
 
                         return (
                           <div
                             key={step.number}
-                            className="publish-step group relative flex gap-4"
+                            className="publish-step group relative flex gap-4 2xl:gap-5"
                             style={{
                               animationDelay: `${index * 120}ms`,
                             }}
@@ -744,7 +743,7 @@ function Publish() {
               </section>
 
               {/* IDENTITY CARD */}
-              <section className="publish-info-card group relative overflow-hidden rounded-3xl border border-violet-400/15 bg-violet-400/[0.035] p-5 transition-all duration-300 hover:border-violet-400/30 sm:p-6">
+              <section className="publish-info-card group relative overflow-hidden rounded-3xl border border-violet-400/15 bg-violet-400/[0.035] p-5 transition-all duration-300 hover:border-violet-400/30 sm:p-6 2xl:p-8">
                 <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-violet-500/[0.09] blur-3xl transition duration-500 group-hover:bg-orange-500/[0.08]" />
 
                 <div className="relative">
@@ -765,7 +764,7 @@ function Publish() {
               </section>
 
               {/* IMPORTANT NOTICE */}
-              <section className="relative overflow-hidden rounded-3xl border border-amber-400/15 bg-amber-400/[0.035] p-5 sm:p-6">
+              <section className="relative overflow-hidden rounded-3xl border border-amber-400/15 bg-amber-400/[0.035] p-5 sm:p-6 2xl:p-8">
                 <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-amber-400/[0.07] blur-3xl" />
 
                 <div className="relative">
@@ -786,7 +785,7 @@ function Publish() {
               {/* HELP LINK */}
               <Link
                 to="/policy"
-                className="group flex items-center justify-between rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition-all duration-300 hover:border-violet-400/20 hover:bg-violet-400/[0.04]"
+                className="group flex items-center justify-between rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4 transition-all duration-300 hover:border-violet-400/20 hover:bg-violet-400/[0.04] 2xl:p-5"
               >
                 <div>
                   <p className="text-xs font-semibold text-white/70">
