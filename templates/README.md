@@ -18,7 +18,7 @@ The method follows the guide [Building a BCH XO Template for a Smart Contract](h
 
 ## Dev tool: template tools
 
-[`web/`](web/) is a dev-only page, styled like `frontend/`, that builds ready-to-import XO invitations for these templates (Drip Mine so far). Run `npm run web` and open http://127.0.0.1:5180. See [web/README.md](web/README.md).
+[`web/`](web/) is a dev-only page, styled like `frontend/`, that builds ready-to-import XO invitations for these templates (Drip Mine so far). Run `npm run web` and open http://127.0.0.1:5180, or build the nginx image from the repo root with `docker build -f templates/Dockerfile -t xogrid-template-tools .`. See [web/README.md](web/README.md).
 
 ## Layout of a system
 
