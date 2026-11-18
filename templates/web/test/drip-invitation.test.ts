@@ -79,6 +79,13 @@ describe('Drip Mine invitations (web tool)', () => {
         expect(parseInvitation(second.serializedInvitation).commits[0]!.entityIdentifier).not.toBe(invitation.commits[0]!.entityIdentifier);
     });
 
+    it("keeps the page's logo identical to frontend's (templates/ builds on its own with a copy)", () => {
+        const copy = readFileSync(join(import.meta.dirname, '..', 'src', 'assets', 'xogridlogo.png'));
+        const original = readFileSync(join(import.meta.dirname, '..', '..', '..', 'frontend', 'src', 'assets', 'images', 'xogridlogo.png'));
+
+        expect(copy.equals(original)).toBe(true);
+    });
+
     it('rejects a malformed coin', () => {
         expect(() => buildDripMineInvitation('chipnet', { transactionHash: 'abc', outputIndex: 0, valueSatoshis: 1000n })).toThrow(/transaction id/);
         expect(() => buildDripMineInvitation('chipnet', { transactionHash: COIN_HASH, outputIndex: 0, valueSatoshis: 0n })).toThrow(/positive/);

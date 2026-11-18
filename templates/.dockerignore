@@ -1,0 +1,12 @@
+# Build context for templates/Dockerfile (context: templates/).
+# Allow-list: only what the template tools page needs.
+*
+!package.json
+!package-lock.json
+!*/template.json
+!web/**
+
+# Never send these, even inside allowed folders.
+**/node_modules
+**/dist
+.xo-demo
