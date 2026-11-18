@@ -16,6 +16,10 @@ The method follows the guide [Building a BCH XO Template for a Smart Contract](h
 
 **Status levels**: Draft → Tested offline → Chipnet verified → Reviewed. Update the row in the same change that moves a system forward.
 
+## Dev tool: template tools
+
+[`web/`](web/) is a dev-only page, styled like `frontend/`, that builds ready-to-import XO invitations for these templates (Drip Mine so far). Run `npm run web` and open http://127.0.0.1:5180. See [web/README.md](web/README.md).
+
 ## Layout of a system
 
 ```
