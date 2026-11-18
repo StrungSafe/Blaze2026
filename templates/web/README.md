@@ -10,6 +10,16 @@ npm run web          # http://127.0.0.1:5180
 npm run web:build    # static build into web/dist (gitignored)
 ```
 
+### Vercel (static, no container)
+
+Set the Vercel project's **Root Directory** to `templates`. [`templates/vercel.json`](../vercel.json) sets the rest:
+- **Install:** `npm ci --ignore-scripts`. The workspace's XO engine packages pull in native SQLite modules (`sqlite3`, and an old `better-sqlite3` through `websql-configurable`). Vercel's npm runs their install scripts, which fail to compile on current Node. The page never loads them; its browser build replaces them with stand-ins.
+- **Build:** `npm run web:build`.
+- **Output:** `web/dist`.
+- **Headers:** `noindex`, and long caching for the built assets.
+
+The same install and build were checked on Node 26.13.1 with npm 11.20, the versions Vercel used.
+
 ### Docker image
 
 `templates/Dockerfile` builds the page and serves it with nginx (unprivileged, port 8080). The build context is `templates/`:
