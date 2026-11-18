@@ -305,7 +305,7 @@ export default function DashboardLayout() {
           </div>
 
           <Link
-            to="/"
+            to="/dashboard"
             className="hidden shrink-0 items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-300 transition hover:border-orange-500/30 hover:text-orange-400 sm:flex 2xl:px-5 2xl:py-3 2xl:text-sm"
           >
             <LogOut size={15} />
