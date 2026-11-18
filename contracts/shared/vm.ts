@@ -117,8 +117,8 @@ export function completeOutput(
     return completeMergedOutput({ outputIdentifier } as never, 0, invitationVariables as never, template as never, actionIdentifier) as never;
 }
 
-/** Builds a version 2 transaction spending `coins` into `outputs`, and returns true when the VM accepts it. */
-export function verifySpend(coins: SpentCoin[], outputs: Output[]): true | string {
+/** Builds a transaction (version 2 unless given) spending `coins` into `outputs`, and returns true when the VM accepts it. */
+export function verifySpend(coins: SpentCoin[], outputs: Output[], { version = 2 }: { version?: number } = {}): true | string {
     const inputs: Input[] = coins.map((coin, index) => ({
         outpointTransactionHash: new Uint8Array(32).fill(index + 1),
         outpointIndex: 0,
@@ -130,7 +130,7 @@ export function verifySpend(coins: SpentCoin[], outputs: Output[]): true | strin
         valueSatoshis: coin.valueSatoshis,
         ...(coin.token ? { token: coin.token } : {}),
     }));
-    const result = vm.verify({ sourceOutputs, transaction: { version: 2, locktime: 0, inputs, outputs } });
+    const result = vm.verify({ sourceOutputs, transaction: { version, locktime: 0, inputs, outputs } });
 
     return result === true ? true : String(result);
 }

@@ -63,6 +63,28 @@ export function findOutputIndex(serializedTransaction: string, lockingBytecode: 
     return decoded.outputs.findIndex((output) => binToHex(output.lockingBytecode) === binToHex(lockingBytecode));
 }
 
+/**
+ * The current chipnet block height, straight from Electrum. The engine's own chain status relies on header sync, which
+ * fails on chipnet since the November 2026 one-minute-block upgrade (see revenue-split/README.md).
+ */
+export async function getChipnetTipHeight(): Promise<number> {
+    const client = new ElectrumClient('xogrid-contracts', '1.4.1', CHIPNET_ELECTRUM_HOST);
+
+    await client.connect();
+
+    try {
+        const tip = (await client.request('blockchain.headers.get_tip')) as { height: number } | Error;
+
+        if (tip instanceof Error) {
+            throw tip;
+        }
+
+        return tip.height;
+    } finally {
+        await client.disconnect(true);
+    }
+}
+
 /** Broadcasts a raw transaction to a chipnet Electrum server and returns its txid. */
 export async function broadcastToChipnet(serializedTransaction: string): Promise<string> {
     const client = new ElectrumClient('xogrid-contracts', '1.4.1', CHIPNET_ELECTRUM_HOST);
