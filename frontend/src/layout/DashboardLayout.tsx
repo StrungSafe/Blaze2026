@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import {
@@ -13,6 +14,7 @@ import {
   Wallet,
   Copy,
   Check,
+  Blocks,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -159,16 +161,28 @@ export default function DashboardLayout() {
               const Icon = item.icon;
 
               return (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.end}
-                  onClick={() => setSidebarOpen(false)}
-                  className={navLinkClass}
-                >
-                  <Icon size={18} />
-                  <span>{item.label}</span>
-                </NavLink>
+                <div key={item.to}>
+                  <NavLink
+                    to={item.to}
+                    end={item.end}
+                    onClick={() => setSidebarOpen(false)}
+                    className={navLinkClass}
+                  >
+                    <Icon size={18} />
+                    <span>{item.label}</span>
+                  </NavLink>
+
+                  {/* Build Template - no navigation for now */}
+                  {item.to === "/publish" && (
+                    <button
+                      type="button"
+                      className="flex w-full cursor-default items-center gap-3 rounded-xl border border-transparent px-4 py-3 text-left text-sm font-medium text-white transition-all"
+                    >
+                      <Blocks size={18} />
+                      <span>Build Template</span>
+                    </button>
+                  )}
+                </div>
               );
             })}
 
@@ -305,7 +319,7 @@ export default function DashboardLayout() {
           </div>
 
           <Link
-            to="/dashboard"
+            to="/"
             className="hidden shrink-0 items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-300 transition hover:border-orange-500/30 hover:text-orange-400 sm:flex 2xl:px-5 2xl:py-3 2xl:text-sm"
           >
             <LogOut size={15} />

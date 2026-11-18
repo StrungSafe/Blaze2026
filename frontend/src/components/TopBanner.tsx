@@ -69,7 +69,7 @@ export default function TopBanner() {
       aria-label="BCH BLAZE 2026 project links"
       className="relative z-[60] border-b border-orange-500/20 bg-[#0a0c14] text-[11px] text-white/70 sm:text-xs"
     >
-      <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4 py-2 sm:justify-between sm:px-8">
+      <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4 py-2 md:py-5 sm:justify-between sm:px-8">
         <span className="hidden font-semibold uppercase tracking-[0.16em] text-orange-400 md:inline">
           Built for BCH BLAZE 2026
         </span>

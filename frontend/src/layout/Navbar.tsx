@@ -5,6 +5,7 @@ import {
   X,
   ArrowUpRight,
   Wallet,
+  LayoutDashboard,
 } from "lucide-react";
 
 import {
@@ -240,8 +241,12 @@ function Navbar() {
   // Open shared wallet modal
   const openWalletModal = () => {
     setMenuOpen(false);
-    // Connecting from the landing page goes straight into the dashboard.
-    openModal(location.pathname === "/" ? { redirectTo: "/dashboard" } : undefined);
+
+    openModal(
+      location.pathname === "/"
+        ? { redirectTo: "/dashboard" }
+        : undefined,
+    );
   };
 
   // Wallet display
@@ -355,7 +360,18 @@ function Navbar() {
           </div>
 
           {/* Desktop CTA */}
-          <div className="hidden shrink-0 lg:flex">
+          <div className="hidden shrink-0 items-center gap-2 lg:flex 2xl:gap-3">
+            <Link
+              to="/dashboard"
+              className="group flex items-center gap-2 whitespace-nowrap rounded-xl border border-white/10 bg-white/[0.04] px-3 py-3 text-xs font-semibold text-white/80 transition-all duration-300 hover:border-orange-400/40 hover:bg-orange-500/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 xl:px-4 xl:text-sm 2xl:px-5"
+            >
+              <LayoutDashboard
+                size={16}
+                className="shrink-0 text-orange-400"
+              />
+              <span>Back to Dashboard</span>
+            </Link>
+
             <button
               type="button"
               onClick={openWalletModal}
@@ -390,27 +406,50 @@ function Navbar() {
             </button>
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            type="button"
-            onClick={() =>
-              setMenuOpen((previous) => !previous)
-            }
-            aria-label={
-              menuOpen
-                ? "Close navigation menu"
-                : "Open navigation menu"
-            }
-            aria-expanded={menuOpen}
-            aria-controls="mobile-navigation"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white transition-all duration-300 hover:border-orange-400/50 hover:bg-orange-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 sm:h-11 sm:w-11 lg:hidden"
-          >
-            {menuOpen ? (
-              <X size={21} />
-            ) : (
-              <Menu size={21} />
-            )}
-          </button>
+          {/* Mobile Header Actions */}
+          <div className="flex shrink-0 items-center gap-2 lg:hidden">
+            {/* Dashboard Link - Always Visible */}
+            <Link
+              to="/dashboard"
+              aria-label="Back to Dashboard"
+              title="Back to Dashboard"
+              className={`flex h-10 items-center justify-center gap-1.5 rounded-xl border px-2.5 text-xs font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 sm:h-11 sm:gap-2 sm:px-3 sm:text-sm ${
+                location.pathname === "/dashboard"
+                  ? "border-orange-400/30 bg-orange-500/10 text-orange-400"
+                  : "border-white/10 bg-white/[0.04] text-white/85 hover:border-orange-400/40 hover:bg-orange-500/10 hover:text-white"
+              }`}
+            >
+              <LayoutDashboard
+                size={16}
+                className="shrink-0 text-orange-400"
+              />
+              <span className="whitespace-nowrap">
+                Dashboard
+              </span>
+            </Link>
+
+            {/* Mobile Menu Toggle */}
+            <button
+              type="button"
+              onClick={() =>
+                setMenuOpen((previous) => !previous)
+              }
+              aria-label={
+                menuOpen
+                  ? "Close navigation menu"
+                  : "Open navigation menu"
+              }
+              aria-expanded={menuOpen}
+              aria-controls="mobile-navigation"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white transition-all duration-300 hover:border-orange-400/50 hover:bg-orange-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 sm:h-11 sm:w-11"
+            >
+              {menuOpen ? (
+                <X size={21} />
+              ) : (
+                <Menu size={21} />
+              )}
+            </button>
+          </div>
         </nav>
 
         {/* Mobile Navigation */}
