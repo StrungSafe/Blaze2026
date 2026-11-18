@@ -12,6 +12,8 @@ import Admin from "./pages/Admin";
 import Documentation from "./pages/Documentation";
 import Demo from "./pages/Demo";
 
+import DashboardLayout from "./layout/DashboardLayout";
+
 import xogridlogo from "./assets/images/xogridlogo.png";
 
 interface LoadingScreenProps {
@@ -92,19 +94,22 @@ function App() {
   return (
     <>
       <Routes>
+        {/* Public landing page */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/explore" element={<Explore />} />
+
+        {/* Shared dashboard layout */}
+        <Route element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/publish" element={<Publish />} />
+          <Route path="/policy" element={<Policy />} />
+          <Route path="/admin" element={<Admin />} />
+        </Route>
+
+        {/* Standalone pages */}
         <Route path="/t/:identifier" element={<TemplateDetail />} />
-        <Route path="/publish" element={<Publish />} />
-        <Route path="/policy" element={<Policy />} />
         <Route path="/demo" element={<Demo />} />
-
-        {/* XOGrid Documentation */}
         <Route path="/docs" element={<Documentation />} />
-
-        {/* XOGrid Admin entry */}
-        <Route path="/admin" element={<Admin />} />
       </Routes>
 
       {isLoading && <LoadingScreen exiting={isExiting} />}

@@ -1,40 +1,32 @@
 
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Activity,
   ArrowRight,
   ArrowUpRight,
   Blocks,
   ChevronDown,
-  CircleHelp,
   Compass,
   ExternalLink,
   FileCheck2,
   Flag,
-  LayoutDashboard,
   LogOut,
-  Menu,
   Plus,
   Search,
   ShieldCheck,
   Upload,
   Wallet,
-  X,
   Zap,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
-
-import xogridlogo from "../assets/images/xogridlogo.png";
 
 import {
   mockDashboardStats,
   mockRecentActivity,
   mockTemplates,
 } from "../data/mockDashboard";
-
-import { hasAdminToken } from "../hub/admin";
 
 type StatIcon = "explore" | "publish" | "checked" | "flags";
 type StatColor = "purple" | "orange" | "green" | "blue";
@@ -62,13 +54,6 @@ type DashboardTemplate = {
   category: string;
   badge: string;
   updated: string;
-};
-
-type NavigationItem = {
-  label: string;
-  to: string;
-  icon: LucideIcon;
-  end?: boolean;
 };
 
 const stats = mockDashboardStats as DashboardStat[];
@@ -107,32 +92,7 @@ const colorMap: Record<
   },
 };
 
-const navigation: NavigationItem[] = [
-  {
-    label: "Overview",
-    to: "/dashboard",
-    icon: LayoutDashboard,
-    end: true,
-  },
-  {
-    label: "Explore templates",
-    to: "/explore",
-    icon: Compass,
-  },
-  {
-    label: "Publish template",
-    to: "/publish",
-    icon: Upload,
-  },
-  {
-    label: "Trust & Policy",
-    to: "/policy",
-    icon: ShieldCheck,
-  },
-];
-
 function Dashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [walletConnected, setWalletConnected] = useState(false);
   const [walletMenuOpen, setWalletMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -140,11 +100,6 @@ function Dashboard() {
   // Demo only: replace this with the actual connected BCH wallet address
   // from your WizardConnect integration.
   const walletAddress = "bitcoincash:qz7...8k2p";
-
-  // Cosmetic only: show the Administration link when a moderator session exists in this browser tab.
-  // Access itself is decided by the server, which checks a wallet signature against the moderator list and
-  // answers 401 to everything else, so hiding or showing this link protects nothing by itself.
-  const isAdmin = hasAdminToken();
 
   const filteredTemplates = templates.filter((template) =>
     `${template.name} ${template.category} ${template.id}`
@@ -166,10 +121,8 @@ function Dashboard() {
     setWalletMenuOpen(false);
   };
 
-  const closeSidebar = () => setSidebarOpen(false);
-
   return (
-    <div className="min-h-screen bg-[#05070b] text-white">
+    <div className="relative min-h-screen overflow-hidden bg-[#05070b] text-white">
       <style>{`
         @keyframes xogridFadeUp {
           from {
@@ -179,28 +132,6 @@ function Dashboard() {
           to {
             opacity: 1;
             transform: translateY(0);
-          }
-        }
-
-        @keyframes xogridFadeDown {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes xogridSlideIn {
-          from {
-            opacity: 0;
-            transform: translateX(-35px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
           }
         }
 
@@ -231,14 +162,6 @@ function Dashboard() {
           100% {
             transform: translateX(220%);
           }
-        }
-
-        .xogrid-sidebar-enter {
-          animation: xogridSlideIn 0.7s cubic-bezier(.2,.8,.2,1) both;
-        }
-
-        .xogrid-header-enter {
-          animation: xogridFadeDown 0.7s ease-out both;
         }
 
         .xogrid-section-enter {
@@ -383,20 +306,7 @@ function Dashboard() {
           box-shadow: 0 16px 45px rgba(0, 0, 0, 0.2);
         }
 
-        .xogrid-nav-link {
-          transition:
-            transform 0.25s ease,
-            color 0.25s ease,
-            background 0.25s ease;
-        }
-
-        .xogrid-nav-link:hover {
-          transform: translateX(4px);
-        }
-
         @media (prefers-reduced-motion: reduce) {
-          .xogrid-sidebar-enter,
-          .xogrid-header-enter,
           .xogrid-section-enter,
           .xogrid-stat-card,
           .xogrid-template-row,
@@ -410,8 +320,7 @@ function Dashboard() {
 
           .xogrid-stat-card,
           .xogrid-primary-button,
-          .xogrid-panel,
-          .xogrid-nav-link {
+          .xogrid-panel {
             transition: none !important;
           }
         }
@@ -424,182 +333,165 @@ function Dashboard() {
         <div className="xogrid-ambient-three absolute bottom-0 left-[35%] h-[350px] w-[350px] rounded-full bg-violet-500/[0.04] blur-[140px]" />
       </div>
 
-      {/* Mobile overlay */}
-      <div
-        onClick={closeSidebar}
-        className={`fixed inset-0 z-40 bg-black/70 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
-          sidebarOpen ? "visible opacity-100" : "invisible opacity-0"
-        }`}
-      />
+      {/* Dashboard content */}
+      <div className="relative mx-auto max-w-[1600px] px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
+        {/* Welcome */}
+        <section className="xogrid-section-enter mb-9 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+          <div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-400/15 bg-violet-500/[0.07] px-3 py-1.5">
+              <span className="xogrid-status-dot h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_#a78bfa]" />
 
-      {/* Sidebar */}
-      <aside
-        className={`xogrid-sidebar-enter fixed inset-y-0 left-0 z-50 flex w-[270px] flex-col border-r border-white/[0.07] bg-[#090A12] transition-transform duration-300 lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex h-[88px] items-center justify-between border-b border-white/[0.07] px-7">
-          <Link to="/" onClick={closeSidebar} aria-label="XOGrid home">
-            <img
-              src={xogridlogo}
-              alt="XOGrid"
-              className="h-12 w-auto object-contain"
-            />
-          </Link>
-
-          <button
-            type="button"
-            onClick={closeSidebar}
-            aria-label="Close sidebar"
-            className="rounded-lg p-2 text-white/50 transition hover:bg-white/5 hover:text-white lg:hidden"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="px-6 pb-3 pt-8">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">
-            Workspace
-          </p>
-        </div>
-
-        <nav className="flex-1 space-y-1 overflow-y-auto px-4">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <NavLink
-                key={item.label}
-                to={item.to}
-                end={item.end}
-                onClick={closeSidebar}
-                className={({ isActive }) =>
-                  `xogrid-nav-link group flex items-center gap-3 rounded-xl border px-4 py-3.5 text-[13px] font-medium ${
-                    isActive
-                      ? "border-orange-500/20 bg-orange-500/[0.09] text-orange-400 shadow-[inset_3px_0_0_#f97316]"
-                      : "border-transparent text-white/55 hover:border-white/[0.06] hover:bg-white/[0.035] hover:text-white"
-                  }`
-                }
-              >
-                <Icon size={18} strokeWidth={1.8} />
-                <span>{item.label}</span>
-
-                {item.label === "Publish template" && (
-                  <Plus
-                    size={15}
-                    className="ml-auto text-white/30 transition-colors group-hover:text-orange-400"
-                  />
-                )}
-              </NavLink>
-            );
-          })}
-
-          {/* Admin section: visible only to an approved real wallet */}
-          {isAdmin && (
-            <>
-              <div className="!my-6 border-t border-white/[0.07]" />
-
-              <p className="px-4 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">
-                Administration
-              </p>
-
-              <NavLink
-                to="/admin"
-                onClick={closeSidebar}
-                className={({ isActive }) =>
-                  `xogrid-nav-link group flex items-center gap-3 rounded-xl border px-4 py-3.5 text-[13px] font-medium ${
-                    isActive
-                      ? "border-orange-500/20 bg-orange-500/[0.09] text-orange-400 shadow-[inset_3px_0_0_#f97316]"
-                      : "border-transparent text-white/55 hover:border-white/[0.06] hover:bg-white/[0.035] hover:text-white"
-                  }`
-                }
-              >
-                <ShieldCheck size={18} strokeWidth={1.8} />
-                <span>Admin Dashboard</span>
-                <ArrowUpRight
-                  size={14}
-                  className="ml-auto text-white/30 transition-colors group-hover:text-orange-400"
-                />
-              </NavLink>
-            </>
-          )}
-
-          <div className="!my-6 border-t border-white/[0.07]" />
-
-          <p className="px-4 pb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/30">
-            Resources
-          </p>
-
-          <Link
-            to="/policy"
-            onClick={closeSidebar}
-            className="xogrid-nav-link flex items-center gap-3 rounded-xl px-4 py-3 text-[13px] font-medium text-white/55 transition hover:bg-white/[0.035] hover:text-white"
-          >
-            <CircleHelp size={18} strokeWidth={1.8} />
-            Help & documentation
-          </Link>
-        </nav>
-
-        <div className="border-t border-white/[0.07] p-4">
-          <div className="rounded-2xl border border-violet-400/10 bg-violet-500/[0.055] p-4 transition duration-300 hover:border-violet-400/25 hover:bg-violet-500/[0.09]">
-            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300">
-              <Zap size={18} />
+              <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-violet-300">
+                Your workspace
+              </span>
             </div>
 
-            <p className="text-sm font-semibold text-white">
-              Build with confidence
-            </p>
+            <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+              Welcome back
+              <span className="text-orange-400">.</span>
+            </h2>
 
-            <p className="mt-1 text-xs leading-5 text-white/40">
-              Explore template identities and community activity.
+            <p className="mt-2 max-w-xl text-sm leading-6 text-white/45">
+              Keep track of your templates, explore the registry, and
+              contribute to the XOGrid ecosystem.
             </p>
-
-            <Link
-              to="/policy"
-              onClick={closeSidebar}
-              className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-violet-300 transition hover:text-violet-200"
-            >
-              Learn about trust
-              <ArrowUpRight size={13} />
-            </Link>
           </div>
 
-          <p className="mt-4 text-center text-[10px] tracking-wide text-white/25">
-            XOGrid · Template Registry
-          </p>
-        </div>
-      </aside>
+          <Link
+            to="/publish"
+            className="xogrid-primary-button group inline-flex h-12 items-center justify-center gap-2 self-start rounded-xl bg-orange-500 px-5 text-sm font-semibold text-white shadow-lg shadow-orange-500/10 sm:self-auto"
+          >
+            <Plus size={17} />
+            Publish a template
 
-      {/* Main content */}
-      <div className="relative min-h-screen lg:pl-[270px]">
-        <header className="xogrid-header-enter sticky top-0 z-30 border-b border-white/[0.07] bg-[#05070b]/80 backdrop-blur-2xl">
-          <div className="flex h-[88px] items-center justify-between gap-4 px-5 sm:px-8 lg:px-10">
-            <div className="flex min-w-0 items-center gap-3">
+            <ArrowUpRight
+              size={16}
+              className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+            />
+          </Link>
+        </section>
+
+        {/* Wallet connection notice */}
+        {!walletConnected && (
+          <section className="xogrid-section-enter mb-8 overflow-hidden rounded-2xl border border-orange-400/15 bg-gradient-to-r from-orange-500/[0.09] via-violet-500/[0.06] to-transparent p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-orange-400/15 bg-orange-500/10 text-orange-400">
+                  <Wallet size={21} />
+                </div>
+
+                <div>
+                  <h3 className="text-sm font-semibold text-white">
+                    Connect your BCH wallet
+                  </h3>
+
+                  <p className="mt-1 max-w-xl text-xs leading-5 text-white/45">
+                    Connect your wallet to prepare your XOGrid workspace
+                    for wallet-based features.
+                  </p>
+                </div>
+              </div>
+
               <button
                 type="button"
-                onClick={() => setSidebarOpen(true)}
-                aria-label="Open sidebar"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.035] text-white/70 transition hover:border-orange-400/30 hover:text-white lg:hidden"
+                onClick={handleWalletClick}
+                className="xogrid-primary-button inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-orange-400/20 bg-orange-500/10 px-4 text-xs font-semibold text-orange-300"
               >
-                <Menu size={20} />
+                Connect wallet
+                <ArrowUpRight size={14} />
               </button>
+            </div>
+          </section>
+        )}
 
-              <div className="min-w-0">
-                <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30 sm:block">
-                  XOGrid workspace
-                </p>
+        {/* Stats */}
+        <section className="mb-10">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold text-white">
+                Workspace activity
+              </h3>
 
-                <h1 className="truncate text-lg font-semibold tracking-tight text-white sm:mt-1 sm:text-xl">
-                  Overview
-                </h1>
-              </div>
+              <p className="mt-1 text-xs text-white/35">
+                A snapshot of your sample activity
+              </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-3">
-              <div className="relative hidden md:block">
+            <span className="rounded-lg border border-white/[0.07] bg-white/[0.025] px-3 py-1.5 text-[10px] text-white/40">
+              Demo data
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {stats.map((stat) => {
+              const Icon = iconMap[stat.icon];
+              const colors = colorMap[stat.color];
+
+              return (
+                <div
+                  key={stat.label}
+                  className={`xogrid-stat-card group rounded-2xl border border-white/[0.07] bg-[#0B0D15]/80 p-5 ${colors.glow}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div
+                      className={`flex h-10 w-10 items-center justify-center rounded-xl ${colors.icon}`}
+                    >
+                      <Icon size={19} strokeWidth={1.8} />
+                    </div>
+
+                    <ArrowUpRight
+                      size={16}
+                      className="text-white/20 transition-colors group-hover:text-white/60"
+                    />
+                  </div>
+
+                  <p className="mt-5 text-3xl font-semibold tracking-tight text-white">
+                    {stat.value}
+                  </p>
+
+                  <p className="mt-1 text-xs font-medium text-white/60">
+                    {stat.label}
+                  </p>
+
+                  <p className="mt-3 text-[10px] text-white/30">
+                    {stat.change}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Main dashboard columns */}
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.45fr_0.85fr]">
+          {/* Templates */}
+          <section className="xogrid-panel min-w-0 overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0B0D15]/80">
+            <div className="flex flex-col gap-3 border-b border-white/[0.07] p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div>
+                <h3 className="text-sm font-semibold text-white">
+                  Your templates
+                </h3>
+
+                <p className="mt-1 text-xs text-white/35">
+                  Recently added template records
+                </p>
+              </div>
+
+              <Link
+                to="/explore"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 transition hover:text-orange-300"
+              >
+                Explore registry
+                <ArrowUpRight size={14} />
+              </Link>
+            </div>
+
+            {/* Search */}
+            <div className="border-b border-white/[0.06] p-4">
+              <div className="relative">
                 <Search
-                  size={16}
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30"
+                  size={15}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
                 />
 
                 <input
@@ -607,444 +499,246 @@ function Dashboard() {
                   placeholder="Search your templates..."
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  className="h-11 w-[230px] rounded-xl border border-white/[0.08] bg-white/[0.035] pl-10 pr-4 text-xs text-white outline-none transition placeholder:text-white/30 focus:border-violet-400/40 focus:bg-white/[0.05]"
+                  className="h-10 w-full rounded-lg border border-white/[0.08] bg-white/[0.025] pl-9 pr-3 text-xs text-white outline-none placeholder:text-white/30 focus:border-violet-400/40"
                 />
               </div>
+            </div>
 
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={handleWalletClick}
-                  className={`flex h-11 items-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-all duration-300 sm:px-4 ${
-                    walletConnected
-                      ? "border-emerald-400/20 bg-emerald-500/[0.07] text-emerald-300 hover:bg-emerald-500/[0.12]"
-                      : "border-orange-500/20 bg-orange-500 text-white shadow-lg shadow-orange-500/10 hover:-translate-y-0.5 hover:bg-orange-400"
-                  }`}
-                >
-                  <Wallet size={16} />
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[570px] text-left">
+                <thead>
+                  <tr className="border-b border-white/[0.06] text-[10px] uppercase tracking-wider text-white/30">
+                    <th className="px-6 py-4 font-semibold">Template</th>
+                    <th className="px-4 py-4 font-semibold">Category</th>
+                    <th className="px-4 py-4 font-semibold">Status</th>
+                    <th className="px-6 py-4 text-right font-semibold">
+                      Updated
+                    </th>
+                  </tr>
+                </thead>
 
-                  <span className="hidden sm:inline">
-                    {walletConnected
-                      ? "Demo wallet connected"
-                      : "Connect wallet"}
-                  </span>
-
-                  <span className="sm:hidden">
-                    {walletConnected ? "Connected" : "Connect"}
-                  </span>
-
-                  {walletConnected && <ChevronDown size={14} />}
-                </button>
-
-                {walletConnected && walletMenuOpen && (
-                  <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-64 rounded-2xl border border-white/10 bg-[#10111b] p-3 shadow-2xl shadow-black/50">
-                    <div className="border-b border-white/[0.07] px-2 pb-3">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
-                        Demo wallet connected
-                      </p>
-
-                      <p className="mt-2 break-all text-xs text-white/70">
-                        {walletAddress}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={disconnectWallet}
-                      className="mt-2 flex w-full items-center gap-2 rounded-lg px-2 py-2.5 text-left text-xs text-white/60 transition hover:bg-white/[0.05] hover:text-white"
+                <tbody>
+                  {filteredTemplates.map((template) => (
+                    <tr
+                      key={template.id}
+                      className="xogrid-template-row border-b border-white/[0.045] last:border-0"
                     >
-                      <LogOut size={15} />
-                      Disconnect demo wallet
-                    </button>
-                  </div>
-                )}
-              </div>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-violet-400/10 bg-violet-500/[0.08] text-violet-300">
+                            <Blocks size={16} />
+                          </div>
+
+                          <div>
+                            <p className="text-xs font-semibold text-white">
+                              {template.name}
+                            </p>
+
+                            <p className="mt-1 text-[10px] text-white/30">
+                              {template.id}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-4 py-4 text-xs text-white/45">
+                        {template.category}
+                      </td>
+
+                      <td className="px-4 py-4">
+                        <span
+                          className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-medium ${
+                            template.badge === "Reviewed"
+                              ? "border-violet-400/15 bg-violet-500/[0.08] text-violet-300"
+                              : template.badge === "Auto-checked"
+                                ? "border-emerald-400/15 bg-emerald-500/[0.07] text-emerald-300"
+                                : "border-white/10 bg-white/[0.04] text-white/45"
+                          }`}
+                        >
+                          {template.badge}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-4 text-right text-xs text-white/40">
+                        {template.updated}
+                      </td>
+                    </tr>
+                  ))}
+
+                  {filteredTemplates.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="px-6 py-12 text-center text-xs text-white/40"
+                      >
+                        No matching sample templates found.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          </div>
-        </header>
 
-        <main className="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
-          {/* Welcome */}
-          <section className="xogrid-section-enter mb-9 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-            <div>
-              <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-violet-400/15 bg-violet-500/[0.07] px-3 py-1.5">
-                <span className="xogrid-status-dot h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_#a78bfa]" />
+            <div className="flex items-center justify-between border-t border-white/[0.06] px-6 py-4">
+              <span className="text-[10px] text-white/30">
+                Showing {filteredTemplates.length} sample records
+              </span>
 
-                <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-violet-300">
-                  Your workspace
-                </span>
-              </div>
-
-              <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-                Welcome back
-                <span className="text-orange-400">.</span>
-              </h2>
-
-              <p className="mt-2 max-w-xl text-sm leading-6 text-white/45">
-                Keep track of your templates, explore the registry, and
-                contribute to the XOGrid ecosystem.
-              </p>
+              <Link
+                to="/explore"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-white/50 transition hover:text-orange-400"
+              >
+                View registry
+                <ArrowRight size={14} />
+              </Link>
             </div>
-
-            <Link
-              to="/publish"
-              className="xogrid-primary-button group inline-flex h-12 items-center justify-center gap-2 self-start rounded-xl bg-orange-500 px-5 text-sm font-semibold text-white shadow-lg shadow-orange-500/10 sm:self-auto"
-            >
-              <Plus size={17} />
-              Publish a template
-
-              <ArrowUpRight
-                size={16}
-                className="transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-              />
-            </Link>
           </section>
 
-          {/* Wallet connection notice */}
-          {!walletConnected && (
-            <section className="xogrid-section-enter mb-8 overflow-hidden rounded-2xl border border-orange-400/15 bg-gradient-to-r from-orange-500/[0.09] via-violet-500/[0.06] to-transparent p-5 sm:p-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-orange-400/15 bg-orange-500/10 text-orange-400">
-                    <Wallet size={21} />
-                  </div>
-
-                  <div>
-                    <h3 className="text-sm font-semibold text-white">
-                      Connect your BCH wallet
-                    </h3>
-
-                    <p className="mt-1 max-w-xl text-xs leading-5 text-white/45">
-                      Connect your wallet to prepare your XOGrid workspace
-                      for wallet-based features.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleWalletClick}
-                  className="xogrid-primary-button inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-orange-400/20 bg-orange-500/10 px-4 text-xs font-semibold text-orange-300"
-                >
-                  Connect wallet
-                  <ArrowUpRight size={14} />
-                </button>
-              </div>
-            </section>
-          )}
-
-          {/* Stats */}
-          <section className="mb-10">
-            <div className="mb-4 flex items-center justify-between">
+          {/* Recent activity */}
+          <section className="xogrid-panel rounded-2xl border border-white/[0.07] bg-[#0B0D15]/80">
+            <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-5 sm:px-6">
               <div>
                 <h3 className="text-sm font-semibold text-white">
-                  Workspace activity
+                  Recent activity
                 </h3>
 
                 <p className="mt-1 text-xs text-white/35">
-                  A snapshot of your sample activity
+                  Your latest sample events
                 </p>
               </div>
 
-              <span className="rounded-lg border border-white/[0.07] bg-white/[0.025] px-3 py-1.5 text-[10px] text-white/40">
-                Demo data
-              </span>
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-white/45">
+                <Activity size={17} />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {stats.map((stat) => {
-                const Icon = iconMap[stat.icon];
-                const colors = colorMap[stat.color];
+            <div className="p-5 sm:px-6">
+              <div className="space-y-6">
+                {recentActivity.map((activity, index) => {
+                  const ActivityIcon: LucideIcon =
+                    activity.type === "publish"
+                      ? Upload
+                      : activity.type === "check"
+                        ? FileCheck2
+                        : activity.type === "flag"
+                          ? Flag
+                          : Compass;
 
-                return (
-                  <div
-                    key={stat.label}
-                    className={`xogrid-stat-card group rounded-2xl border border-white/[0.07] bg-[#0B0D15]/80 p-5 ${colors.glow}`}
-                  >
-                    <div className="flex items-center justify-between">
+                  const activityColor =
+                    activity.type === "publish"
+                      ? "text-orange-400 bg-orange-500/10"
+                      : activity.type === "check"
+                        ? "text-emerald-400 bg-emerald-500/10"
+                        : activity.type === "flag"
+                          ? "text-amber-400 bg-amber-500/10"
+                          : "text-violet-300 bg-violet-500/10";
+
+                  return (
+                    <div
+                      key={activity.id}
+                      className="xogrid-activity-item relative flex gap-3"
+                    >
+                      {index !== recentActivity.length - 1 && (
+                        <div className="absolute bottom-[-22px] left-[17px] top-10 w-px bg-white/[0.07]" />
+                      )}
+
                       <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl ${colors.icon}`}
+                        className={`relative z-10 flex h-[35px] w-[35px] shrink-0 items-center justify-center rounded-xl ${activityColor}`}
                       >
-                        <Icon size={19} strokeWidth={1.8} />
+                        <ActivityIcon size={15} />
                       </div>
 
-                      <ArrowUpRight
-                        size={16}
-                        className="text-white/20 transition-colors group-hover:text-white/60"
-                      />
-                    </div>
-
-                    <p className="mt-5 text-3xl font-semibold tracking-tight text-white">
-                      {stat.value}
-                    </p>
-
-                    <p className="mt-1 text-xs font-medium text-white/60">
-                      {stat.label}
-                    </p>
-
-                    <p className="mt-3 text-[10px] text-white/30">
-                      {stat.change}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Main dashboard columns */}
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.45fr_0.85fr]">
-            {/* Templates */}
-            <section className="xogrid-panel min-w-0 overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0B0D15]/80">
-              <div className="flex flex-col gap-3 border-b border-white/[0.07] p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <div>
-                  <h3 className="text-sm font-semibold text-white">
-                    Your templates
-                  </h3>
-
-                  <p className="mt-1 text-xs text-white/35">
-                    Recently added template records
-                  </p>
-                </div>
-
-                <Link
-                  to="/explore"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-400 transition hover:text-orange-300"
-                >
-                  Explore registry
-                  <ArrowUpRight size={14} />
-                </Link>
-              </div>
-
-              {/* Mobile search */}
-              <div className="border-b border-white/[0.06] p-4 md:hidden">
-                <div className="relative">
-                  <Search
-                    size={15}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"
-                  />
-
-                  <input
-                    type="search"
-                    placeholder="Search templates..."
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    className="h-10 w-full rounded-lg border border-white/[0.08] bg-white/[0.025] pl-9 pr-3 text-xs text-white outline-none placeholder:text-white/30 focus:border-violet-400/40"
-                  />
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[570px] text-left">
-                  <thead>
-                    <tr className="border-b border-white/[0.06] text-[10px] uppercase tracking-wider text-white/30">
-                      <th className="px-6 py-4 font-semibold">Template</th>
-                      <th className="px-4 py-4 font-semibold">Category</th>
-                      <th className="px-4 py-4 font-semibold">Status</th>
-                      <th className="px-6 py-4 text-right font-semibold">
-                        Updated
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {filteredTemplates.map((template) => (
-                      <tr
-                        key={template.id}
-                        className="xogrid-template-row border-b border-white/[0.045] last:border-0"
-                      >
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-violet-400/10 bg-violet-500/[0.08] text-violet-300">
-                              <Blocks size={16} />
-                            </div>
-
-                            <div>
-                              <p className="text-xs font-semibold text-white">
-                                {template.name}
-                              </p>
-
-                              <p className="mt-1 text-[10px] text-white/30">
-                                {template.id}
-                              </p>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="px-4 py-4 text-xs text-white/45">
-                          {template.category}
-                        </td>
-
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-medium ${
-                              template.badge === "Reviewed"
-                                ? "border-violet-400/15 bg-violet-500/[0.08] text-violet-300"
-                                : template.badge === "Auto-checked"
-                                  ? "border-emerald-400/15 bg-emerald-500/[0.07] text-emerald-300"
-                                  : "border-white/10 bg-white/[0.04] text-white/45"
-                            }`}
-                          >
-                            {template.badge}
-                          </span>
-                        </td>
-
-                        <td className="px-6 py-4 text-right text-xs text-white/40">
-                          {template.updated}
-                        </td>
-                      </tr>
-                    ))}
-
-                    {filteredTemplates.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="px-6 py-12 text-center text-xs text-white/40"
-                        >
-                          No matching sample templates found.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex items-center justify-between border-t border-white/[0.06] px-6 py-4">
-                <span className="text-[10px] text-white/30">
-                  Showing {filteredTemplates.length} sample records
-                </span>
-
-                <Link
-                  to="/explore"
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-white/50 transition hover:text-orange-400"
-                >
-                  View registry
-                  <ArrowRight size={14} />
-                </Link>
-              </div>
-            </section>
-
-            {/* Recent activity */}
-            <section className="xogrid-panel rounded-2xl border border-white/[0.07] bg-[#0B0D15]/80">
-              <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-5 sm:px-6">
-                <div>
-                  <h3 className="text-sm font-semibold text-white">
-                    Recent activity
-                  </h3>
-
-                  <p className="mt-1 text-xs text-white/35">
-                    Your latest sample events
-                  </p>
-                </div>
-
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.025] text-white/45">
-                  <Activity size={17} />
-                </div>
-              </div>
-
-              <div className="p-5 sm:px-6">
-                <div className="space-y-6">
-                  {recentActivity.map((activity, index) => {
-                    const ActivityIcon: LucideIcon =
-                      activity.type === "publish"
-                        ? Upload
-                        : activity.type === "check"
-                          ? FileCheck2
-                          : activity.type === "flag"
-                            ? Flag
-                            : Compass;
-
-                    const activityColor =
-                      activity.type === "publish"
-                        ? "text-orange-400 bg-orange-500/10"
-                        : activity.type === "check"
-                          ? "text-emerald-400 bg-emerald-500/10"
-                          : activity.type === "flag"
-                            ? "text-amber-400 bg-amber-500/10"
-                            : "text-violet-300 bg-violet-500/10";
-
-                    return (
-                      <div
-                        key={activity.id}
-                        className="xogrid-activity-item relative flex gap-3"
-                      >
-                        {index !== recentActivity.length - 1 && (
-                          <div className="absolute bottom-[-22px] left-[17px] top-10 w-px bg-white/[0.07]" />
-                        )}
-
-                        <div
-                          className={`relative z-10 flex h-[35px] w-[35px] shrink-0 items-center justify-center rounded-xl ${activityColor}`}
-                        >
-                          <ActivityIcon size={15} />
-                        </div>
-
-                        <div className="min-w-0 flex-1 pt-0.5">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="text-xs font-semibold text-white">
-                              {activity.title}
-                            </p>
-
-                            <span className="text-[9px] text-white/30">
-                              {activity.time}
-                            </span>
-                          </div>
-
-                          <p className="mt-1 truncate text-[11px] text-white/45">
-                            {activity.description}
+                      <div className="min-w-0 flex-1 pt-0.5">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-xs font-semibold text-white">
+                            {activity.title}
                           </p>
 
-                          <span className="mt-2 inline-flex rounded-md border border-white/[0.07] bg-white/[0.025] px-2 py-1 text-[9px] text-white/40">
-                            {activity.status}
+                          <span className="text-[9px] text-white/30">
+                            {activity.time}
                           </span>
                         </div>
+
+                        <p className="mt-1 truncate text-[11px] text-white/45">
+                          {activity.description}
+                        </p>
+
+                        <span className="mt-2 inline-flex rounded-md border border-white/[0.07] bg-white/[0.025] px-2 py-1 text-[9px] text-white/40">
+                          {activity.status}
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="border-t border-white/[0.06] px-6 py-4">
-                <span className="text-[10px] text-white/30">
-                  Activity shown here is illustrative mock data.
-                </span>
-              </div>
-            </section>
-          </div>
-
-          {/* Bottom information */}
-          <section className="xogrid-section-enter mt-8 flex flex-col justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.018] px-5 py-4 transition duration-300 hover:border-violet-400/20 sm:flex-row sm:items-center sm:px-6">
-            <div className="flex items-start gap-3">
-              <ShieldCheck
-                size={18}
-                className="mt-0.5 shrink-0 text-violet-300"
-              />
-
-              <div>
-                <p className="text-xs font-semibold text-white/75">
-                  Understand template trust statuses
-                </p>
-
-                <p className="mt-1 text-[11px] leading-5 text-white/35">
-                  Automated checks and community reviews provide information,
-                  not a guarantee that a template is safe.
-                </p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            <Link
-              to="/policy"
-              className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-violet-300 transition hover:text-violet-200"
-            >
-              Read trust policy
-              <ExternalLink size={13} />
-            </Link>
+            <div className="border-t border-white/[0.06] px-6 py-4">
+              <span className="text-[10px] text-white/30">
+                Activity shown here is illustrative mock data.
+              </span>
+            </div>
           </section>
+        </div>
 
-          {/* Footer */}
-          <footer className="pb-4 pt-8 text-center text-[10px] tracking-wide text-white/25">
-            XOGrid · Explore. Publish. Build trust.
-          </footer>
-        </main>
+        {/* Bottom information */}
+        <section className="xogrid-section-enter mt-8 flex flex-col justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.018] px-5 py-4 transition duration-300 hover:border-violet-400/20 sm:flex-row sm:items-center sm:px-6">
+          <div className="flex items-start gap-3">
+            <ShieldCheck
+              size={18}
+              className="mt-0.5 shrink-0 text-violet-300"
+            />
+
+            <div>
+              <p className="text-xs font-semibold text-white/75">
+                Understand template trust statuses
+              </p>
+
+              <p className="mt-1 text-[11px] leading-5 text-white/35">
+                Automated checks and community reviews provide information,
+                not a guarantee that a template is safe.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            to="/policy"
+            className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-violet-300 transition hover:text-violet-200"
+          >
+            Read trust policy
+            <ExternalLink size={13} />
+          </Link>
+        </section>
+
+        {/* Footer */}
+        <footer className="pb-4 pt-8 text-center text-[10px] tracking-wide text-white/25">
+          XOGrid · Explore. Publish. Build trust.
+        </footer>
       </div>
+
+      {/* Demo wallet dropdown */}
+      {walletConnected && walletMenuOpen && (
+        <div className="fixed right-5 top-5 z-50 w-64 rounded-2xl border border-white/10 bg-[#10111b] p-3 shadow-2xl shadow-black/50 sm:right-8">
+          <div className="border-b border-white/[0.07] px-2 pb-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
+              Demo wallet connected
+            </p>
+
+            <p className="mt-2 break-all text-xs text-white/70">
+              {walletAddress}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={disconnectWallet}
+            className="mt-2 flex w-full items-center gap-2 rounded-lg px-2 py-2.5 text-left text-xs text-white/60 transition hover:bg-white/[0.05] hover:text-white"
+          >
+            <LogOut size={15} />
+            Disconnect demo wallet
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -6,15 +6,8 @@ import {
   ShieldCheck,
   ArrowUp,
   ArrowUpRight,
-  Mail,
 } from "lucide-react";
-
-import {
-  SiX,
-  SiDiscord,
-  SiTelegram,
-  SiGithub,
-} from "react-icons/si";
+import { SiGithub } from "react-icons/si";
 
 import xogridlogo from "../assets/images/xogridlogo.png";
 
@@ -27,15 +20,7 @@ function Footer() {
   const currentYear = new Date().getFullYear();
   const location = useLocation();
 
-  // Replace these with your official XOGrid accounts.
-  const CONTACT_EMAIL = "xogrid@.com";
-
-  const socialLinks = [
-    { name: "X", href: "https://x.com/YOUR_X_USERNAME", icon: SiX },
-    { name: "Discord", href: "https://discord.gg/YOUR_INVITE", icon: SiDiscord },
-    { name: "Telegram", href: "https://t.me/YOUR_USERNAME", icon: SiTelegram },
-    { name: "GitHub", href: "https://github.com/YOUR_GITHUB", icon: SiGithub },
-  ];
+  const GITHUB_URL = "https://github.com/YOUR_GITHUB";
 
   const footerLinks: Record<string, FooterLink[]> = {
     Platform: [
@@ -151,12 +136,12 @@ function Footer() {
 
         .xogrid-footer-social {
           display: flex;
-          width: 39px;
-          height: 39px;
+          width: 36px;
+          height: 36px;
           align-items: center;
           justify-content: center;
           border: 1px solid rgba(255,255,255,.1);
-          border-radius: 11px;
+          border-radius: 10px;
           background: rgba(255,255,255,.03);
           color: rgba(255,255,255,.55);
           transition: all 250ms ease;
@@ -167,19 +152,6 @@ function Footer() {
           border-color: rgba(249,115,22,.4);
           background: rgba(249,115,22,.08);
           transform: translateY(-3px);
-        }
-
-        .xogrid-footer-email {
-          display: inline-flex;
-          align-items: center;
-          gap: 9px;
-          color: rgba(255,255,255,.5);
-          font-size: 13px;
-          transition: color 250ms ease;
-        }
-
-        .xogrid-footer-email:hover {
-          color: #F97316;
         }
 
         @keyframes waveFlow {
@@ -235,7 +207,7 @@ function Footer() {
 
       <div className="relative z-10 mx-auto max-w-7xl px-6 pb-8 pt-16 sm:px-8 lg:px-12">
         {/* Main footer */}
-        <div className="grid grid-cols-1 gap-12 border-b border-white/[0.08] pb-14 md:grid-cols-2 lg:grid-cols-5 lg:gap-10">
+        <div className="grid grid-cols-1 gap-12 border-b border-white/[0.08] pb-14 md:grid-cols-2 lg:grid-cols-4 lg:gap-10">
           {/* Brand */}
           <div className="lg:col-span-2">
             <Link to="/" className="inline-flex items-center gap-3">
@@ -276,38 +248,6 @@ function Footer() {
               {renderLinks(footerLinks.Resources)}
             </ul>
           </div>
-
-          {/* Follow us and email */}
-          <div>
-            <h3 className="text-sm font-semibold text-white">Follow Us</h3>
-
-            <div className="mt-6 flex flex-wrap gap-3">
-              {socialLinks.map(({ name, href, icon: Icon }) => (
-                <a
-                  key={name}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Follow XOGrid on ${name}`}
-                  title={name}
-                  className="xogrid-footer-social"
-                >
-                  <Icon size={17} />
-                </a>
-              ))}
-            </div>
-
-            <h3 className="mt-8 text-sm font-semibold text-white">Email Us</h3>
-
-            <a
-              href={`mailto:${CONTACT_EMAIL}`}
-              className="xogrid-footer-email mt-5"
-            >
-              <Mail size={16} />
-              <span>{CONTACT_EMAIL}</span>
-              <ArrowUpRight size={13} />
-            </a>
-          </div>
         </div>
 
         {/* Bottom section */}
@@ -316,7 +256,18 @@ function Footer() {
             © {currentYear} XOGrid. All rights reserved.
           </p>
 
-          <div className="flex flex-wrap items-center gap-5">
+          <div className="flex flex-wrap items-center gap-4">
+            <a
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="XOGrid GitHub"
+              title="GitHub"
+              className="xogrid-footer-social"
+            >
+              <SiGithub size={17} />
+            </a>
+
             <Link
               to="/policy"
               className={`xogrid-footer-policy text-xs ${
