@@ -1,0 +1,15 @@
+pragma cashscript ^0.9.0;
+
+// Burner - where tokens enter the void
+//
+// vi: ft=solidity
+
+contract Burner() {
+    function burn() {
+        require(tx.outputs.length == 1);
+        require(tx.outputs[0].tokenCategory == 0x);
+        bytes requiredPrefix = 0x6a /* op_return */;
+        bytes prefix = tx.outputs[0].lockingBytecode.split(1)[0];
+        require(prefix == requiredPrefix);
+    }
+}

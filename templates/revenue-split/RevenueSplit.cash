@@ -1,0 +1,43 @@
+pragma cashscript ^0.14.0;
+
+// Fixed-percentage revenue split.
+//
+// Each coin locked to this contract is paid out in full to three P2PKH recipients at fixed basis points.
+// Anyone may trigger the payout, but the value can only go to the three recipients, in the amounts below.
+// The triggerer pays the miner fee from an input of their own, so the split itself never loses value to fees.
+//
+// Transaction layout, relative to this contract's input index i:
+//   output i      artist share        P2PKH(artistPublicKeyHash)
+//   output i + 1  collaborator share  P2PKH(collaboratorPublicKeyHash)
+//   output i + 2  platform share      P2PKH(platformPublicKeyHash), which also receives the rounding remainder
+// Every other input and output (fee input, change, other contracts) is unconstrained.
+//
+// Deploy only with 0 <= artistBasisPoints, 0 <= collaboratorBasisPoints and their sum <= 10000. Other values lock
+// coins that can never be spent, and a check here could not rescue them, so the XO template checks before funding.
+//
+// Based on the RevenueSplit draft by angelnath (XOGrid commit 8267aec). See README.md for the changes.
+contract RevenueSplit(
+    bytes20 artistPublicKeyHash,
+    bytes20 collaboratorPublicKeyHash,
+    bytes20 platformPublicKeyHash,
+    int artistBasisPoints,
+    int collaboratorBasisPoints
+) {
+    function Payout() {
+        int inputIndex = this.activeInputIndex;
+        int total = tx.inputs[inputIndex].value;
+
+        int artistAmount = total * artistBasisPoints / 10000;
+        int collaboratorAmount = total * collaboratorBasisPoints / 10000;
+        int platformAmount = total - artistAmount - collaboratorAmount;
+
+        require(tx.outputs[inputIndex].lockingBytecode == new LockingBytecodeP2PKH(artistPublicKeyHash));
+        require(tx.outputs[inputIndex].value == artistAmount);
+
+        require(tx.outputs[inputIndex + 1].lockingBytecode == new LockingBytecodeP2PKH(collaboratorPublicKeyHash));
+        require(tx.outputs[inputIndex + 1].value == collaboratorAmount);
+
+        require(tx.outputs[inputIndex + 2].lockingBytecode == new LockingBytecodeP2PKH(platformPublicKeyHash));
+        require(tx.outputs[inputIndex + 2].value == platformAmount);
+    }
+}
