@@ -4,7 +4,7 @@ For anyone writing templates (Miguel) and for whoever integrates them into the r
 
 ## Converting a CashScript contract
 
-Contract conversions live in [`contracts/`](../contracts/README.md), one folder per contract system. Each folder holds the `.cash` source, its cashc artifact, the template, tests that prove the template builds exactly the contract, a chipnet script, and a Credits section for the original authors. Start from `contracts/_skeleton/`. `contracts/revenue-split/` is the worked example. Once a converted template is chipnet-verified, register it in the hub as described below.
+Contract conversions live in [`templates/`](../templates/README.md), one folder per contract system. Each folder holds the `.cash` source, its cashc artifact, the template, tests that prove the template builds exactly the contract, a chipnet script, and a Credits section for the original authors. Start from `contracts/_skeleton/`. `contracts/revenue-split/` is the worked example. Once a converted template is chipnet-verified, register it in the hub as described below.
 
 ## The fast path
 
