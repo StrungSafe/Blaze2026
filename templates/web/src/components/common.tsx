@@ -1,7 +1,7 @@
 /** Pieces every contract panel shares: the network toggle, the contract address, coin loading and messages. */
 import { Loader2, RefreshCw, Search, TriangleAlert } from 'lucide-react';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { listUnspentCoins, type UnspentCoin } from '../lib/electrum';
+import { listUnspentCoins, type UnspentCoinList } from '../lib/electrum';
 import type { Network } from '../lib/invitation';
 import { CopyButton, StatusMessage, smallButton } from './ui';
 
@@ -9,7 +9,7 @@ export type CoinsState =
     | { status: 'idle' }
     | { status: 'loading' }
     | { status: 'error'; message: string }
-    | { status: 'loaded'; coins: UnspentCoin[]; tipHeight: number };
+    | ({ status: 'loaded' } & UnspentCoinList);
 
 export const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
 
@@ -95,15 +95,27 @@ export function CoinsGate({ coins, emptyText, children }: { coins: CoinsState; e
         return <StatusMessage type="error">Could not list coins: {coins.message}</StatusMessage>;
     }
 
+    const tokensWarning = coins.tokensMayBeHidden && (
+        <StatusMessage type="warning">This Electrum server refused the token filter, so coins that carry tokens may be missing from this list.</StatusMessage>
+    );
+
     if (coins.coins.length === 0) {
         return (
-            <div className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-6 text-sm text-gray-400">
-                <Search size={16} /> {emptyText}
-            </div>
+            <>
+                {tokensWarning}
+                <div className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-6 text-sm text-gray-400">
+                    <Search size={16} /> {emptyText}
+                </div>
+            </>
         );
     }
 
-    return <>{children(coins)}</>;
+    return (
+        <>
+            {tokensWarning}
+            {children(coins)}
+        </>
+    );
 }
 
 export function BuildError({ message }: { message: string | undefined }) {
