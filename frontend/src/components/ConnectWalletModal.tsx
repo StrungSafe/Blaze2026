@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import QRCode from "qrcode";
 import {
@@ -13,14 +12,13 @@ import {
   ScanLine,
   Sparkles,
   RefreshCw,
-  ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 
 import { shortenAddress, useWallet } from "../hub/WalletContext";
 
-// The wallet connection itself lives in hub/WalletContext, shared by the whole site. This modal only shows the steps
-// (QR code, link, status) and reads whether a wallet is connected.
+// The wallet connection itself lives in hub/WalletContext.
+// This modal displays the QR code, connection link and wallet status.
 
 interface ConnectWalletModalProps {
   isOpen: boolean;
@@ -48,25 +46,45 @@ function ConnectWalletModal({
   const [connecting, setConnecting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [mobileScreen, setMobileScreen] =
-    useState<MobileScreen>("choices");
+    useState<MobileScreen>("wizard");
 
   const wasConnected = useRef(connected);
+  const autoConnectStarted = useRef(false);
 
-  // Clears only what this modal shows. The shared wallet connection is not touched here.
+  // Clears only what this modal shows.
+  // The shared wallet connection is not touched here.
   function resetView() {
     setQr(null);
     setWalletUri(null);
     setError(null);
     setConnecting(false);
     setCopied(false);
-    setMobileScreen("choices");
+    setMobileScreen("wizard");
   }
 
   useEffect(() => {
-    if (!isOpen) resetView();
+    if (!isOpen) {
+      resetView();
+      autoConnectStarted.current = false;
+    }
   }, [isOpen]);
 
-  // When a wallet finishes connecting, drop the QR and close the modal shortly after.
+  // Automatically start wallet connection when the modal opens.
+  // The ref prevents duplicate connection attempts.
+  useEffect(() => {
+    if (!isOpen) {
+      autoConnectStarted.current = false;
+      return;
+    }
+
+    if (connected || autoConnectStarted.current) return;
+
+    autoConnectStarted.current = true;
+    void connectWallet();
+  }, [isOpen, connected]);
+
+  // When a wallet finishes connecting, drop the QR
+  // and close the modal shortly after.
   useEffect(() => {
     const justConnected = connected && !wasConnected.current;
 
@@ -165,9 +183,7 @@ function ConnectWalletModal({
   }
 
   function backToChoices() {
-    // Cancel a connection attempt, but never drop a wallet that is already connected.
     if (!connected) disconnect();
-
     resetView();
   }
 
@@ -194,8 +210,7 @@ function ConnectWalletModal({
           <div className="pointer-events-none absolute -right-20 bottom-0 h-40 w-40 rounded-full bg-orange-500/10 blur-[75px]" />
 
           <div className="relative z-10">
-
-            {/* MOBILE: CONNECTION OPTIONS */}
+            {/* MOBILE: DIRECT QR CONNECTION */}
             <div className="lg:hidden">
               {mobileScreen === "choices" ? (
                 <>
@@ -260,16 +275,7 @@ function ConnectWalletModal({
                 </>
               ) : (
                 <>
-                  <div className="flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={backToChoices}
-                      className="flex items-center gap-1.5 text-xs font-medium text-slate-400 transition hover:text-white"
-                    >
-                      <ChevronLeft size={16} />
-                      Back
-                    </button>
-
+                  <div className="flex items-center justify-end">
                     <button
                       type="button"
                       onClick={closeModal}
@@ -280,12 +286,15 @@ function ConnectWalletModal({
                     </button>
                   </div>
 
-                  <div className="mt-4 text-center">
+                  <div className="mt-2 text-center">
                     <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-orange-400">
                       <Sparkles size={22} />
                     </div>
 
-                    <h2 className="mt-3 text-lg font-bold text-white">
+                    <h2
+                      id="connect-wallet-title"
+                      className="mt-3 text-lg font-bold text-white"
+                    >
                       Wizard Connect
                     </h2>
 
@@ -298,9 +307,11 @@ function ConnectWalletModal({
                   {connected ? (
                     <div className="mt-5 flex flex-col items-center rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] p-5 text-center">
                       <Check size={30} className="text-emerald-400" />
+
                       <p className="mt-2 text-sm font-semibold text-emerald-400">
                         Connected to {walletName}
                       </p>
+
                       {address && (
                         <p
                           title={address}
@@ -309,9 +320,11 @@ function ConnectWalletModal({
                           {shortenAddress(address)}
                         </p>
                       )}
+
                       <p className="mt-1 text-[10px] text-slate-400">
                         This wallet is used across XOGrid until you disconnect.
                       </p>
+
                       <button
                         type="button"
                         onClick={disconnectWallet}
@@ -343,6 +356,7 @@ function ConnectWalletModal({
                               size={28}
                               className="animate-spin text-orange-400"
                             />
+
                             <p className="mt-3 text-xs text-slate-300">
                               Preparing your connection...
                             </p>
@@ -353,9 +367,11 @@ function ConnectWalletModal({
                               size={28}
                               className="text-slate-500"
                             />
+
                             <p className="mt-3 text-xs text-slate-400">
                               QR code not available.
                             </p>
+
                             <button
                               type="button"
                               onClick={connectWallet}
@@ -390,6 +406,7 @@ function ConnectWalletModal({
                             ) : (
                               <Copy size={15} />
                             )}
+
                             {copied
                               ? "Connection link copied"
                               : "Copy connection link"}
@@ -421,6 +438,7 @@ function ConnectWalletModal({
                       size={14}
                       className="mt-0.5 shrink-0 text-orange-400"
                     />
+
                     <p className="text-[10px] leading-4 text-slate-500">
                       Use a compatible Bitcoin Cash HD wallet such as
                       Selene or Paytaca.
@@ -445,7 +463,9 @@ function ConnectWalletModal({
                 <div className="min-w-0 flex-1">
                   <div className="wallet-icon-animation relative mx-auto flex h-11 w-11 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/10 text-orange-400 lg:mx-0 2xl:h-14 2xl:w-14 2xl:rounded-2xl 3xl:h-16 3xl:w-16">
                     <div className="wallet-icon-ring absolute inset-0 rounded-xl border border-orange-400/30" />
+
                     <Wallet size={21} className="2xl:h-7 2xl:w-7" />
+
                     <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full border-2 border-[#080A12] bg-orange-500 text-white 2xl:h-5 2xl:w-5">
                       <Sparkles size={8} className="2xl:h-3 2xl:w-3" />
                     </span>
@@ -477,6 +497,7 @@ function ConnectWalletModal({
                           <p className="text-xs font-bold text-white 2xl:text-base">
                             WizardConnect
                           </p>
+
                           <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[8px] font-semibold text-emerald-400 2xl:px-2.5 2xl:py-1 2xl:text-[10px]">
                             Supported
                           </span>
@@ -510,6 +531,7 @@ function ConnectWalletModal({
                         ) : (
                           <Wallet size={15} />
                         )}
+
                         {connecting
                           ? "Preparing connection..."
                           : "Connect an HD Wallet"}
@@ -519,6 +541,7 @@ function ConnectWalletModal({
                     {connected && (
                       <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.07] p-3 2xl:mt-5 2xl:rounded-xl 2xl:p-4">
                         <Check size={17} className="text-emerald-400 2xl:h-5 2xl:w-5" />
+
                         <p className="text-xs font-semibold text-emerald-400 2xl:text-sm">
                           Connected to {walletName}
                         </p>
@@ -528,6 +551,7 @@ function ConnectWalletModal({
                     {status && !connected && (
                       <div className="mt-2 flex items-start gap-2 rounded-lg border border-orange-500/10 bg-orange-500/[0.05] p-2 2xl:mt-3 2xl:rounded-xl 2xl:p-3">
                         <span className="mt-1 h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-orange-400" />
+
                         <p className="text-[10px] leading-4 text-orange-300 2xl:text-xs 2xl:leading-5">
                           {status}
                         </p>
@@ -542,9 +566,11 @@ function ConnectWalletModal({
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 2xl:h-16 2xl:w-16 2xl:rounded-2xl">
                         <Check size={25} className="2xl:h-8 2xl:w-8" />
                       </div>
+
                       <p className="mt-3 text-sm font-bold text-white 2xl:mt-5 2xl:text-lg">
                         Wallet connected
                       </p>
+
                       {address && (
                         <p
                           title={address}
@@ -553,9 +579,11 @@ function ConnectWalletModal({
                           {shortenAddress(address)}
                         </p>
                       )}
+
                       <p className="mt-1 text-[10px] text-slate-400 2xl:text-xs">
                         {walletName} is used across XOGrid until you disconnect.
                       </p>
+
                       <button
                         type="button"
                         onClick={disconnectWallet}
@@ -568,6 +596,7 @@ function ConnectWalletModal({
                     <div className="wallet-qr-panel flex flex-col items-center rounded-xl border border-white/[0.08] bg-black/30 p-4 text-center 2xl:rounded-2xl 2xl:p-7 3xl:p-9">
                       <div className="mb-3 flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/[0.07] px-2.5 py-1 2xl:mb-5 2xl:px-3.5 2xl:py-1.5">
                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+
                         <span className="text-[9px] font-semibold uppercase tracking-wider text-emerald-400 2xl:text-[11px]">
                           Ready to connect
                         </span>
@@ -575,6 +604,7 @@ function ConnectWalletModal({
 
                       <div className="flex items-center gap-2">
                         <ScanLine size={16} className="text-orange-400 2xl:h-5 2xl:w-5" />
+
                         <p className="text-sm font-bold text-white 2xl:text-lg">
                           Scan to connect
                         </p>
@@ -609,6 +639,7 @@ function ConnectWalletModal({
                           ) : (
                             <Copy size={13} />
                           )}
+
                           {copied ? "Copied" : "Copy connection link"}
                         </button>
                       )}
@@ -618,13 +649,16 @@ function ConnectWalletModal({
                       <div className="qr-placeholder-icon flex h-12 w-12 items-center justify-center rounded-xl border border-orange-500/20 bg-orange-500/[0.08] text-orange-400 2xl:h-16 2xl:w-16 2xl:rounded-2xl">
                         <ScanLine size={22} className="2xl:h-7 2xl:w-7" />
                       </div>
+
                       <p className="mt-3 text-sm font-semibold text-white 2xl:mt-5 2xl:text-lg">
                         Desktop wallet connection
                       </p>
+
                       <p className="mt-1 max-w-[220px] text-[10px] leading-5 text-slate-500 2xl:mt-2 2xl:max-w-[300px] 2xl:text-xs 2xl:leading-6">
                         Generate a QR code and scan it using your compatible
                         Bitcoin Cash wallet.
                       </p>
+
                       <div className="mt-3 flex items-center gap-1.5 text-[9px] uppercase tracking-wider text-slate-600 2xl:mt-5 2xl:text-[11px]">
                         <ShieldCheck size={12} />
                         Secure connection
@@ -649,10 +683,12 @@ function ConnectWalletModal({
                 size={15}
                 className="mt-0.5 shrink-0 text-emerald-400 2xl:h-5 2xl:w-5"
               />
+
               <div>
                 <p className="text-[10px] font-semibold text-slate-300 2xl:text-xs">
                   Your wallet. Your control.
                 </p>
+
                 <p className="mt-0.5 text-[9px] leading-4 text-slate-500 2xl:text-[11px] 2xl:leading-5">
                   XOGrid will never ask for your recovery phrase or private
                   keys.

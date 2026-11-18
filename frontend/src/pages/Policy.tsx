@@ -414,7 +414,7 @@ function Policy() {
 
             <div className="mt-8 space-y-5 2xl:mt-10 2xl:space-y-7">
               <div className="flex gap-4">
-                <div className="mt-1 rounded-lg bg-violet-500/10 p-2 text-violet-400 2xl:p-3">
+                <div className="mt-1 flex justify-center items-center rounded-lg bg-violet-500/10 p-2 text-violet-400 2xl:p-3">
                   <FileCheck2 size={19} />
                 </div>
 
@@ -430,7 +430,7 @@ function Policy() {
               </div>
 
               <div className="flex gap-4">
-                <div className="mt-1 rounded-lg bg-orange-500/10 p-2 text-orange-400 2xl:p-3">
+                <div className="mt-1 flex justify-center items-center rounded-lg bg-orange-500/10 p-2 text-orange-400 2xl:p-3">
                   <Fingerprint size={19} />
                 </div>
 
@@ -446,7 +446,7 @@ function Policy() {
               </div>
 
               <div className="flex gap-4">
-                <div className="mt-1 rounded-lg bg-blue-500/10 p-2 text-blue-400 2xl:p-3">
+                <div className="mt-1 flex justify-center items-center rounded-lg bg-blue-500/10 p-2 text-blue-400 2xl:p-3">
                   <Sparkles size={19} />
                 </div>
 
