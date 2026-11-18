@@ -240,7 +240,8 @@ function Navbar() {
   // Open shared wallet modal
   const openWalletModal = () => {
     setMenuOpen(false);
-    openModal();
+    // Connecting from the landing page goes straight into the dashboard.
+    openModal(location.pathname === "/" ? { redirectTo: "/dashboard" } : undefined);
   };
 
   // Wallet display

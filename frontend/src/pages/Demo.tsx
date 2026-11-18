@@ -26,6 +26,8 @@ import xogridlogo from '../assets/images/xogridlogo.png';
 import { hub, type Summary } from '../hub/api';
 import { useWallet } from '../hub/WalletContext';
 import { Chain } from '../voucher/chain';
+import TemplateGuide from '../components/demo/TemplateGuide';
+import TemplatePicker from '../components/demo/TemplatePicker';
 
 import {
     CLAIM_FEE_SATOSHIS,
@@ -150,7 +152,7 @@ function StatusMessage({
     );
 }
 
-export default function Demo() {
+function VoucherDemo() {
     const navigate = useNavigate();
 
     const fragment = useMemo(
@@ -175,7 +177,6 @@ export default function Demo() {
         walletName,
         status: relayStatus,
         openModal,
-        setNetwork: setWalletNetwork,
     } = useWallet();
     const [coins, setCoins] = useState<Coin[]>([]);
     const [scanning, setScanning] = useState(false);
@@ -214,11 +215,6 @@ export default function Demo() {
             .then(setTemplate)
             .catch(() => setTemplate(undefined));
     }, []);
-
-    // The navbar shows the wallet's address for the network chosen here.
-    useEffect(() => {
-        setWalletNetwork(network);
-    }, [network, setWalletNetwork]);
 
     // Use the shared wallet connection whenever one is open, and let go of it when it closes.
     useEffect(() => {
@@ -1257,5 +1253,27 @@ export default function Demo() {
                 </motion.footer>
             </div>
         </main>
+    );
+}
+/** The Demo page: pick any registry template. The Claim-Code Voucher runs live; every other template opens as a guide. */
+export default function Demo() {
+    const [selected, setSelected] = useState<string>(VOUCHER_TEMPLATE_IDENTIFIER);
+
+    return (
+        <div className="min-h-screen bg-[#05070B]">
+            <TemplatePicker
+                selected={selected}
+                liveIdentifier={VOUCHER_TEMPLATE_IDENTIFIER}
+                onSelect={setSelected}
+            />
+
+            {selected === VOUCHER_TEMPLATE_IDENTIFIER ? (
+                <VoucherDemo />
+            ) : (
+                <main className="mx-auto max-w-5xl px-4 py-10 text-white sm:px-8">
+                    <TemplateGuide identifier={selected} />
+                </main>
+            )}
+        </div>
     );
 }

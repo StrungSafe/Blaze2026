@@ -17,7 +17,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import xogridlogo from "../assets/images/xogridlogo.png";
-import { hasAdminToken } from "../hub/admin";
+import { useHasAdminToken } from "../hub/admin";
 import { shortenAddress, useWallet } from "../hub/WalletContext";
 
 interface NavigationItem {
@@ -59,7 +59,7 @@ export default function DashboardLayout() {
   const { connected, walletName, address, openModal, disconnect } = useWallet();
 
   const walletMenuRef = useRef<HTMLDivElement>(null);
-  const isAdmin = hasAdminToken();
+  const isAdmin = useHasAdminToken();
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all ${
@@ -228,7 +228,7 @@ export default function DashboardLayout() {
             {!connected ? (
               <button
                 type="button"
-                onClick={openModal}
+                onClick={() => openModal()}
                 className="flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/[0.07] px-3 py-2.5 text-xs font-semibold text-white transition hover:border-orange-500/50 hover:bg-orange-500/[0.12] sm:gap-3 sm:px-4 2xl:px-5 2xl:py-3 2xl:text-sm"
               >
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-orange-500/15 text-orange-400 2xl:h-8 2xl:w-8">
@@ -309,7 +309,7 @@ export default function DashboardLayout() {
             className="hidden shrink-0 items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-xs font-semibold text-slate-300 transition hover:border-orange-500/30 hover:text-orange-400 sm:flex 2xl:px-5 2xl:py-3 2xl:text-sm"
           >
             <LogOut size={15} />
-            Back to website
+            Back to homepage
           </Link>
         </header>
 

@@ -87,6 +87,14 @@ Registry, audit checks, flags, reviews, policy preview, admin API, UI (Home, Bro
 - Still open: Dashboard shows mock data; delete `web/` after mining; slides URL;
   set `ADMIN_IDENTITIES` on Render (yours, Miguel's, John's); README/docs now point at `frontend/`.
 
+## 2026-11-18 (later): gating, real dashboard, persistence
+- Wallet: mainnet address only; resumes after reload (sessionStorage); 20 minute idle limit; Disconnect sends `sendDisconnect` and clears stored credentials.
+- `/dashboard` and `/publish` need a connected wallet; `/admin` is a 404 unless a wallet is connected or a moderator session exists; unknown URLs show a 404 page.
+- Dashboard reads the live registry (totals, your templates by publisher address, newest templates). `data/mockDashboard.*` is now unused and can be deleted.
+- Admin: Feature/Unfeature replace "Feature only" (adds to the 6-slot list). "Back to website" and "Return to XOGrid" now read "Back to homepage".
+- Demo: template picker; the Claim-Code Voucher runs live, every other template opens a guided walk-through (no on-chain run).
+- Unverified: resuming a wallet pairing after reload needs a real wallet (the relay is blocked in the sandbox). If a reload shows "Reconnecting" then the connect prompt, the wallet did not re-announce; check the browser console.
+
 ## Hosted deployment (Postgres)
 
 The server now supports PostgreSQL. With `DATABASE_URL` set (Supabase Session pooler string) all data lives there; without

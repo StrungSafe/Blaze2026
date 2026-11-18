@@ -1,32 +1,26 @@
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Activity,
   ArrowRight,
   ArrowUpRight,
   Blocks,
-  ChevronDown,
   Compass,
   ExternalLink,
-  FileCheck2,
   Flag,
-  LogOut,
+  Library,
   Plus,
   Search,
   ShieldCheck,
+  Star,
   Upload,
-  Wallet,
-  Zap,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
 
-import {
-  mockDashboardStats,
-  mockRecentActivity,
-  mockTemplates,
-} from "../data/mockDashboard";
+import { listTemplates, type Badge, type Summary } from "../hub/api";
+import { shortenAddress, useWallet } from "../hub/WalletContext";
 
 type StatIcon = "explore" | "publish" | "checked" | "flags";
 type StatColor = "purple" | "orange" | "green" | "blue";
@@ -39,26 +33,37 @@ type DashboardStat = {
   color: StatColor;
 };
 
-type DashboardActivity = {
-  id: number;
-  title: string;
-  description: string;
-  time: string;
-  status: string;
-  type: "publish" | "check" | "explore" | "flag";
+const BADGE_LABEL: Record<Badge, string> = {
+  unchecked: "Unchecked",
+  "auto-checked": "Auto-checked",
+  reviewed: "Reviewed",
 };
 
-type DashboardTemplate = {
-  id: string;
-  name: string;
-  category: string;
-  badge: string;
-  updated: string;
-};
+const PAGE_SIZE = 50;
+const MAX_PAGES = 10;
 
-const stats = mockDashboardStats as DashboardStat[];
-const recentActivity = mockRecentActivity as DashboardActivity[];
-const templates = mockTemplates as DashboardTemplate[];
+/** Every template in the registry (the API pages at 50, so this walks the pages). */
+async function loadAllTemplates(): Promise<Summary[]> {
+  const all: Summary[] = [];
+
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const result = await listTemplates({ sort: "newest", page, pageSize: PAGE_SIZE });
+
+    all.push(...result.items);
+
+    if (all.length >= result.total || result.items.length === 0) break;
+  }
+
+  return all;
+}
+
+const formatDate = (iso: string): string => {
+  const date = new Date(iso);
+
+  return Number.isNaN(date.getTime())
+    ? ""
+    : date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+};
 
 const iconMap: Record<StatIcon, LucideIcon> = {
   explore: Compass,
@@ -93,33 +98,73 @@ const colorMap: Record<
 };
 
 function Dashboard() {
-  const [walletConnected, setWalletConnected] = useState(false);
-  const [walletMenuOpen, setWalletMenuOpen] = useState(false);
+  const { address, walletName } = useWallet();
   const [searchQuery, setSearchQuery] = useState("");
+  const [all, setAll] = useState<Summary[] | null>(null);
+  const [loadError, setLoadError] = useState("");
 
-  // Demo only: replace this with the actual connected BCH wallet address
-  // from your WizardConnect integration.
-  const walletAddress = "bitcoincash:qz7...8k2p";
+  useEffect(() => {
+    let current = true;
 
-  const filteredTemplates = templates.filter((template) =>
-    `${template.name} ${template.category} ${template.id}`
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase())
+    loadAllTemplates()
+      .then((items) => {
+        if (current) setAll(items);
+      })
+      .catch((reason: unknown) => {
+        if (current) setLoadError(reason instanceof Error ? reason.message : "Could not load the registry.");
+      });
+
+    return () => {
+      current = false;
+    };
+  }, []);
+
+  // "Yours" means published while this wallet was connected (the publish form sends the wallet address).
+  const mine = useMemo(
+    () => (all && address ? all.filter((template) => template.publisher === address) : []),
+    [all, address],
   );
 
-  const handleWalletClick = () => {
-    if (!walletConnected) {
-      setWalletConnected(true);
-      return;
-    }
+  const newest = useMemo(() => (all ?? []).slice(0, 5), [all]);
+  const loading = all === null && !loadError;
+  const dash = loading ? "…" : "0";
 
-    setWalletMenuOpen((previous) => !previous);
-  };
+  const stats: DashboardStat[] = [
+    {
+      label: "Templates in the registry",
+      value: all ? String(all.length) : dash,
+      change: "Live from the registry",
+      icon: "explore",
+      color: "purple",
+    },
+    {
+      label: "Published by you",
+      value: all ? String(mine.length) : dash,
+      change: address ? `Wallet ${shortenAddress(address)}` : "Resolving your wallet address",
+      icon: "publish",
+      color: "orange",
+    },
+    {
+      label: "Checked or reviewed",
+      value: all ? String(all.filter((template) => template.badge !== "unchecked").length) : dash,
+      change: all
+        ? `${all.filter((template) => template.badge === "reviewed").length} reviewed by a person`
+        : "Auto-checked and reviewed",
+      icon: "checked",
+      color: "green",
+    },
+    {
+      label: "Open flags on your templates",
+      value: all ? String(mine.reduce((total, template) => total + template.openFlags, 0)) : dash,
+      change: "Community reports awaiting review",
+      icon: "flags",
+      color: "blue",
+    },
+  ];
 
-  const disconnectWallet = () => {
-    setWalletConnected(false);
-    setWalletMenuOpen(false);
-  };
+  const filteredTemplates = mine.filter((template) =>
+    `${template.name} ${template.identifier}`.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05070b] text-white">
@@ -371,39 +416,6 @@ function Dashboard() {
           </Link>
         </section>
 
-        {/* Wallet connection notice */}
-        {!walletConnected && (
-          <section className="xogrid-section-enter mb-8 overflow-hidden rounded-2xl border border-orange-400/15 bg-gradient-to-r from-orange-500/[0.09] via-violet-500/[0.06] to-transparent p-5 sm:p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-orange-400/15 bg-orange-500/10 text-orange-400">
-                  <Wallet size={21} />
-                </div>
-
-                <div>
-                  <h3 className="text-sm font-semibold text-white">
-                    Connect your BCH wallet
-                  </h3>
-
-                  <p className="mt-1 max-w-xl text-xs leading-5 text-white/45">
-                    Connect your wallet to prepare your XOGrid workspace
-                    for wallet-based features.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleWalletClick}
-                className="xogrid-primary-button inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-orange-400/20 bg-orange-500/10 px-4 text-xs font-semibold text-orange-300"
-              >
-                Connect wallet
-                <ArrowUpRight size={14} />
-              </button>
-            </div>
-          </section>
-        )}
-
         {/* Stats */}
         <section className="mb-10">
           <div className="mb-4 flex items-center justify-between">
@@ -413,12 +425,12 @@ function Dashboard() {
               </h3>
 
               <p className="mt-1 text-xs text-white/35">
-                A snapshot of your sample activity
+                {walletName ? `Connected with ${walletName}` : "Your wallet"}
               </p>
             </div>
 
             <span className="rounded-lg border border-white/[0.07] bg-white/[0.025] px-3 py-1.5 text-[10px] text-white/40">
-              Demo data
+              Live data
             </span>
           </div>
 
@@ -473,7 +485,7 @@ function Dashboard() {
                 </h3>
 
                 <p className="mt-1 text-xs text-white/35">
-                  Recently added template records
+                  Templates published from your connected wallet
                 </p>
               </div>
 
@@ -509,10 +521,10 @@ function Dashboard() {
                 <thead>
                   <tr className="border-b border-white/[0.06] text-[10px] uppercase tracking-wider text-white/30">
                     <th className="px-6 py-4 font-semibold">Template</th>
-                    <th className="px-4 py-4 font-semibold">Category</th>
+                    <th className="px-4 py-4 font-semibold">Reviews</th>
                     <th className="px-4 py-4 font-semibold">Status</th>
                     <th className="px-6 py-4 text-right font-semibold">
-                      Updated
+                      Published
                     </th>
                   </tr>
                 </thead>
@@ -520,58 +532,72 @@ function Dashboard() {
                 <tbody>
                   {filteredTemplates.map((template) => (
                     <tr
-                      key={template.id}
+                      key={template.identifier}
                       className="xogrid-template-row border-b border-white/[0.045] last:border-0"
                     >
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
+                        <Link to={`/t/${template.identifier}`} className="flex items-center gap-3">
                           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-violet-400/10 bg-violet-500/[0.08] text-violet-300">
                             <Blocks size={16} />
                           </div>
 
-                          <div>
-                            <p className="text-xs font-semibold text-white">
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-semibold text-white">
                               {template.name}
                             </p>
 
                             <p className="mt-1 text-[10px] text-white/30">
-                              {template.id}
+                              {template.identifier.slice(0, 12)}…
                             </p>
                           </div>
-                        </div>
+                        </Link>
                       </td>
 
                       <td className="px-4 py-4 text-xs text-white/45">
-                        {template.category}
+                        <span className="inline-flex items-center gap-1">
+                          <Star size={12} className="text-amber-400" />
+                          {template.averageRating !== null ? template.averageRating.toFixed(1) : "–"}
+                          <span className="text-white/30">({template.userReviewCount})</span>
+                        </span>
                       </td>
 
                       <td className="px-4 py-4">
                         <span
                           className={`inline-flex whitespace-nowrap rounded-full border px-2.5 py-1 text-[10px] font-medium ${
-                            template.badge === "Reviewed"
+                            template.badge === "reviewed"
                               ? "border-violet-400/15 bg-violet-500/[0.08] text-violet-300"
-                              : template.badge === "Auto-checked"
+                              : template.badge === "auto-checked"
                                 ? "border-emerald-400/15 bg-emerald-500/[0.07] text-emerald-300"
                                 : "border-white/10 bg-white/[0.04] text-white/45"
                           }`}
                         >
-                          {template.badge}
+                          {BADGE_LABEL[template.badge]}
                         </span>
                       </td>
 
                       <td className="px-6 py-4 text-right text-xs text-white/40">
-                        {template.updated}
+                        {formatDate(template.createdAt)}
                       </td>
                     </tr>
                   ))}
 
                   {filteredTemplates.length === 0 && (
                     <tr>
-                      <td
-                        colSpan={4}
-                        className="px-6 py-12 text-center text-xs text-white/40"
-                      >
-                        No matching sample templates found.
+                      <td colSpan={4} className="px-6 py-12 text-center text-xs text-white/40">
+                        {loadError ? (
+                          loadError
+                        ) : loading ? (
+                          "Loading your templates…"
+                        ) : mine.length === 0 ? (
+                          <>
+                            You have not published a template from this wallet yet.{" "}
+                            <Link to="/publish" className="font-semibold text-orange-400 hover:text-orange-300">
+                              Publish your first one
+                            </Link>
+                          </>
+                        ) : (
+                          "No matching templates."
+                        )}
                       </td>
                     </tr>
                   )}
@@ -581,7 +607,7 @@ function Dashboard() {
 
             <div className="flex items-center justify-between border-t border-white/[0.06] px-6 py-4">
               <span className="text-[10px] text-white/30">
-                Showing {filteredTemplates.length} sample records
+                Showing {filteredTemplates.length} of {mine.length} yours
               </span>
 
               <Link
@@ -599,11 +625,11 @@ function Dashboard() {
             <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-5 sm:px-6">
               <div>
                 <h3 className="text-sm font-semibold text-white">
-                  Recent activity
+                  Newest in the registry
                 </h3>
 
                 <p className="mt-1 text-xs text-white/35">
-                  Your latest sample events
+                  The latest templates anyone has published
                 </p>
               </div>
 
@@ -614,68 +640,49 @@ function Dashboard() {
 
             <div className="p-5 sm:px-6">
               <div className="space-y-6">
-                {recentActivity.map((activity, index) => {
-                  const ActivityIcon: LucideIcon =
-                    activity.type === "publish"
-                      ? Upload
-                      : activity.type === "check"
-                        ? FileCheck2
-                        : activity.type === "flag"
-                          ? Flag
-                          : Compass;
+                {newest.map((template, index) => (
+                  <Link
+                    key={template.identifier}
+                    to={`/t/${template.identifier}`}
+                    className="xogrid-activity-item relative flex gap-3"
+                  >
+                    {index !== newest.length - 1 && (
+                      <div className="absolute bottom-[-22px] left-[17px] top-10 w-px bg-white/[0.07]" />
+                    )}
 
-                  const activityColor =
-                    activity.type === "publish"
-                      ? "text-orange-400 bg-orange-500/10"
-                      : activity.type === "check"
-                        ? "text-emerald-400 bg-emerald-500/10"
-                        : activity.type === "flag"
-                          ? "text-amber-400 bg-amber-500/10"
-                          : "text-violet-300 bg-violet-500/10";
-
-                  return (
-                    <div
-                      key={activity.id}
-                      className="xogrid-activity-item relative flex gap-3"
-                    >
-                      {index !== recentActivity.length - 1 && (
-                        <div className="absolute bottom-[-22px] left-[17px] top-10 w-px bg-white/[0.07]" />
-                      )}
-
-                      <div
-                        className={`relative z-10 flex h-[35px] w-[35px] shrink-0 items-center justify-center rounded-xl ${activityColor}`}
-                      >
-                        <ActivityIcon size={15} />
-                      </div>
-
-                      <div className="min-w-0 flex-1 pt-0.5">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-xs font-semibold text-white">
-                            {activity.title}
-                          </p>
-
-                          <span className="text-[9px] text-white/30">
-                            {activity.time}
-                          </span>
-                        </div>
-
-                        <p className="mt-1 truncate text-[11px] text-white/45">
-                          {activity.description}
-                        </p>
-
-                        <span className="mt-2 inline-flex rounded-md border border-white/[0.07] bg-white/[0.025] px-2 py-1 text-[9px] text-white/40">
-                          {activity.status}
-                        </span>
-                      </div>
+                    <div className="relative z-10 flex h-[35px] w-[35px] shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400">
+                      <Upload size={15} />
                     </div>
-                  );
-                })}
+
+                    <div className="min-w-0 flex-1 pt-0.5">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="truncate text-xs font-semibold text-white">{template.name}</p>
+
+                        <span className="text-[9px] text-white/30">{formatDate(template.createdAt)}</span>
+                      </div>
+
+                      <p className="mt-1 truncate text-[11px] text-white/45">
+                        by {template.publisher === address ? "you" : shortenAddress(template.publisher)}
+                      </p>
+
+                      <span className="mt-2 inline-flex rounded-md border border-white/[0.07] bg-white/[0.025] px-2 py-1 text-[9px] text-white/40">
+                        {BADGE_LABEL[template.badge]}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+
+                {newest.length === 0 && (
+                  <p className="text-xs text-white/40">
+                    {loadError || (loading ? "Loading…" : "No templates have been published yet.")}
+                  </p>
+                )}
               </div>
             </div>
 
             <div className="border-t border-white/[0.06] px-6 py-4">
               <span className="text-[10px] text-white/30">
-                Activity shown here is illustrative mock data.
+                Read from the live registry.
               </span>
             </div>
           </section>
@@ -716,29 +723,6 @@ function Dashboard() {
         </footer>
       </div>
 
-      {/* Demo wallet dropdown */}
-      {walletConnected && walletMenuOpen && (
-        <div className="fixed right-5 top-5 z-50 w-64 rounded-2xl border border-white/10 bg-[#10111b] p-3 shadow-2xl shadow-black/50 sm:right-8">
-          <div className="border-b border-white/[0.07] px-2 pb-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">
-              Demo wallet connected
-            </p>
-
-            <p className="mt-2 break-all text-xs text-white/70">
-              {walletAddress}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={disconnectWallet}
-            className="mt-2 flex w-full items-center gap-2 rounded-lg px-2 py-2.5 text-left text-xs text-white/60 transition hover:bg-white/[0.05] hover:text-white"
-          >
-            <LogOut size={15} />
-            Disconnect demo wallet
-          </button>
-        </div>
-      )}
     </div>
   );
 }

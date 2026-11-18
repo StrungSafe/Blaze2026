@@ -4,6 +4,8 @@
 // (ADMIN_IDENTITIES) and hands out a one-hour session token. Nothing in the browser decides access, so this file only
 // stores the token and calls the API. A user who edits the page in dev tools gets a login screen and 401 responses.
 
+import { useEffect, useState } from "react";
+
 import { hub, type Summary } from "./api";
 
 const TOKEN_KEY = "xogrid-admin-token";
@@ -26,6 +28,25 @@ export function saveAdminToken(value: string): void {
   } catch {
     // Storage can be unavailable (private mode). The session then lasts until the page closes.
   }
+
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
+const CHANGE_EVENT = "xogrid-admin-change";
+
+/** Re-renders when a moderator signs in or out, so the menu link and the Admin page follow along. */
+export function useHasAdminToken(): boolean {
+  const [value, setValue] = useState(() => readAdminToken() !== "");
+
+  useEffect(() => {
+    const update = () => setValue(readAdminToken() !== "");
+
+    window.addEventListener(CHANGE_EVENT, update);
+
+    return () => window.removeEventListener(CHANGE_EVENT, update);
+  }, []);
+
+  return value;
 }
 
 /** Cosmetic only, for showing a menu link. The server still checks every request. */
@@ -149,9 +170,20 @@ export const removeTemplate = (token: string, identifier: string, reason: string
 export const restoreTemplate = (token: string, identifier: string) =>
   call(token, `/api/admin/templates/${identifier}/restore`, "POST", {});
 
-/** Replaces the whole featured list with this one template. The API replaces, it does not append. */
-export const featureOnly = (token: string, identifier: string, blurb: string) =>
-  call(token, "/api/admin/spotlight", "PUT", { items: [{ identifier, blurb }] });
+export interface FeaturedItem {
+  identifier: string;
+  blurb: string;
+}
+
+/** The Home page's featured list (public endpoint). */
+export const featuredList = () =>
+  hub<{ items: (Summary & { blurb: string })[] }>("/api/spotlight").then((result) =>
+    result.items.map((item): FeaturedItem => ({ identifier: item.identifier, blurb: item.blurb })),
+  );
+
+/** Saves the whole featured list (at most 6). The API replaces the list, so callers send the full new list. */
+export const saveFeatured = (token: string, items: FeaturedItem[]) =>
+  call(token, "/api/admin/spotlight", "PUT", { items });
 
 export const hideUserReview = (token: string, id: number, reason: string) =>
   call(token, `/api/admin/user-reviews/${id}/hide`, "POST", { reason });

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { publishTemplate } from "../hub/api";
+import { useWallet } from "../hub/WalletContext";
 
 const MAX_FILE_SIZE = 256 * 1024;
 
@@ -53,6 +54,7 @@ const publishingSteps = [
 ];
 
 function Publish() {
+  const { address } = useWallet();
   const [jsonText, setJsonText] = useState<string>("");
   const [fileName, setFileName] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
@@ -225,7 +227,7 @@ function Publish() {
     try {
       // The API returns PublishResponse directly.
       // It does not return a { data, status } wrapper.
-      const response = await publishTemplate(parsedTemplate);
+      const response = await publishTemplate(parsedTemplate, address || undefined);
 
       if (!response.identifier) {
         throw new Error(

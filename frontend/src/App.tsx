@@ -13,6 +13,9 @@ import Documentation from "./pages/Documentation";
 import Demo from "./pages/Demo";
 
 import DashboardLayout from "./layout/DashboardLayout";
+import RequireWallet from "./components/RequireWallet";
+import NotFoundPage from "./components/NotFoundPage";
+import { useHasAdminToken } from "./hub/admin";
 
 import TopBanner from "./components/TopBanner";
 import ConnectWalletModal from "./components/ConnectWalletModal";
@@ -83,6 +86,14 @@ function WalletModalHost() {
   return <ConnectWalletModal isOpen={modalOpen} onClose={closeModal} />;
 }
 
+/** /admin looks like any unknown address to someone with no wallet connected and no moderator session. */
+function AdminGate() {
+  const { connected, restoring } = useWallet();
+  const hasToken = useHasAdminToken();
+
+  return connected || restoring || hasToken ? <Admin /> : <NotFoundPage />;
+}
+
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isExiting, setIsExiting] = useState(false);
@@ -112,17 +123,18 @@ function App() {
 
         {/* Shared dashboard layout */}
         <Route element={<DashboardLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard" element={<RequireWallet title="Connect your wallet to open the dashboard"><Dashboard /></RequireWallet>} />
           <Route path="/explore" element={<Explore />} />
-          <Route path="/publish" element={<Publish />} />
+          <Route path="/publish" element={<RequireWallet title="Connect your wallet to publish a template"><Publish /></RequireWallet>} />
           <Route path="/policy" element={<Policy />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin" element={<AdminGate />} />
         </Route>
 
         {/* Standalone pages */}
         <Route path="/t/:identifier" element={<TemplateDetail />} />
         <Route path="/demo" element={<Demo />} />
         <Route path="/docs" element={<Documentation />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
 
       <WalletModalHost />

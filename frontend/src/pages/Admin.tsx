@@ -23,7 +23,9 @@ import {
   adminSummary,
   adminTemplates,
   adminUserReviews,
-  featureOnly,
+  featuredList,
+  saveFeatured,
+  type FeaturedItem,
   hideUserReview,
   readAdminToken,
   removeTemplate,
@@ -98,7 +100,7 @@ function Shell({ status, children }: { status?: string; children: ReactNode }) {
           </p>
           <Link to="/" className="group inline-flex items-center gap-2 text-sm font-medium text-gray-400 transition hover:text-amber-400 2xl:gap-3 2xl:text-base">
             <ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1 2xl:h-5 2xl:w-5" />
-            Return to XOGrid
+            Back to homepage
           </Link>
         </footer>
       </div>
@@ -256,7 +258,7 @@ function Login({ onLogin }: { onLogin: (token: string, admin: string) => void })
 
               <button
                 type="button"
-                onClick={openModal}
+                onClick={() => openModal()}
                 disabled={busy}
                 className="rounded-xl border border-white/10 px-4 py-3 text-xs font-medium text-white/70 transition hover:border-amber-500/40 hover:text-amber-300 disabled:opacity-50 2xl:px-5 2xl:py-4 2xl:text-sm"
               >
@@ -268,7 +270,7 @@ function Login({ onLogin }: { onLogin: (token: string, admin: string) => void })
           <>
             <button
               type="button"
-              onClick={openModal}
+              onClick={() => openModal()}
               className="flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-semibold text-black transition hover:bg-amber-400 2xl:gap-3 2xl:px-6 2xl:py-4 2xl:text-base"
             >
               <Wallet size={17} />
@@ -541,9 +543,15 @@ function TemplatesTab({ token, version, act, onError }: ActProps) {
   const [query, setQuery] = useState("");
   const [applied, setApplied] = useState("");
   const { data, error } = useTabData(() => adminTemplates(token, applied), [version, applied], onError);
+  const featured = useTabData<FeaturedItem[]>(() => featuredList(), [version], onError);
 
   return (
     <div>
+      <p className="mb-4 text-xs text-gray-500">
+        Featured templates ({featured.data?.length ?? 0} of 6) appear on the Home page. Use Feature on a template to add it
+        and Unfeature to take it off. Type a short blurb first if you want your own wording; otherwise the template's description is used.
+      </p>
+
       <form
         className="mb-4 flex gap-2 2xl:mb-6 2xl:gap-3"
         onSubmit={(event) => {
@@ -563,16 +571,52 @@ function TemplatesTab({ token, version, act, onError }: ActProps) {
 
       <div className="space-y-3 2xl:space-y-4">
         {data?.items.map((template) => (
-          <TemplateRow key={template.identifier} token={token} template={template} act={act} />
+          <TemplateRow key={template.identifier} token={token} template={template} act={act} featured={featured.data ?? []} />
         ))}
       </div>
     </div>
   );
 }
 
-function TemplateRow({ token, template, act }: { token: string; template: Summary; act: ActProps["act"] }) {
+function TemplateRow({
+  token,
+  template,
+  act,
+  featured,
+}: {
+  token: string;
+  template: Summary;
+  act: ActProps["act"];
+  featured: FeaturedItem[];
+}) {
   const [note, setNote] = useState("");
   const ready = note.trim().length >= 3;
+  const isFeatured = featured.some((item) => item.identifier === template.identifier);
+
+  // Feature / Unfeature edit the whole list the API stores, so the list is rebuilt from what is live now.
+  function toggleFeatured() {
+    if (isFeatured) {
+      void act(
+        () => saveFeatured(token, featured.filter((item) => item.identifier !== template.identifier)),
+        "Removed from the Home page.",
+      );
+
+      return;
+    }
+
+    if (featured.length >= 6) {
+      void act(() => Promise.reject(new Error("The Home page features at most 6 templates. Unfeature one first.")));
+
+      return;
+    }
+
+    const blurb = (note.trim() || template.description || template.name).slice(0, 200);
+
+    void act(
+      () => saveFeatured(token, [...featured, { identifier: template.identifier, blurb: blurb.length >= 3 ? blurb : template.name }]),
+      "Featured on the Home page.",
+    ).then((ok) => ok && setNote(""));
+  }
 
   return (
     <div className={card}>
@@ -601,7 +645,7 @@ function TemplateRow({ token, template, act }: { token: string; template: Summar
             className={`${field} 2xl:px-4 2xl:py-3 2xl:text-sm`}
             value={note}
             onChange={(event) => setNote(event.target.value)}
-            placeholder="Type a note first: review note, removal reason or featured blurb (3+ characters)"
+            placeholder="Note for Review or Remove (3+ characters), or a blurb for Feature (optional)"
           />
           <div className="flex shrink-0 gap-2 2xl:gap-3">
             <button
@@ -626,17 +670,8 @@ function TemplateRow({ token, template, act }: { token: string; template: Summar
             >
               Remove
             </button>
-            <button
-              type="button"
-              className={`${smallButton} 2xl:px-4 2xl:py-2 2xl:text-sm`}
-              disabled={!ready}
-              onClick={() => {
-                if (!window.confirm("This replaces the whole featured list on the Home page with this one template. Continue?")) return;
-
-                void act(() => featureOnly(token, template.identifier, note.trim()), "Featured on Home.").then((ok) => ok && setNote(""));
-              }}
-            >
-              Feature only
+            <button type="button" className={`${smallButton} 2xl:px-4 2xl:py-2 2xl:text-sm`} onClick={toggleFeatured}>
+              {isFeatured ? "Unfeature" : "Feature"}
             </button>
           </div>
         </div>

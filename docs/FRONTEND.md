@@ -79,7 +79,7 @@ Login proves control of an allowlisted moderator key by signing a challenge with
 | `POST /api/admin/templates/:identifier/restore` | | |
 | `PUT /api/admin/spotlight` | `{ items: [{ identifier, blurb }] }` (at most 6) | Replaces the whole list |
 
-Moderator routes never send the open CORS header. Disable the action buttons until required text is filled in (the server rejects empty notes with a 400).
+Moderator routes never send the open CORS header. Review and Remove stay disabled until a note of 3+ characters is typed (the server rejects shorter ones with a 400). Feature and Unfeature are always enabled: the admin page reads the live list (`GET /api/spotlight`), adds or removes one template and PUTs the whole list back (at most 6). The blurb is the typed note, or the template's description if the box is empty.
 
 ## Wallet connections
 
@@ -90,8 +90,10 @@ There is exactly one wallet connection for the whole site, held by `WalletProvid
 - The navbar button, the Admin sign-in, the review form and the Demo all use it. A person connects once and every page sees the same wallet.
 - `openModal()` opens the single connect modal (`ConnectWalletModal`, mounted once in `App.tsx`). Closing it keeps a connected wallet and drops an unfinished attempt.
 - The modal offers Wizard Connect (Selene, Paytaca) only. WalletConnect was dropped.
-- `address` is the wallet's first receive address for `network` (chipnet by default; the Demo's network switch updates it). The navbar and the dashboard header show it shortened (`bchtest:qp9c…tw6y`) with `shortenAddress()`.
-- The connection is in memory only. A page reload ends it; the person connects again.
+- `address` is always the mainnet form (`bitcoincash:`) of the wallet's first receive address, shown shortened (`bitcoincash:qp9c…tw6y`) with `shortenAddress()`. The key is looked up with retries, so it resolves even when the wallet is slow to share it.
+- The connection persists. The relay credentials are kept in `sessionStorage` (`xogrid-wallet-session`) and the provider resumes them on load, so a reload or moving between pages keeps the wallet. It ends on Disconnect, when the wallet closes it, when the tab closes, or after 20 minutes without activity on the page (`IDLE_LIMIT_MS`). Disconnect also tells the wallet (`sendDisconnect`) and forgets the stored credentials, so connecting again starts clean.
+- `restoring` is true while a stored connection is being picked back up. `openModal({ redirectTo: "/dashboard" })` sends the person to that page the moment the wallet connects (the landing page navbar uses it).
+- Gates: `/dashboard` and `/publish` are wrapped in `RequireWallet` (connect prompt; going back to `/` when the wallet disconnects). `/admin` renders the 404 page unless a wallet is connected or a moderator session exists. All of this is front-end only: the public read API stays public and the server still checks moderator tokens on every admin request. The publish form sends the wallet address as `publisher`.
 - Admin login does not end the wallet connection, and neither does leaving a page.
 
 ### The Demo page
