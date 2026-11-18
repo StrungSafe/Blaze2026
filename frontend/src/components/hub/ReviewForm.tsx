@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import QRCode from "qrcode";
+import { useEffect, useState } from "react";
 import { Loader2, ShieldCheck, Wallet } from "lucide-react";
 
 import { finishReview, startReview } from "../../hub/api";
-import { publicKeyHex, signWithWallet, startWalletSession, type WalletSession } from "../../hub/wallet";
+import { publicKeyHex, signWithWallet, type WalletSession } from "../../hub/wallet";
+import { useWallet } from "../../hub/WalletContext";
 import { Stars } from "./Stars";
 
 type Phase = "idle" | "connecting" | "signing" | "posting";
@@ -18,11 +18,10 @@ export function ReviewForm({ identifier, onPosted }: { identifier: string; onPos
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-  const [qr, setQr] = useState<string | null>(null);
-  const [status, setStatus] = useState("");
-  const session = useRef<WalletSession | null>(null);
 
-  useEffect(() => () => session.current?.cleanup(), []);
+  // The wallet is the site-wide connection. If it is not connected yet, the shared connect modal opens and the review
+  // continues on its own once the person has connected.
+  const { session, connected, modalOpen, openModal } = useWallet();
 
   const valid = rating >= 1 && body.trim().length >= 3 && body.trim().length <= 1000;
 
@@ -48,27 +47,32 @@ export function ReviewForm({ identifier, onPosted }: { identifier: string; onPos
   async function submit() {
     setError(null);
 
-    try {
-      if (session.current) {
-        await postWith(session.current);
-
-        return;
-      }
-
+    if (!session || !connected) {
       setPhase("connecting");
+      openModal();
 
-      const created = startWalletSession(setStatus, (name) => {
-        setStatus(`Connected to ${name}`);
-        setQr(null);
-        postWith(created).catch(fail);
-      });
+      return;
+    }
 
-      session.current = created;
-      setQr(await QRCode.toDataURL(created.qrUri, { width: 240, margin: 1 }));
+    try {
+      await postWith(session);
     } catch (reason) {
       fail(reason);
     }
   }
+
+  // Waiting for the wallet: carry on as soon as it connects, or give up if the modal is closed without connecting.
+  useEffect(() => {
+    if (phase !== "connecting") return;
+
+    if (connected && session) {
+      postWith(session).catch(fail);
+    } else if (!modalOpen) {
+      setPhase("idle");
+    }
+    // postWith and fail only use state setters and props, so they are safe to leave out.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, connected, session, modalOpen]);
 
   function fail(reason: unknown) {
     setError(reason instanceof Error ? reason.message : "Something went wrong.");
@@ -108,16 +112,6 @@ export function ReviewForm({ identifier, onPosted }: { identifier: string; onPos
       />
       <p className="mt-1 text-right text-xs text-slate-600">{body.trim().length} / 1000</p>
 
-      {qr && (
-        <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-white/[0.08] bg-black/20 p-5 text-center">
-          <p className="text-sm text-slate-300">
-            Open a WizardConnect wallet such as Selene or Paytaca, choose WizardConnect and scan this code.
-          </p>
-          <img src={qr} alt="WizardConnect QR code" className="rounded-xl bg-white p-2" width={240} height={240} />
-          <p className="text-xs text-slate-500">{status}</p>
-        </div>
-      )}
-
       {error && <p className="mt-4 text-sm text-rose-300">{error}</p>}
 
       <button
@@ -128,7 +122,7 @@ export function ReviewForm({ identifier, onPosted }: { identifier: string; onPos
       >
         {busy ? <Loader2 size={16} className="animate-spin" /> : <Wallet size={16} />}
         {phase === "connecting"
-          ? "Waiting for your wallet..."
+          ? "Connect your wallet..."
           : phase === "signing"
             ? "Approve in your wallet..."
             : phase === "posting"

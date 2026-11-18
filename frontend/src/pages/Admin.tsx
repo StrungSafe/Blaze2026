@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import QRCode from "qrcode";
 import {
   Activity,
   ArrowLeft,
@@ -39,7 +38,8 @@ import {
   type AdminSummary,
   type AdminUserReview,
 } from "../hub/admin";
-import { publicKeyHex, signWithWallet, startWalletSession, type WalletSession } from "../hub/wallet";
+import { publicKeyHex, signWithWallet } from "../hub/wallet";
+import { useWallet } from "../hub/WalletContext";
 
 type Tab = "overview" | "flags" | "templates" | "reviews";
 
@@ -72,30 +72,24 @@ const STYLE = `
 
 function Shell({ status, children }: { status?: string; children: ReactNode }) {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#05070B] text-white">
+    <main className="relative min-h-[calc(100vh-76px)] overflow-hidden bg-[#05070B] text-white">
       <style>{STYLE}</style>
       <div className="admin-grid-bg pointer-events-none absolute inset-0" />
       <div className="admin-ambient pointer-events-none absolute -left-40 top-32 h-[420px] w-[420px] rounded-full bg-amber-500/[0.055] blur-[120px]" />
 
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/[0.07] bg-[#0B0E13]/90 shadow-lg shadow-black/20 backdrop-blur-2xl">
-        <div className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 sm:px-8">
-          <Link to="/" className="group flex items-center gap-3">
-            <img src={xogridlogo} alt="XOGrid" className="h-9 w-auto object-contain transition duration-300 group-hover:scale-105" />
-            <span className="hidden border-l border-white/10 pl-3 text-xs font-medium tracking-wider text-gray-400 transition group-hover:text-amber-400 sm:block">
-              ADMINISTRATION
-            </span>
-          </Link>
-
-          {status ? (
+      {/* Admin lives inside the shared DashboardLayout, which already provides the header and sidebar. */}
+      <div className="relative z-10 mx-auto max-w-7xl px-5 pt-6 sm:px-8">
+        {status ? (
+          <div className="flex justify-end">
             <div className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-3 py-2">
               <span className="h-2 w-2 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,.65)]" />
               <span className="text-xs font-medium text-amber-400">{status}</span>
             </div>
-          ) : null}
-        </div>
-      </header>
+          </div>
+        ) : null}
+      </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl px-5 pb-16 pt-[116px] sm:px-8 lg:pt-[132px]">
+      <div className="relative z-10 mx-auto max-w-7xl px-5 pb-16 pt-8 sm:px-8 lg:pt-12">
         {children}
 
         <footer className="mt-14 flex items-center justify-between border-t border-white/[0.07] pt-7">
@@ -189,38 +183,22 @@ export default function Admin() {
 // ---------------------------------------------------------------------------------------------------------------
 
 function Login({ onLogin }: { onLogin: (token: string, admin: string) => void }) {
-  const [qr, setQr] = useState<string | null>(null);
-  const [status, setStatus] = useState("");
-  const [walletName, setWalletName] = useState("");
+  // The wallet is the site-wide connection (navbar / connect modal), so a moderator who already connected elsewhere is
+  // ready to sign in without scanning again.
+  const { session, connected, walletName, status, openModal } = useWallet();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [triedKey, setTriedKey] = useState("");
-  const session = useRef<WalletSession | null>(null);
-
-  useEffect(() => () => session.current?.cleanup(), []);
-
-  async function connect() {
-    session.current?.cleanup();
-    setError("");
-    setTriedKey("");
-    setWalletName("");
-
-    try {
-      session.current = startWalletSession(setStatus, setWalletName);
-      setQr(await QRCode.toDataURL(session.current.qrUri, { width: 240, margin: 1 }));
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Could not start the wallet connection.");
-    }
-  }
 
   async function signIn() {
-    if (!session.current || busy) return;
+    if (!session || !connected || busy) return;
 
     setBusy(true);
     setError("");
+    setTriedKey("");
 
     try {
-      const key = await publicKeyHex(session.current);
+      const key = await publicKeyHex(session);
 
       setTriedKey(key);
 
@@ -230,11 +208,10 @@ function Login({ onLogin }: { onLogin: (token: string, admin: string) => void })
         throw new Error("The server did not return a signing request.");
       }
 
-      const signedTransaction = await signWithWallet(session.current, challenge.walletSignRequest);
+      const signedTransaction = await signWithWallet(session, challenge.walletSignRequest);
       const result = await submitLogin(challenge.nonce, signedTransaction);
 
-      session.current.cleanup();
-      session.current = null;
+      // The wallet stays connected for the rest of the site. Only the moderator session is new.
       onLogin(result.token, result.admin);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Sign in failed.");
@@ -257,36 +234,48 @@ function Login({ onLogin }: { onLogin: (token: string, admin: string) => void })
       </p>
 
       <div className="mt-8 rounded-2xl border border-white/[0.09] bg-[#0D1117] p-6">
-        <button
-          type="button"
-          onClick={connect}
-          disabled={busy}
-          className="flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-semibold text-black transition hover:bg-amber-400 disabled:opacity-50"
-        >
-          <Wallet size={17} />
-          {qr ? "Restart wallet connection" : "Connect wallet"}
-        </button>
+        {connected ? (
+          <>
+            <p className="flex items-center gap-2 text-xs text-emerald-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              Wallet connected: {walletName}
+            </p>
 
-        {qr && !walletName ? (
-          <div className="mt-5">
-            <img src={qr} alt="Wallet connection QR code" width={220} height={220} className="rounded-xl bg-white p-2" />
-            <p className="mt-2 text-xs text-gray-500">Scan with Selene, Paytaca or another WizardConnect wallet.</p>
-          </div>
-        ) : null}
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={signIn}
+                disabled={busy}
+                className="flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-3 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20 disabled:opacity-50"
+              >
+                {busy ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+                {busy ? "Approve in your wallet..." : `Sign in with ${walletName}`}
+              </button>
 
-        {status ? <p className="mt-3 text-xs text-gray-500">Relay: {status}</p> : null}
+              <button
+                type="button"
+                onClick={openModal}
+                disabled={busy}
+                className="rounded-xl border border-white/10 px-4 py-3 text-xs font-medium text-white/70 transition hover:border-amber-500/40 hover:text-amber-300 disabled:opacity-50"
+              >
+                Change wallet
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={openModal}
+              className="flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-3 text-sm font-semibold text-black transition hover:bg-amber-400"
+            >
+              <Wallet size={17} />
+              Connect wallet
+            </button>
 
-        {walletName ? (
-          <button
-            type="button"
-            onClick={signIn}
-            disabled={busy}
-            className="mt-5 flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-5 py-3 text-sm font-semibold text-emerald-300 transition hover:bg-emerald-500/20 disabled:opacity-50"
-          >
-            {busy ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
-            {busy ? "Approve in your wallet..." : `Sign in with ${walletName}`}
-          </button>
-        ) : null}
+            {status ? <p className="mt-3 text-xs text-gray-500">Relay: {status}</p> : null}
+          </>
+        )}
 
         {error ? (
           <div className="mt-5 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-xs text-rose-300">

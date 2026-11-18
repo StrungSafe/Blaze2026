@@ -1,20 +1,24 @@
 # XOGrid frontend guide
 
-For the frontend developer. The backend is a Fastify server that exposes a JSON API and also serves the built web app, so one process runs everything. This guide lists what the UI can rely on.
+For the frontend developer. The real UI is `frontend/` (React, Vite, Tailwind). It is deployed on Vercel and reaches the Fastify API in `server/` through a `/api/*` rewrite to Render (`frontend/vercel.json`). `web/` is a small stub used to test the backend; it is not the product. This guide lists what the UI can rely on.
 
 ## Run it
 
-    cd server && npm install && npm run dev     # API + static files on http://localhost:3000
-    cd web && npm install --legacy-peer-deps && npm run dev   # Vite dev server, proxies /api to :3000
-    cd web && npm run build                      # writes web/dist, which the server serves
+    cd server && npm install && npm run dev                    # API on http://localhost:3000
+    cd frontend && npm install --legacy-peer-deps && npm run dev   # Vite dev server, proxies /api to :3000
+    cd frontend && npm run build                               # type-checks and writes frontend/dist
 
-In production the server serves `web/dist` (set `WEB_DIR`, default `../web/dist`), with `index.html` as the fallback for every non-API GET, so client-side routes such as `/demo` and `/t/<id>` work on reload.
+In production Vercel serves `frontend/dist` and rewrites `/api/*` to the Render API, so the browser only ever talks to its own origin (no CORS). The `vercel.json` fallback sends every non-API path to `index.html`, so client-side routes such as `/demo` and `/t/<id>` work on reload. The root `Dockerfile` / `docker-compose.yml` build one image that serves the same `frontend/dist` from the API process (`WEB_DIR`), for running everything locally.
 
-Stack: React 18, react-router 6, Tailwind 4, Vite 6, TypeScript. `web/src/api.ts` holds the shared API types and the `api()` fetch helper.
+Stack: React 19, react-router 7, Tailwind 4, Vite 8, TypeScript. `frontend/src/hub/api.ts` holds the shared API types and the `hub()` fetch helper.
 
 ## Banner values
 
-The top banner reads `VITE_SLIDES_URL`, `VITE_EMBER_ADDRESS` and `VITE_REPO_URL` from `web/.env` at build time. Set them and rebuild.
+The required top banner is `frontend/src/components/TopBanner.tsx`, rendered once in `App.tsx` above the routes, so it is on every page. It scrolls with the page. It publishes how much of it is still visible as the CSS variable `--banner-offset`; **any new `position: fixed` element pinned to the top of the screen must use `top: var(--banner-offset, 0px)`** (the navbar, the DashboardLayout sidebar and the Docs sidebar already do), or the banner will cover it. Its values come from `frontend/src/config/banner.ts`:
+
+- `VITE_REPO_URL`: defaults to the GitHub repo.
+- `VITE_EMBER_ADDRESS`: defaults to the EMBER2026 token-aware address (`bitcoincash:z...`). It must stay a token-aware address.
+- `VITE_SLIDES_URL`: no default. Until it is set the banner shows "Slides: link coming soon". On Vercel add it under Settings > Environment Variables and redeploy; the value is baked in at build time.
 
 ## Public API (no login)
 
@@ -31,7 +35,7 @@ All responses are JSON. Errors are `{ "error": "message" }` with a 4xx status. P
 | `GET /api/spotlight` | `{ items }`, the featured templates for the Home page |
 | `POST /api/policy/evaluate` | Body `{ policy, identifier }`. Returns `{ decision: 'allow' \| 'block', reasons: string[] }`. Policy fields: `minBadge`, `blockFlagged`, `allowIdentifiers`, `blockIdentifiers` |
 
-The TypeScript shapes (`Summary`, `Detail`, `CheckResult`, `Decision`) are in `web/src/api.ts`; keep that file in step with the server.
+The TypeScript shapes (`Summary`, `Detail`, `CheckResult`, `Decision`) are in `frontend/src/hub/api.ts`; keep that file in step with the server.
 
 ### Community reviews (wallet-signed)
 
@@ -50,7 +54,7 @@ Limits to be honest about in the UI copy: a review proves a wallet signed it, no
 ### Identifiers and badges
 
 - A template identifier is a SHA-256 based hash of the template content, so it never changes for the same template and is safe to use in URLs.
-- Badges: `unchecked` (no checks recorded), `auto-checked` (the automated checks found no failure, which is never a safety claim) and `reviewed` (a moderator reviewed this exact template). Always show the tooltip text for them; `web/src/components.tsx` has it.
+- Badges: `unchecked` (no checks recorded), `auto-checked` (the automated checks found no failure, which is never a safety claim) and `reviewed` (a moderator reviewed this exact template). Always show the tooltip text for them; the badge copy is in `frontend/src/pages/TemplateDetail.tsx`.
 - A removed template has `removed: true` and a `removedReason`. Do not link to its raw JSON.
 
 ## Moderator API (login required)
@@ -77,7 +81,20 @@ Login proves control of an allowlisted moderator key by signing a challenge with
 
 Moderator routes never send the open CORS header. Disable the action buttons until required text is filled in (the server rejects empty notes with a 400).
 
-## Wallet connections (the Demo page)
+## Wallet connections
+
+### One shared connection
+
+There is exactly one wallet connection for the whole site, held by `WalletProvider` in `frontend/src/hub/WalletContext.tsx` (mounted in `App.tsx`). Read it anywhere with `useWallet()`: `connected`, `walletName`, `session`, `status`, `openModal()`, `disconnect()`. Do not call `startWalletSession` from a page or component; ask for the shared wallet instead.
+
+- The navbar button, the Admin sign-in, the review form and the Demo all use it. A person connects once and every page sees the same wallet.
+- `openModal()` opens the single connect modal (`ConnectWalletModal`, mounted once in `App.tsx`). Closing it keeps a connected wallet and drops an unfinished attempt.
+- The modal offers Wizard Connect (Selene, Paytaca) only. WalletConnect was dropped.
+- `address` is the wallet's first receive address for `network` (chipnet by default; the Demo's network switch updates it). The navbar and the dashboard header show it shortened (`bchtest:qp9c…tw6y`) with `shortenAddress()`.
+- The connection is in memory only. A page reload ends it; the person connects again.
+- Admin login does not end the wallet connection, and neither does leaving a page.
+
+### The Demo page
 
 The demo talks to wallets through one interface, `WalletConnector` in `frontend/src/voucher/wallet.ts`:
 
@@ -86,7 +103,7 @@ The demo talks to wallets through one interface, `WalletConnector` in `frontend/
 - `sign(request, pathName, addressIndex)` returns signed transaction hex
 - `stop()`
 
-`WizardConnectWallet` implements it and is tested with Selene and Paytaca. Another connection method (WalletConnect, a future XO wallet connection) only needs another class with these four methods. The wallet signs a transaction the page built, and the page checks the result before anything is sent.
+`WizardConnectWallet` implements it and is tested with Selene and Paytaca. The Demo does not start its own connection: it calls `adopt(session.manager)` to use the shared one, and `stop()` only lets go of it (it never closes the shared connection). Another connection method (WalletConnect, a future XO wallet connection) only needs another class with these four methods. The wallet signs a transaction the page built, and the page checks the result before anything is sent.
 
 ### Rules that must not be relaxed
 
@@ -98,15 +115,19 @@ The demo talks to wallets through one interface, `WalletConnector` in `frontend/
 
 ## Pages and routes
 
-| Route | File | Purpose |
+| Route | File (in `frontend/src/`) | Purpose |
 |---|---|---|
-| `/` | `pages/Home.tsx` | Spotlight and intro |
-| `/browse` | `pages/Browse.tsx` | Search, badge filter, paging |
-| `/t/:identifier` | `pages/Template.tsx` | Detail, audit report, flag form, policy preview |
-| `/admin` | `pages/Admin.tsx` | Moderator login and tools |
+| `/` | `pages/Landing.tsx` | Intro and featured templates |
+| `/explore` | `pages/Explore.tsx` | Search, badge filter, paging |
+| `/t/:identifier` | `pages/TemplateDetail.tsx` | Detail, audit report, reviews, flag form, policy preview |
+| `/publish` | `pages/Publish.tsx` | Publish a template |
+| `/policy` | `pages/Policy.tsx` | Wallet trust policy preview |
 | `/demo` | `pages/Demo.tsx` | Claim-code voucher demo (chipnet and mainnet) |
+| `/docs` | `pages/Documentation.tsx` | In-app documentation |
+| `/admin` | `pages/Admin.tsx` | Moderator login and tools (inside `layout/DashboardLayout.tsx`, like `/dashboard`, `/explore`, `/publish`, `/policy`) |
+| `/dashboard` | `pages/Dashboard.tsx` | Still shows mock data (see HANDOFF.md) |
 
 ## Quick checks before you push
 
-    cd web && npm run build          # type-checks and builds
+    cd frontend && npm run build     # type-checks and builds
     cd server && npm test            # all tests must pass

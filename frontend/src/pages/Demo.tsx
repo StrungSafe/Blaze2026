@@ -1,6 +1,5 @@
 
 import { binToHex } from '@bitauth/libauth';
-import QRCode from 'qrcode';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -26,6 +25,7 @@ import {
 
 import xogridlogo from '../assets/images/xogridlogo.png';
 import { hub, type Summary } from '../hub/api';
+import { useWallet } from '../hub/WalletContext';
 import { Chain } from '../voucher/chain';
 
 import {
@@ -168,10 +168,16 @@ export default function Demo() {
 
     const wallet = useRef(new WizardConnectWallet());
     const chain = useRef<Chain | undefined>(undefined);
-    const qrCanvas = useRef<HTMLCanvasElement>(null);
 
-    const [relayStatus, setRelayStatus] = useState('');
-    const [walletName, setWalletName] = useState<string | undefined>();
+    // One wallet connection for the whole site (hub/WalletContext). The Demo borrows it; it never closes it.
+    const {
+        session: walletSession,
+        connected: walletConnected,
+        walletName,
+        status: relayStatus,
+        openModal,
+        setNetwork: setWalletNetwork,
+    } = useWallet();
     const [coins, setCoins] = useState<Coin[]>([]);
     const [scanning, setScanning] = useState(false);
     const [chosen, setChosen] = useState<Coin | undefined>();
@@ -210,6 +216,24 @@ export default function Demo() {
             .catch(() => setTemplate(undefined));
     }, []);
 
+    // The navbar shows the wallet's address for the network chosen here.
+    useEffect(() => {
+        setWalletNetwork(network);
+    }, [network, setWalletNetwork]);
+
+    // Use the shared wallet connection whenever one is open, and let go of it when it closes.
+    useEffect(() => {
+        if (walletConnected && walletSession) {
+            wallet.current.adopt(walletSession.manager);
+        } else {
+            wallet.current.stop();
+        }
+
+        // A different wallet means different coins.
+        setCoins([]);
+        setChosen(undefined);
+    }, [walletConnected, walletSession]);
+
     useEffect(
         () => () => {
             wallet.current.stop();
@@ -219,15 +243,12 @@ export default function Demo() {
     );
 
     const resetForNetwork = (next: Network) => {
-        wallet.current.stop();
         void chain.current?.close();
 
         chain.current = undefined;
 
         setNetwork(next);
         setMainnetOk(false);
-        setWalletName(undefined);
-        setRelayStatus('');
         setCoins([]);
         setChosen(undefined);
         setIssued(undefined);
@@ -255,25 +276,10 @@ export default function Demo() {
         }
     };
 
+    // Opens the site-wide connect window. The wallet connection itself is shared, so it also shows in the navbar.
     const connect = () => {
         setError('');
-        setWalletName(undefined);
-
-        const session = wallet.current.start(
-            setRelayStatus,
-            (name) => setWalletName(name)
-        );
-
-        if (qrCanvas.current) {
-            void QRCode.toCanvas(qrCanvas.current, session.qrUri, {
-                width: 240,
-                margin: 2,
-                color: {
-                    dark: '#111827',
-                    light: '#FFFFFF',
-                },
-            });
-        }
+        openModal();
     };
 
     const findCoins = () => {
@@ -694,7 +700,7 @@ export default function Demo() {
                                         ? ' (set to chipnet)'
                                         : ''}
                                     , choose WizardConnect and scan the QR
-                                    code.
+                                    code in the connect window.
                                 </p>
 
                                 <button
@@ -704,7 +710,7 @@ export default function Demo() {
                                     onClick={connect}
                                 >
                                     <QrCode size={17} />
-                                    Show QR code
+                                    {walletName ? 'Change wallet' : 'Connect wallet'}
                                     <ArrowRight size={16} />
                                 </button>
 
@@ -755,16 +761,16 @@ export default function Demo() {
                                             animate={{ opacity: 1, scale: 1 }}
                                             className="flex flex-col items-center"
                                         >
-                                            <canvas
-                                                ref={qrCanvas}
-                                                className="block max-w-full rounded-xl bg-white p-2"
-                                            />
-                                            {!relayStatus && (
-                                                <div className="mt-3 flex items-center gap-2 text-xs text-gray-600">
-                                                    <QrCode size={14} />
-                                                    QR code appears here
-                                                </div>
-                                            )}
+                                            <div className="flex h-[180px] w-[180px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-white/15 text-center">
+                                                <QrCode
+                                                    size={34}
+                                                    className="text-gray-500"
+                                                />
+                                                <p className="px-3 text-xs text-gray-500">
+                                                    The QR code appears in the
+                                                    connect window.
+                                                </p>
+                                            </div>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>

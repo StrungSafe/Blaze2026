@@ -4,6 +4,7 @@ import {
   Menu,
   X,
   ArrowUpRight,
+  Wallet,
 } from "lucide-react";
 
 import {
@@ -13,7 +14,7 @@ import {
 } from "react-router-dom";
 
 import xogridlogo from "../assets/images/xogridlogo.png";
-import ConnectWalletModal from "../components/ConnectWalletModal";
+import { shortenAddress, useWallet } from "../hub/WalletContext";
 
 interface NavLink {
   name: string;
@@ -29,7 +30,7 @@ function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
-  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const { connected, walletName, address, openModal } = useWallet();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -231,15 +232,27 @@ function Navbar() {
     return location.pathname === link.href;
   };
 
-  // Open wallet modal
+  // Open the shared wallet modal
   const openWalletModal = () => {
     setMenuOpen(false);
-    setWalletModalOpen(true);
+    openModal();
   };
+
+  // Once connected the button shows a shortened receive address (like bchtest:qp9c…tw6y). The wallet name is only a
+  // fallback for the moment before the wallet has shared its key.
+  const walletLabel = address
+    ? shortenAddress(address)
+    : walletName.length > 18
+      ? `${walletName.slice(0, 17)}…`
+      : walletName;
+  const walletTitle = address ? `${walletName}: ${address}` : walletName;
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 lg:px-10">
+      <header
+        style={{ top: "var(--banner-offset, 0px)" }}
+        className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 lg:px-10"
+      >
         <nav
           className={`mx-auto flex h-[76px] max-w-[1440px] items-center justify-between rounded-2xl px-4 transition-all duration-500 sm:px-7 ${
             scrolled
@@ -319,14 +332,23 @@ function Navbar() {
             <button
               type="button"
               onClick={openWalletModal}
+              title={connected ? walletTitle : "Connect a wallet"}
               className="group relative flex items-center gap-3 overflow-hidden rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-500/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-orange-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
             >
-              <span className="relative z-10">Get Started</span>
-
-              <ArrowUpRight
-                size={17}
-                className="relative z-10 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1"
-              />
+              {connected ? (
+                <>
+                  <span
+                    aria-hidden="true"
+                    className="relative z-10 h-2 w-2 rounded-full bg-emerald-300"
+                  />
+                  <span className="relative z-10 font-mono tracking-tight">{walletLabel}</span>
+                </>
+              ) : (
+                <>
+                  <Wallet size={17} className="relative z-10" />
+                  <span className="relative z-10">Connect Wallet</span>
+                </>
+              )}
             </button>
           </div>
 
@@ -408,21 +430,28 @@ function Navbar() {
             <button
               type="button"
               onClick={openWalletModal}
+              title={connected ? walletTitle : "Connect a wallet"}
               className="flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/15 transition-all duration-300 hover:bg-orange-400"
             >
-              Get Started
-
-              <ArrowUpRight size={17} />
+              {connected ? (
+                <>
+                  <span
+                    aria-hidden="true"
+                    className="h-2 w-2 rounded-full bg-emerald-300"
+                  />
+                  <span className="font-mono tracking-tight">{walletLabel}</span>
+                </>
+              ) : (
+                <>
+                  <Wallet size={17} />
+                  Connect Wallet
+                </>
+              )}
             </button>
           </div>
         </div>
       </header>
 
-      {/* Reusable Wallet Modal */}
-      <ConnectWalletModal
-        isOpen={walletModalOpen}
-        onClose={() => setWalletModalOpen(false)}
-      />
     </>
   );
 }

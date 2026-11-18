@@ -70,6 +70,23 @@ Registry, audit checks, flags, reviews, policy preview, admin API, UI (Home, Bro
 - The voucher output address derived from the claim code matches the issue transaction's output.
 
 
+## 2026-11-18: shared wallet and banner
+- Real UI is `frontend/` (React, Vite, Tailwind). `web/` is a backend test stub, to be mined and then deleted.
+- One site-wide wallet connection: `frontend/src/hub/WalletContext.tsx` (`useWallet()`), mounted in `App.tsx` with a single
+  `ConnectWalletModal`. Navbar, Admin sign-in, ReviewForm and Demo all use it. The Demo adopts the shared session
+  (`WizardConnectWallet.adopt`). WalletConnect was dropped from the modal. The connection is in memory; a reload ends it.
+  The navbar and the DashboardLayout header show the wallet's shortened receive address (not the wallet name).
+- Fixed top elements use `top: var(--banner-offset, 0px)` so the banner never covers them (navbar, DashboardLayout sidebar,
+  Docs sidebar). Admin no longer draws its own header: it renders inside DashboardLayout.
+- Required top banner: `components/TopBanner.tsx` + `config/banner.ts`. EMBER2026 address is set (token-aware, checksum
+  verified); `VITE_SLIDES_URL` is still unset and the banner says "Slides: link coming soon".
+- Verified: `tsc --noEmit` and `npm run build` pass; banner, navbar offset, connect modal and Admin connect button checked in
+  a real browser at desktop and 375px width. NOT verified: a live Selene connection through the new modal, Admin login,
+  a review signed through it, and the Demo adopting the shared session (the sandbox blocks the WizardConnect relay).
+  Test each with a real wallet before relying on it.
+- Still open: Dashboard shows mock data; delete `web/` after mining; slides URL;
+  set `ADMIN_IDENTITIES` on Render (yours, Miguel's, John's); README/docs now point at `frontend/`.
+
 ## Hosted deployment (Postgres)
 
 The server now supports PostgreSQL. With `DATABASE_URL` set (Supabase Session pooler string) all data lives there; without

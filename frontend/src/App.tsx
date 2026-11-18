@@ -14,6 +14,10 @@ import Demo from "./pages/Demo";
 
 import DashboardLayout from "./layout/DashboardLayout";
 
+import TopBanner from "./components/TopBanner";
+import ConnectWalletModal from "./components/ConnectWalletModal";
+import { WalletProvider, useWallet } from "./hub/WalletContext";
+
 import xogridlogo from "./assets/images/xogridlogo.png";
 
 interface LoadingScreenProps {
@@ -72,6 +76,13 @@ function LoadingScreen({ exiting }: LoadingScreenProps) {
   );
 }
 
+/** The one wallet modal for the whole site. Any page opens it with useWallet().openModal(). */
+function WalletModalHost() {
+  const { modalOpen, closeModal } = useWallet();
+
+  return <ConnectWalletModal isOpen={modalOpen} onClose={closeModal} />;
+}
+
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isExiting, setIsExiting] = useState(false);
@@ -92,7 +103,9 @@ function App() {
   }, []);
 
   return (
-    <>
+    <WalletProvider>
+      <TopBanner />
+
       <Routes>
         {/* Public landing page */}
         <Route path="/" element={<LandingPage />} />
@@ -112,8 +125,10 @@ function App() {
         <Route path="/docs" element={<Documentation />} />
       </Routes>
 
+      <WalletModalHost />
+
       {isLoading && <LoadingScreen exiting={isExiting} />}
-    </>
+    </WalletProvider>
   );
 }
 

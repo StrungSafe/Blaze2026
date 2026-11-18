@@ -17,119 +17,101 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import {
-  startWalletSession,
-  type WalletSession,
-} from "../hub/wallet";
+import { shortenAddress, useWallet } from "../hub/WalletContext";
+
+// The wallet connection itself lives in hub/WalletContext, shared by the whole site. This modal only shows the steps
+// (QR code, link, status) and reads whether a wallet is connected.
 
 interface ConnectWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onWalletConnect?: () => void;
 }
-
-type WalletSessionWithUri = WalletSession & {
-  uri?: string;
-  qrUri: string;
-};
 
 type MobileScreen = "choices" | "wizard";
 
 function ConnectWalletModal({
   isOpen,
   onClose,
-  onWalletConnect,
 }: ConnectWalletModalProps) {
+  const {
+    connected,
+    walletName,
+    address,
+    status,
+    start,
+    disconnect,
+  } = useWallet();
+
   const [qr, setQr] = useState<string | null>(null);
   const [walletUri, setWalletUri] = useState<string | null>(null);
-  const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [connected, setConnected] = useState(false);
   const [mobileScreen, setMobileScreen] =
     useState<MobileScreen>("choices");
 
-  const session = useRef<WalletSession | null>(null);
+  const wasConnected = useRef(connected);
 
-  function resetModal() {
-    session.current?.cleanup();
-    session.current = null;
-
+  // Clears only what this modal shows. The shared wallet connection is not touched here.
+  function resetView() {
     setQr(null);
     setWalletUri(null);
-    setStatus("");
     setError(null);
     setConnecting(false);
     setCopied(false);
-    setConnected(false);
     setMobileScreen("choices");
   }
 
   useEffect(() => {
-    if (!isOpen) resetModal();
+    if (!isOpen) resetView();
   }, [isOpen]);
 
+  // When a wallet finishes connecting, drop the QR and close the modal shortly after.
   useEffect(() => {
-    return () => {
-      session.current?.cleanup();
-      session.current = null;
-    };
-  }, []);
+    const justConnected = connected && !wasConnected.current;
+
+    wasConnected.current = connected;
+
+    if (!connected) return;
+
+    setConnecting(false);
+    setQr(null);
+    setWalletUri(null);
+
+    if (!justConnected || !isOpen) return;
+
+    const timer = window.setTimeout(onClose, 1400);
+
+    return () => window.clearTimeout(timer);
+  }, [connected, isOpen, onClose]);
 
   function closeModal() {
-    resetModal();
     onClose();
   }
 
-  function openWalletConnect() {
-    if (onWalletConnect) {
-      onWalletConnect();
-      return;
-    }
-
-    setError(
-      "WalletConnect is not connected to this modal yet. Connect your existing WalletConnect handler through the onWalletConnect prop."
-    );
+  function disconnectWallet() {
+    disconnect();
+    resetView();
   }
 
   async function connectWallet() {
     if (connecting || connected) return;
 
-    session.current?.cleanup();
-    session.current = null;
-
     setConnecting(true);
-    setConnected(false);
     setError(null);
     setCopied(false);
     setQr(null);
     setWalletUri(null);
-    setStatus("Preparing secure connection...");
 
     try {
-      const created = startWalletSession(
-        (message) => setStatus(message),
-        (name) => {
-          setStatus(`Successfully connected to ${name}`);
-          setConnecting(false);
-          setConnected(true);
-          setQr(null);
-          setWalletUri(null);
-        }
-      );
-
-      session.current = created;
-
-      const sessionData = created as WalletSessionWithUri;
+      const created = start();
 
       const standardUri =
-        typeof sessionData.uri === "string" &&
-        sessionData.uri.length > 0
-          ? sessionData.uri
-          : sessionData.qrUri;
+        typeof created.uri === "string" && created.uri.length > 0
+          ? created.uri
+          : created.qrUri;
 
-      const qrUri = sessionData.qrUri;
+      const qrUri = created.qrUri;
 
       if (!standardUri || !qrUri) {
         throw new Error(
@@ -150,10 +132,8 @@ function ConnectWalletModal({
       });
 
       setQr(qrCode);
-      setStatus("Connection ready. Open your compatible wallet.");
     } catch (reason) {
-      session.current?.cleanup();
-      session.current = null;
+      disconnect();
       setConnecting(false);
 
       setError(
@@ -161,8 +141,6 @@ function ConnectWalletModal({
           ? reason.message
           : "Unable to start wallet connection. Please try again."
       );
-
-      setStatus("");
     }
   }
 
@@ -173,7 +151,6 @@ function ConnectWalletModal({
       await navigator.clipboard.writeText(walletUri);
       setCopied(true);
       setError(null);
-      setStatus("Connection link copied.");
 
       window.setTimeout(() => setCopied(false), 2500);
     } catch {
@@ -188,17 +165,10 @@ function ConnectWalletModal({
   }
 
   function backToChoices() {
-    session.current?.cleanup();
-    session.current = null;
+    // Cancel a connection attempt, but never drop a wallet that is already connected.
+    if (!connected) disconnect();
 
-    setQr(null);
-    setWalletUri(null);
-    setStatus("");
-    setError(null);
-    setConnecting(false);
-    setCopied(false);
-    setConnected(false);
-    setMobileScreen("choices");
+    resetView();
   }
 
   if (!isOpen) return null;
@@ -252,31 +222,6 @@ function ConnectWalletModal({
                   </div>
 
                   <div className="mt-6 space-y-3">
-                    <button
-                      type="button"
-                      onClick={openWalletConnect}
-                      className="wallet-choice-card flex w-full items-center gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.035] p-4 text-left transition hover:border-orange-500/40 hover:bg-white/[0.06]"
-                    >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-orange-500/15 bg-orange-500/10 text-orange-400">
-                        <Wallet size={25} />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white">
-                          WalletConnect
-                        </p>
-                        <p className="mt-1 text-[11px] leading-5 text-slate-400">
-                          Scan with a WalletConnect wallet or pick one from
-                          the list.
-                        </p>
-                      </div>
-
-                      <ChevronRight
-                        size={18}
-                        className="shrink-0 text-slate-500"
-                      />
-                    </button>
-
                     <button
                       type="button"
                       onClick={selectWizardConnect}
@@ -354,8 +299,26 @@ function ConnectWalletModal({
                     <div className="mt-5 flex flex-col items-center rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] p-5 text-center">
                       <Check size={30} className="text-emerald-400" />
                       <p className="mt-2 text-sm font-semibold text-emerald-400">
-                        Wallet connected successfully
+                        Connected to {walletName}
                       </p>
+                      {address && (
+                        <p
+                          title={address}
+                          className="mt-1 font-mono text-[11px] text-slate-300"
+                        >
+                          {shortenAddress(address)}
+                        </p>
+                      )}
+                      <p className="mt-1 text-[10px] text-slate-400">
+                        This wallet is used across XOGrid until you disconnect.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={disconnectWallet}
+                        className="mt-3 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold text-slate-300 transition hover:border-rose-400/40 hover:text-rose-300"
+                      >
+                        Disconnect
+                      </button>
                     </div>
                   ) : (
                     <>
@@ -557,12 +520,12 @@ function ConnectWalletModal({
                       <div className="mt-3 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.07] p-3">
                         <Check size={17} className="text-emerald-400" />
                         <p className="text-xs font-semibold text-emerald-400">
-                          Wallet connected successfully
+                          Connected to {walletName}
                         </p>
                       </div>
                     )}
 
-                    {status && (
+                    {status && !connected && (
                       <div className="mt-2 flex items-start gap-2 rounded-lg border border-orange-500/10 bg-orange-500/[0.05] p-2">
                         <span className="mt-1 h-1.5 w-1.5 shrink-0 animate-pulse rounded-full bg-orange-400" />
                         <p className="text-[10px] leading-4 text-orange-300">
@@ -571,6 +534,7 @@ function ConnectWalletModal({
                       </div>
                     )}
                   </div>
+
                 </div>
 
                 <div className="min-w-0 flex-1">
@@ -582,9 +546,24 @@ function ConnectWalletModal({
                       <p className="mt-3 text-sm font-bold text-white">
                         Wallet connected
                       </p>
+                      {address && (
+                        <p
+                          title={address}
+                          className="mt-1 font-mono text-[11px] text-slate-300"
+                        >
+                          {shortenAddress(address)}
+                        </p>
+                      )}
                       <p className="mt-1 text-[10px] text-slate-400">
-                        Your WizardConnect session is active.
+                        {walletName} is used across XOGrid until you disconnect.
                       </p>
+                      <button
+                        type="button"
+                        onClick={disconnectWallet}
+                        className="mt-4 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-semibold text-slate-300 transition hover:border-rose-400/40 hover:text-rose-300"
+                      >
+                        Disconnect
+                      </button>
                     </div>
                   ) : qr ? (
                     <div className="wallet-qr-panel flex flex-col items-center rounded-xl border border-white/[0.08] bg-black/30 p-4 text-center">

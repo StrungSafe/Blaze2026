@@ -51,6 +51,15 @@ export class WizardConnectWallet implements WalletConnector {
         return { uri: relay.uri, qrUri: relay.qrUri };
     }
 
+    /**
+     * Uses a connection that is already open (the site-wide wallet from hub/WalletContext) instead of starting its own.
+     * The shared connection stays open when this wallet is stopped: stop() only lets go of it.
+     */
+    adopt(manager: DappConnectionManager): void {
+        this.stop();
+        this.manager = manager;
+    }
+
     stop(): void {
         this.cleanup?.();
         this.cleanup = undefined;

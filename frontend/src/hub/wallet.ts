@@ -12,6 +12,7 @@ export interface WalletSession {
 export function startWalletSession(
   onStatus: (text: string) => void,
   onReady: (walletName: string) => void,
+  onDisconnect?: () => void,
 ): WalletSession {
   const manager = new DappConnectionManager("XOGrid", undefined, { session: false });
   const relay = initiateDappRelay((payload) => {
@@ -28,6 +29,9 @@ export function startWalletSession(
       onReady(manager.walletName ?? "wallet");
     }
   });
+
+  // The wallet closed the connection (or the relay dropped). Lets the shared wallet state go back to "not connected".
+  manager.on("disconnect", () => onDisconnect?.());
 
   return { manager, cleanup: relay.cleanup, uri: relay.uri, qrUri: relay.qrUri };
 }

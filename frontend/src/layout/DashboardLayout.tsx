@@ -20,6 +20,7 @@ import type { LucideIcon } from "lucide-react";
 
 import xogridlogo from "../assets/images/xogridlogo.png";
 import { hasAdminToken } from "../hub/admin";
+import { shortenAddress, useWallet } from "../hub/WalletContext";
 
 interface NavigationItem {
   label: string;
@@ -52,14 +53,13 @@ const navigation: NavigationItem[] = [
   },
 ];
 
-// Frontend demo data only.
-// Replace this with the real connected wallet address later.
-const DEMO_WALLET_ADDRESS = "bitcoincash:qz8x...7k2m";
-
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [walletMenuOpen, setWalletMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // The same wallet connection as the navbar, the Admin sign-in and the Demo (hub/WalletContext).
+  const { connected, walletName, address, openModal, disconnect } = useWallet();
 
   const walletMenuRef = useRef<HTMLDivElement>(null);
   const isAdmin = hasAdminToken();
@@ -90,8 +90,10 @@ export default function DashboardLayout() {
   }, []);
 
   const handleCopyAddress = async () => {
+    if (!address) return;
+
     try {
-      await navigator.clipboard.writeText(DEMO_WALLET_ADDRESS);
+      await navigator.clipboard.writeText(address);
       setCopied(true);
 
       window.setTimeout(() => {
@@ -103,8 +105,8 @@ export default function DashboardLayout() {
   };
 
   const handleDisconnect = () => {
-    // UI preview only. Backend/wallet integration will handle this later.
     setWalletMenuOpen(false);
+    disconnect();
   };
 
   return (
@@ -121,6 +123,7 @@ export default function DashboardLayout() {
 
       {/* Sidebar */}
       <aside
+        style={{ top: "var(--banner-offset, 0px)" }}
         className={`fixed inset-y-0 left-0 z-50 flex w-[270px] flex-col border-r border-white/[0.07] bg-[#080B10] transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
@@ -236,8 +239,20 @@ export default function DashboardLayout() {
             </p>
           </div>
 
-          {/* Wallet dropdown - UI preview only */}
+          {/* Wallet: connect button, or a dropdown for the connected wallet */}
           <div className="relative shrink-0" ref={walletMenuRef}>
+            {!connected ? (
+              <button
+                type="button"
+                onClick={openModal}
+                className="flex items-center gap-2 rounded-xl border border-orange-500/25 bg-orange-500/[0.07] px-3 py-2.5 text-xs font-semibold text-white transition hover:border-orange-500/50 hover:bg-orange-500/[0.12] sm:gap-3 sm:px-4"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-orange-500/15 text-orange-400">
+                  <Wallet size={15} />
+                </span>
+                Connect wallet
+              </button>
+            ) : (
             <button
               type="button"
               onClick={() => setWalletMenuOpen((previous) => !previous)}
@@ -249,8 +264,8 @@ export default function DashboardLayout() {
                 <Wallet size={15} />
               </span>
 
-              <span className="min-w-0 truncate">
-                {DEMO_WALLET_ADDRESS}
+              <span className="min-w-0 truncate font-mono">
+                {address ? shortenAddress(address) : walletName}
               </span>
 
               <ChevronDown
@@ -260,26 +275,28 @@ export default function DashboardLayout() {
                 }`}
               />
             </button>
+            )}
 
-            {walletMenuOpen && (
+            {connected && walletMenuOpen && (
               <div className="absolute right-0 top-[calc(100%+12px)] z-50 w-[260px] overflow-hidden rounded-2xl border border-white/10 bg-[#0B0E14] p-2 shadow-2xl shadow-black/50">
                 <div className="border-b border-white/[0.07] px-3 py-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-emerald-400" />
                     <p className="text-xs font-semibold text-white">
-                      Wallet connected
+                      Connected to {walletName}
                     </p>
                   </div>
 
                   <p className="mt-2 break-all text-[11px] leading-5 text-slate-500">
-                    {DEMO_WALLET_ADDRESS}
+                    {address || "Waiting for the wallet to share its address..."}
                   </p>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleCopyAddress}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-xs text-slate-300 transition hover:bg-white/[0.05] hover:text-white"
+                  disabled={!address}
+                  className="flex w-full disabled:cursor-not-allowed disabled:opacity-50 items-center gap-3 rounded-xl px-3 py-3 text-left text-xs text-slate-300 transition hover:bg-white/[0.05] hover:text-white"
                 >
                   {copied ? (
                     <Check size={16} className="text-emerald-400" />

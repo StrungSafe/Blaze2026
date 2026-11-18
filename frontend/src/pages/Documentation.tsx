@@ -325,7 +325,7 @@ function Documentation() {
         /* Fixed desktop sidebar */
         .xg-docs-sidebar {
           position: fixed;
-          top: 76px;
+          top: calc(76px + var(--banner-offset, 0px));
           bottom: 0;
           left: max(0px, calc((100vw - 1500px) / 2));
           width: 265px;
@@ -901,7 +901,7 @@ function Documentation() {
 
           .xg-docs-sidebar {
             position: fixed;
-            top: 66px;
+            top: calc(66px + var(--banner-offset, 0px));
             left: 0;
             bottom: 0;
             width: min(310px,85vw);
