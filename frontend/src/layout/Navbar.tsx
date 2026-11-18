@@ -30,6 +30,7 @@ function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
+
   const { connected, walletName, address, openModal } = useWallet();
 
   const location = useLocation();
@@ -86,7 +87,11 @@ function Navbar() {
   useEffect(() => {
     if (location.pathname !== "/") return;
 
-    const sectionIds = ["home", "how-it-works", "featured-templates"];
+    const sectionIds = [
+      "home",
+      "how-it-works",
+      "featured-templates",
+    ];
 
     const updateActiveSection = () => {
       const marker = window.scrollY + window.innerHeight * 0.35;
@@ -232,29 +237,46 @@ function Navbar() {
     return location.pathname === link.href;
   };
 
-  // Open the shared wallet modal
+  // Open shared wallet modal
   const openWalletModal = () => {
     setMenuOpen(false);
     openModal();
   };
 
-  // Once connected the button shows a shortened receive address (like bchtest:qp9c…tw6y). The wallet name is only a
-  // fallback for the moment before the wallet has shared its key.
+  // Wallet display
   const walletLabel = address
     ? shortenAddress(address)
     : walletName.length > 18
       ? `${walletName.slice(0, 17)}…`
       : walletName;
-  const walletTitle = address ? `${walletName}: ${address}` : walletName;
+
+  const walletTitle = address
+    ? `${walletName}: ${address}`
+    : walletName;
+
+  // Shared navigation link styling
+  const desktopLinkClass = (active: boolean) =>
+    `group relative whitespace-nowrap rounded-xl px-3 xl:px-4 2xl:px-5 3xl:px-6 py-3 text-[12px] xl:text-[13px] 2xl:text-sm font-medium tracking-wide transition-all duration-300 hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 ${
+      active
+        ? "text-orange-400"
+        : "text-white/75 hover:text-white"
+    }`;
+
+  const mobileLinkClass = (active: boolean) =>
+    `group flex w-full items-center justify-between rounded-xl border px-4 py-3.5 text-sm font-medium transition-all duration-300 ${
+      active
+        ? "border-orange-400/20 bg-orange-500/10 text-orange-400"
+        : "border-transparent text-white/70 hover:border-orange-400/20 hover:bg-orange-500/10 hover:text-white"
+    }`;
 
   return (
     <>
       <header
         style={{ top: "var(--banner-offset, 0px)" }}
-        className="fixed inset-x-0 top-0 z-50 px-4 pt-4 sm:px-6 lg:px-10"
+        className="fixed inset-x-0 z-50 px-3 pt-3 sm:px-5 sm:pt-4 lg:px-8 xl:px-10 2xl:px-14 3xl:px-20 4xl:px-24"
       >
         <nav
-          className={`mx-auto flex h-[76px] max-w-[1440px] items-center justify-between rounded-2xl px-4 transition-all duration-500 sm:px-7 ${
+          className={`mx-auto flex h-[68px] w-full max-w-[1440px] items-center justify-between rounded-2xl px-3 transition-all duration-500 sm:h-[76px] sm:px-5 lg:px-6 xl:max-w-[1536px] xl:px-7 2xl:max-w-[1760px] 2xl:px-9 3xl:max-w-[1920px] 3xl:px-12 4xl:max-w-[2200px] 4xl:px-16 ${
             scrolled
               ? "border border-white/[0.09] bg-[#090A13]/75 shadow-[0_12px_50px_rgba(0,0,0,0.3)] backdrop-blur-2xl"
               : "border border-transparent bg-transparent shadow-none backdrop-blur-none"
@@ -270,27 +292,33 @@ function Navbar() {
             <img
               src={xogridlogo}
               alt="XOGrid"
-              className="h-12 w-auto object-contain sm:h-14"
+              className="h-10 w-auto object-contain transition-all duration-300 sm:h-12 xl:h-13 2xl:h-14 3xl:h-15 4xl:h-16"
             />
           </button>
 
           {/* Desktop Navigation */}
-          <div className="hidden items-center gap-1 lg:flex">
+          <div className="hidden items-center gap-0.5 lg:flex xl:gap-1 2xl:gap-2 3xl:gap-3">
             {/* Home */}
             <button
               type="button"
               onClick={handleHomeClick}
-              className={`group relative rounded-xl px-4 py-3 text-[13px] font-medium tracking-wide transition-all duration-300 hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 ${
-                location.pathname === "/" && activeSection === "home"
-                  ? "text-orange-400"
-                  : "text-white/75 hover:text-white"
-              }`}
+              aria-current={
+                location.pathname === "/" &&
+                activeSection === "home"
+                  ? "page"
+                  : undefined
+              }
+              className={desktopLinkClass(
+                location.pathname === "/" &&
+                  activeSection === "home",
+              )}
             >
               Home
 
               <span
-                className={`absolute bottom-1.5 left-4 right-4 h-[2px] origin-center rounded-full bg-orange-500 transition-transform duration-300 ${
-                  location.pathname === "/" && activeSection === "home"
+                className={`absolute bottom-1.5 left-3 right-3 h-[2px] origin-center rounded-full bg-orange-500 transition-transform duration-300 xl:left-4 xl:right-4 ${
+                  location.pathname === "/" &&
+                  activeSection === "home"
                     ? "scale-x-100"
                     : "scale-x-0 group-hover:scale-x-100"
                 }`}
@@ -305,18 +333,16 @@ function Navbar() {
                 <Link
                   key={link.name}
                   to={link.href}
-                  onClick={(event) => handleSectionClick(event, link)}
+                  onClick={(event) =>
+                    handleSectionClick(event, link)
+                  }
                   aria-current={active ? "page" : undefined}
-                  className={`group relative rounded-xl px-4 py-3 text-[13px] font-medium tracking-wide transition-all duration-300 hover:bg-white/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 ${
-                    active
-                      ? "text-orange-400"
-                      : "text-white/75 hover:text-white"
-                  }`}
+                  className={desktopLinkClass(active)}
                 >
                   {link.name}
 
                   <span
-                    className={`absolute bottom-1.5 left-4 right-4 h-[2px] origin-center rounded-full bg-orange-500 transition-transform duration-300 ${
+                    className={`absolute bottom-1.5 left-3 right-3 h-[2px] origin-center rounded-full bg-orange-500 transition-transform duration-300 xl:left-4 xl:right-4 ${
                       active
                         ? "scale-x-100"
                         : "scale-x-0 group-hover:scale-x-100"
@@ -328,25 +354,36 @@ function Navbar() {
           </div>
 
           {/* Desktop CTA */}
-          <div className="hidden lg:flex">
+          <div className="hidden shrink-0 lg:flex">
             <button
               type="button"
               onClick={openWalletModal}
-              title={connected ? walletTitle : "Connect a wallet"}
-              className="group relative flex items-center gap-3 overflow-hidden rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-500/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-orange-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
+              title={
+                connected ? walletTitle : "Connect a wallet"
+              }
+              className="group relative flex items-center gap-2 overflow-hidden rounded-xl bg-orange-500 px-3 py-3 text-xs font-semibold text-white shadow-lg shadow-orange-500/15 transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-400 hover:shadow-orange-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 xl:gap-3 xl:px-4 xl:text-sm 2xl:px-5 3xl:px-6"
             >
               {connected ? (
                 <>
                   <span
                     aria-hidden="true"
-                    className="relative z-10 h-2 w-2 rounded-full bg-emerald-300"
+                    className="relative z-10 h-2 w-2 shrink-0 rounded-full bg-emerald-300"
                   />
-                  <span className="relative z-10 font-mono tracking-tight">{walletLabel}</span>
+
+                  <span className="relative z-10 max-w-[115px] truncate font-mono tracking-tight xl:max-w-[145px] 2xl:max-w-[180px] 3xl:max-w-[220px]">
+                    {walletLabel}
+                  </span>
                 </>
               ) : (
                 <>
-                  <Wallet size={17} className="relative z-10" />
-                  <span className="relative z-10">Connect Wallet</span>
+                  <Wallet
+                    size={17}
+                    className="relative z-10 shrink-0"
+                  />
+
+                  <span className="relative z-10 whitespace-nowrap">
+                    Connect Wallet
+                  </span>
                 </>
               )}
             </button>
@@ -355,15 +392,23 @@ function Navbar() {
           {/* Mobile Menu Toggle */}
           <button
             type="button"
-            onClick={() => setMenuOpen((previous) => !previous)}
+            onClick={() =>
+              setMenuOpen((previous) => !previous)
+            }
             aria-label={
-              menuOpen ? "Close navigation menu" : "Open navigation menu"
+              menuOpen
+                ? "Close navigation menu"
+                : "Open navigation menu"
             }
             aria-expanded={menuOpen}
             aria-controls="mobile-navigation"
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white transition-all duration-300 hover:border-orange-400/50 hover:bg-orange-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 lg:hidden"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white transition-all duration-300 hover:border-orange-400/50 hover:bg-orange-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 sm:h-11 sm:w-11 lg:hidden"
           >
-            {menuOpen ? <X size={21} /> : <Menu size={21} />}
+            {menuOpen ? (
+              <X size={21} />
+            ) : (
+              <Menu size={21} />
+            )}
           </button>
         </nav>
 
@@ -371,9 +416,10 @@ function Navbar() {
         <div
           id="mobile-navigation"
           aria-hidden={!menuOpen}
-          className={`mx-auto mt-3 max-w-[1440px] overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0B0C16]/90 shadow-2xl shadow-black/40 backdrop-blur-2xl transition-all duration-300 lg:hidden ${
+          inert={!menuOpen}
+          className={`mx-auto mt-3 w-full max-w-[1440px] overflow-hidden rounded-2xl border border-white/[0.09] bg-[#0B0C16]/90 shadow-2xl shadow-black/40 backdrop-blur-2xl transition-all duration-300 xl:max-w-[1536px] 2xl:max-w-[1760px] 3xl:max-w-[1920px] 4xl:max-w-[2200px] lg:hidden ${
             menuOpen
-              ? "max-h-135 translate-y-0 p-4 opacity-100"
+              ? "max-h-[80vh] translate-y-0 overflow-y-auto p-4 opacity-100"
               : "pointer-events-none max-h-0 -translate-y-2 border-transparent p-0 opacity-0"
           }`}
         >
@@ -383,11 +429,10 @@ function Navbar() {
               type="button"
               onClick={handleHomeClick}
               tabIndex={menuOpen ? 0 : -1}
-              className={`group flex w-full items-center justify-between rounded-xl border px-4 py-3.5 text-left text-sm font-medium transition-all duration-300 ${
-                location.pathname === "/" && activeSection === "home"
-                  ? "border-orange-400/20 bg-orange-500/10 text-orange-400"
-                  : "border-transparent text-white/70 hover:border-orange-400/20 hover:bg-orange-500/10 hover:text-white"
-              }`}
+              className={mobileLinkClass(
+                location.pathname === "/" &&
+                  activeSection === "home",
+              )}
             >
               Home
 
@@ -405,14 +450,12 @@ function Navbar() {
                 <Link
                   key={link.name}
                   to={link.href}
-                  onClick={(event) => handleSectionClick(event, link)}
+                  onClick={(event) =>
+                    handleSectionClick(event, link)
+                  }
                   tabIndex={menuOpen ? 0 : -1}
                   aria-current={active ? "page" : undefined}
-                  className={`group flex items-center justify-between rounded-xl border px-4 py-3.5 text-sm font-medium transition-all duration-300 ${
-                    active
-                      ? "border-orange-400/20 bg-orange-500/10 text-orange-400"
-                      : "border-transparent text-white/70 hover:border-orange-400/20 hover:bg-orange-500/10 hover:text-white"
-                  }`}
+                  className={mobileLinkClass(active)}
                 >
                   {link.name}
 
@@ -430,16 +473,21 @@ function Navbar() {
             <button
               type="button"
               onClick={openWalletModal}
-              title={connected ? walletTitle : "Connect a wallet"}
-              className="flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/15 transition-all duration-300 hover:bg-orange-400"
+              title={
+                connected ? walletTitle : "Connect a wallet"
+              }
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-orange-500/15 transition-all duration-300 hover:bg-orange-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300"
             >
               {connected ? (
                 <>
                   <span
                     aria-hidden="true"
-                    className="h-2 w-2 rounded-full bg-emerald-300"
+                    className="h-2 w-2 shrink-0 rounded-full bg-emerald-300"
                   />
-                  <span className="font-mono tracking-tight">{walletLabel}</span>
+
+                  <span className="max-w-[220px] truncate font-mono tracking-tight">
+                    {walletLabel}
+                  </span>
                 </>
               ) : (
                 <>
@@ -451,7 +499,6 @@ function Navbar() {
           </div>
         </div>
       </header>
-
     </>
   );
 }

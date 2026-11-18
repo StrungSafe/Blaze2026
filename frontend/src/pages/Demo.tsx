@@ -1,4 +1,3 @@
-
 import { binToHex } from '@bitauth/libauth';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -98,13 +97,13 @@ function Step({
             whileInView="visible"
             viewport={{ once: true, amount: 0.12 }}
             transition={{ duration: 0.55, delay: 0.08 * n }}
-            className={`${cardClass} relative overflow-hidden p-5 sm:p-7`}
+            className={`${cardClass} relative overflow-hidden p-5 sm:p-7 2xl:p-9 3xl:p-10 4xl:p-12`}
         >
             <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-orange-500/[0.04] blur-3xl" />
 
             <div className="relative">
-                <div className="mb-6 flex items-start gap-4">
-                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10 text-orange-400">
+                <div className="mb-6 flex items-start gap-4 2xl:mb-8 2xl:gap-5">
+                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10 text-orange-400 2xl:h-14 2xl:w-14">
                         {icon}
                         <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#0D1117] bg-orange-500 text-[10px] font-bold text-white">
                             {n}
@@ -112,16 +111,16 @@ function Step({
                     </div>
 
                     <div>
-                        <h2 className="text-lg font-semibold tracking-tight text-white sm:text-xl">
+                        <h2 className="text-lg font-semibold tracking-tight text-white sm:text-xl 2xl:text-2xl">
                             {title}
                         </h2>
-                        <p className="mt-1 text-sm leading-relaxed text-gray-500">
+                        <p className="mt-1 text-sm leading-relaxed text-gray-500 2xl:text-base">
                             {description}
                         </p>
                     </div>
                 </div>
 
-                <div className="space-y-4">{children}</div>
+                <div className="space-y-4 2xl:space-y-5">{children}</div>
             </div>
         </motion.section>
     );
@@ -479,18 +478,18 @@ export default function Demo() {
                 />
             </div>
 
-            <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
+            <div className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 2xl:max-w-6xl 2xl:px-8 3xl:max-w-7xl 3xl:px-10 4xl:max-w-[100rem] 4xl:px-14">
                 {/* Top navigation */}
                 <motion.header
                     initial={{ opacity: 0, y: -15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="flex items-center justify-between border-b border-white/[0.07] py-5"
+                    className="flex items-center justify-between border-b border-white/[0.07] py-5 2xl:py-7"
                 >
                     <button
                         type="button"
                         onClick={goBack}
-                        className="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-gray-300 transition hover:border-orange-500/40 hover:bg-orange-500/10 hover:text-white"
+                        className="group inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-gray-300 transition hover:border-orange-500/40 hover:bg-orange-500/10 hover:text-white 2xl:px-5 2xl:py-3 2xl:text-base"
                     >
                         <ArrowLeft
                             size={16}
@@ -503,16 +502,16 @@ export default function Demo() {
                         <img
                             src={xogridlogo}
                             alt="XOGrid"
-                            className="h-9 w-auto object-contain sm:h-10"
+                            className="h-9 w-auto object-contain sm:h-10 2xl:h-12 3xl:h-14"
                         />
                     </Link>
 
-                    <div className="flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-2">
+                    <div className="flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-2 2xl:px-4 2xl:py-2.5">
                         <span className="relative flex h-2 w-2">
                             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
                             <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                         </span>
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300 sm:text-xs">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300 sm:text-xs 2xl:text-sm">
                             Demo live
                         </span>
                     </div>
@@ -524,7 +523,7 @@ export default function Demo() {
                     animate="visible"
                     variants={fadeUp}
                     transition={{ duration: 0.7 }}
-                    className="relative py-12 text-center sm:py-16"
+                    className="relative py-12 text-center sm:py-16 2xl:py-20 3xl:py-24"
                 >
                     <motion.div
                         animate={{ rotate: [0, 5, -5, 0] }}
@@ -533,39 +532,40 @@ export default function Demo() {
                             repeat: Infinity,
                             ease: 'easeInOut',
                         }}
-                        className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-orange-500/25 bg-orange-500/10 shadow-xl shadow-orange-500/10"
+                        className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-orange-500/25 bg-orange-500/10 shadow-xl shadow-orange-500/10 2xl:mb-8 2xl:h-20 2xl:w-20"
                     >
-                        <Fingerprint size={32} className="text-orange-400" />
+                        <Fingerprint size={32} className="text-orange-400 2xl:hidden" />
+                        <Fingerprint size={40} className="hidden text-orange-400 2xl:block" />
                     </motion.div>
 
-                    <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/[0.07] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-orange-300">
+                    <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/[0.07] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-orange-300 2xl:px-5 2xl:py-2.5 2xl:text-sm">
                         <Sparkles size={14} />
                         XOGrid Voucher Experience
                     </div>
 
-                    <h1 className="mx-auto max-w-3xl text-3xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+                    <h1 className="mx-auto max-w-3xl text-3xl font-bold tracking-tight sm:text-5xl lg:text-6xl 2xl:max-w-5xl 2xl:text-7xl 3xl:text-8xl">
                         Send value with a{' '}
                         <span className="bg-gradient-to-r from-orange-300 via-orange-500 to-amber-300 bg-clip-text text-transparent">
                             secret code.
                         </span>
                     </h1>
 
-                    <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-gray-400 sm:text-base">
+                    <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-gray-400 sm:text-base 2xl:mt-7 2xl:max-w-3xl 2xl:text-lg 2xl:leading-8">
                         Create BCH vouchers secured by an on-chain secret.
                         Share the claim code with anyone. They can redeem it
                         without needing your wallet or an upfront address.
                     </p>
 
-                    <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-                        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs text-gray-400">
+                    <div className="mt-7 flex flex-wrap items-center justify-center gap-3 2xl:mt-9 2xl:gap-4">
+                        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs text-gray-400 2xl:px-5 2xl:py-2.5 2xl:text-sm">
                             <ShieldCheck size={14} className="text-emerald-400" />
                             On-chain verification
                         </div>
-                        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs text-gray-400">
+                        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs text-gray-400 2xl:px-5 2xl:py-2.5 2xl:text-sm">
                             <LockKeyhole size={14} className="text-orange-400" />
                             Secret-code security
                         </div>
-                        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs text-gray-400">
+                        <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-xs text-gray-400 2xl:px-5 2xl:py-2.5 2xl:text-sm">
                             <Zap size={14} className="text-amber-400" />
                             Wallet powered
                         </div>
@@ -577,16 +577,16 @@ export default function Demo() {
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="mb-6 flex flex-col gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 sm:flex-row sm:items-center sm:justify-between"
+                    className="mb-6 flex flex-col gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 sm:flex-row sm:items-center sm:justify-between 2xl:mb-8 2xl:p-6"
                 >
                     <div className="min-w-0">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gray-500 2xl:text-xs">
                             Powered by XOGrid registry
                         </p>
-                        <p className="mt-1 truncate text-sm font-semibold text-gray-200">
+                        <p className="mt-1 truncate text-sm font-semibold text-gray-200 2xl:text-base">
                             {template?.name ?? 'Claim-Code Voucher'}
                         </p>
-                        <code className="mt-1 block break-all text-[10px] text-gray-600">
+                        <code className="mt-1 block break-all text-[10px] text-gray-600 2xl:text-xs">
                             {VOUCHER_TEMPLATE_IDENTIFIER}
                         </code>
                     </div>
@@ -603,25 +603,25 @@ export default function Demo() {
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className={`${cardClass} mb-6 p-5 sm:p-6`}
+                    className={`${cardClass} mb-6 p-5 sm:p-6 2xl:mb-8 2xl:p-8`}
                 >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between 2xl:gap-8">
                         <div>
-                            <p className="text-sm font-semibold text-white">
+                            <p className="text-sm font-semibold text-white 2xl:text-base">
                                 Select your network
                             </p>
-                            <p className="mt-1 text-xs text-gray-500">
+                            <p className="mt-1 text-xs text-gray-500 2xl:text-sm">
                                 Choose where your voucher will be created.
                             </p>
                         </div>
 
-                        <div className="flex rounded-xl border border-white/10 bg-black/30 p-1">
+                        <div className="flex rounded-xl border border-white/10 bg-black/30 p-1 2xl:p-1.5">
                             {(Object.keys(NETWORKS) as Network[]).map((name) => (
                                 <button
                                     key={name}
                                     type="button"
                                     onClick={() => resetForNetwork(name)}
-                                    className={`rounded-lg px-5 py-2.5 text-sm font-semibold transition-all ${
+                                    className={`rounded-lg px-5 py-2.5 text-sm font-semibold transition-all 2xl:px-7 2xl:py-3 2xl:text-base ${
                                         network === name
                                             ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
                                             : 'text-gray-500 hover:text-white'
@@ -639,7 +639,7 @@ export default function Demo() {
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="mt-5 flex cursor-pointer items-start gap-3 overflow-hidden rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-4 text-sm text-amber-100"
+                                className="mt-5 flex cursor-pointer items-start gap-3 overflow-hidden rounded-xl border border-amber-500/20 bg-amber-500/[0.06] p-4 text-sm text-amber-100 2xl:p-5 2xl:text-base"
                             >
                                 <input
                                     type="checkbox"
@@ -683,7 +683,7 @@ export default function Demo() {
                 </AnimatePresence>
 
                 {/* Steps */}
-                <div className="space-y-6">
+                <div className="space-y-6 2xl:space-y-8">
                     {/* Step 1 */}
                     <Step
                         n={1}
@@ -691,9 +691,9 @@ export default function Demo() {
                         description="Connect a compatible wallet to securely access your BCH."
                         icon={<Wallet size={23} />}
                     >
-                        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+                        <div className="flex flex-col gap-5 sm:flex-row sm:items-center 2xl:gap-8">
                             <div className="min-w-0 flex-1">
-                                <p className="text-sm leading-6 text-gray-400">
+                                <p className="text-sm leading-6 text-gray-400 2xl:text-base 2xl:leading-7">
                                     Open a WizardConnect wallet such as Selene
                                     or Paytaca
                                     {network === 'chipnet'
@@ -705,7 +705,7 @@ export default function Demo() {
 
                                 <button
                                     type="button"
-                                    className={`${primaryButton} mt-5`}
+                                    className={`${primaryButton} mt-5 2xl:mt-7 2xl:px-7 2xl:py-4 2xl:text-base`}
                                     disabled={!enabled || busy}
                                     onClick={connect}
                                 >
@@ -732,7 +732,7 @@ export default function Demo() {
                                 ) : null}
                             </div>
 
-                            <div className="flex min-h-[220px] shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/30 p-4 sm:w-[270px]">
+                            <div className="flex min-h-[220px] shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/30 p-4 sm:w-[270px] 2xl:min-h-[280px] 2xl:w-[320px] 2xl:p-6 3xl:min-h-[320px] 3xl:w-[360px]">
                                 <AnimatePresence mode="wait">
                                     {walletName ? (
                                         <motion.div
@@ -741,16 +741,20 @@ export default function Demo() {
                                             animate={{ opacity: 1, scale: 1 }}
                                             className="text-center"
                                         >
-                                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10">
+                                            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-emerald-500/20 bg-emerald-500/10 2xl:h-20 2xl:w-20">
                                                 <Check
                                                     size={30}
-                                                    className="text-emerald-400"
+                                                    className="text-emerald-400 2xl:hidden"
+                                                />
+                                                <Check
+                                                    size={38}
+                                                    className="hidden text-emerald-400 2xl:block"
                                                 />
                                             </div>
-                                            <p className="mt-4 text-sm font-semibold text-emerald-300">
+                                            <p className="mt-4 text-sm font-semibold text-emerald-300 2xl:text-base">
                                                 Wallet connected
                                             </p>
-                                            <p className="mt-1 text-xs text-gray-500">
+                                            <p className="mt-1 text-xs text-gray-500 2xl:text-sm">
                                                 Your wallet is ready.
                                             </p>
                                         </motion.div>
@@ -761,12 +765,12 @@ export default function Demo() {
                                             animate={{ opacity: 1, scale: 1 }}
                                             className="flex flex-col items-center"
                                         >
-                                            <div className="flex h-[180px] w-[180px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-white/15 text-center">
+                                            <div className="flex h-[180px] w-[180px] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-white/15 text-center 2xl:h-[210px] 2xl:w-[210px] 3xl:h-[230px] 3xl:w-[230px]">
                                                 <QrCode
                                                     size={34}
                                                     className="text-gray-500"
                                                 />
-                                                <p className="px-3 text-xs text-gray-500">
+                                                <p className="px-3 text-xs text-gray-500 2xl:text-sm">
                                                     The QR code appears in the
                                                     connect window.
                                                 </p>
@@ -787,17 +791,17 @@ export default function Demo() {
                     >
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
-                                <p className="text-sm font-medium text-white">
+                                <p className="text-sm font-medium text-white 2xl:text-base">
                                     Available coins
                                 </p>
-                                <p className="mt-1 text-xs text-gray-500">
+                                <p className="mt-1 text-xs text-gray-500 2xl:text-sm">
                                     Scan your wallet for spendable BCH.
                                 </p>
                             </div>
 
                             <button
                                 type="button"
-                                className={secondaryButton}
+                                className={`${secondaryButton} 2xl:px-7 2xl:py-4 2xl:text-base`}
                                 disabled={!enabled || !walletName || busy || scanning}
                                 onClick={findCoins}
                             >
@@ -827,20 +831,20 @@ export default function Demo() {
                                             key={`${coin.transactionHash}:${coin.outputIndex}`}
                                             type="button"
                                             onClick={() => setChosen(coin)}
-                                            className={`flex w-full items-center justify-between gap-3 rounded-xl border p-4 text-left transition-all ${
+                                            className={`flex w-full items-center justify-between gap-3 rounded-xl border p-4 text-left transition-all 2xl:p-5 ${
                                                 chosen === coin
                                                     ? 'border-orange-500/50 bg-orange-500/[0.08]'
                                                     : 'border-white/[0.08] bg-black/20 hover:border-white/20'
                                             }`}
                                         >
                                             <div className="min-w-0">
-                                                <p className="text-sm font-semibold text-white">
+                                                <p className="text-sm font-semibold text-white 2xl:text-base">
                                                     {coin.valueSatoshis.toString()}{' '}
                                                     <span className="text-gray-500">
                                                         sats
                                                     </span>
                                                 </p>
-                                                <p className="mt-1 truncate text-[11px] text-gray-500">
+                                                <p className="mt-1 truncate text-[11px] text-gray-500 2xl:text-xs">
                                                     {coin.pathName}/
                                                     {coin.addressIndex} ·{' '}
                                                     {coin.transactionHash.slice(0, 8)}
@@ -863,8 +867,8 @@ export default function Demo() {
                             )}
                         </AnimatePresence>
 
-                        <div className="rounded-xl border border-white/[0.07] bg-black/20 p-4">
-                            <label className="block text-sm font-medium text-gray-300">
+                        <div className="rounded-xl border border-white/[0.07] bg-black/20 p-4 2xl:p-6">
+                            <label className="block text-sm font-medium text-gray-300 2xl:text-base">
                                 Voucher amount
                                 <span className="ml-2 text-xs font-normal text-gray-500">
                                     Minimum {MINIMUM_VOUCHER_SATOSHIS.toString()} sats
@@ -873,7 +877,7 @@ export default function Demo() {
 
                             <div className="relative mt-3">
                                 <input
-                                    className={`${inputClass} pr-20 font-mono text-base`}
+                                    className={`${inputClass} pr-20 font-mono text-base 2xl:py-4 2xl:text-lg`}
                                     value={amount}
                                     onChange={(event) =>
                                         setAmount(event.target.value)
@@ -931,7 +935,7 @@ export default function Demo() {
 
                         <button
                             type="button"
-                            className={`${primaryButton} w-full sm:w-auto`}
+                            className={`${primaryButton} w-full sm:w-auto 2xl:px-7 2xl:py-4 2xl:text-base`}
                             disabled={
                                 !enabled ||
                                 !chosen ||
@@ -959,27 +963,27 @@ export default function Demo() {
                                 <motion.div
                                     initial={{ opacity: 0, y: 15 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="overflow-hidden rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.05] p-5"
+                                    className="overflow-hidden rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.05] p-5 2xl:p-7"
                                 >
                                     <div className="flex items-center gap-3">
                                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
                                             <CheckCircle2 size={22} />
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-emerald-300">
+                                            <p className="font-semibold text-emerald-300 2xl:text-base">
                                                 Voucher created
                                             </p>
-                                            <p className="text-xs text-gray-500">
+                                            <p className="text-xs text-gray-500 2xl:text-sm">
                                                 Save your claim code securely.
                                             </p>
                                         </div>
                                     </div>
 
-                                    <div className="mt-5 rounded-xl border border-white/10 bg-black/30 p-4">
+                                    <div className="mt-5 rounded-xl border border-white/10 bg-black/30 p-4 2xl:p-6">
                                         <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-gray-500">
                                             Your secret claim code
                                         </p>
-                                        <p className="break-all font-mono text-lg tracking-wider text-white">
+                                        <p className="break-all font-mono text-lg tracking-wider text-white 2xl:text-xl">
                                             {issued.code}
                                         </p>
                                     </div>
@@ -987,7 +991,7 @@ export default function Demo() {
                                     <div className="mt-4 flex flex-wrap gap-2">
                                         <button
                                             type="button"
-                                            className={secondaryButton}
+                                            className={`${secondaryButton} 2xl:px-6 2xl:py-4 2xl:text-base`}
                                             onClick={() =>
                                                 void copyValue(issued.code, 'code')
                                             }
@@ -1004,7 +1008,7 @@ export default function Demo() {
 
                                         <button
                                             type="button"
-                                            className={secondaryButton}
+                                            className={`${secondaryButton} 2xl:px-6 2xl:py-4 2xl:text-base`}
                                             onClick={() =>
                                                 void copyValue(claimLink, 'link')
                                             }
@@ -1020,7 +1024,7 @@ export default function Demo() {
                                         </button>
                                     </div>
 
-                                    <p className="mt-4 break-all text-xs text-gray-500">
+                                    <p className="mt-4 break-all text-xs text-gray-500 2xl:text-sm">
                                         Transaction: {issued.transactionId}
                                         {explorer(
                                             issued.network,
@@ -1044,7 +1048,7 @@ export default function Demo() {
                                         )}
                                     </p>
 
-                                    <p className="mt-3 text-xs leading-relaxed text-gray-500">
+                                    <p className="mt-3 text-xs leading-relaxed text-gray-500 2xl:text-sm">
                                         The claim link keeps the code after the
                                         # sign, which browsers never send to
                                         any server.
@@ -1061,19 +1065,19 @@ export default function Demo() {
                         description="Redeem a voucher using its secret code and your BCH destination address."
                         icon={<Fingerprint size={23} />}
                     >
-                        <p className="text-sm leading-6 text-gray-400">
+                        <p className="text-sm leading-6 text-gray-400 2xl:text-base 2xl:leading-7">
                             Anyone with the code can redeem it from any browser.
                             No wallet signature is needed. The page verifies
                             the claim in the BCH virtual machine before
                             broadcasting the transaction.
                         </p>
 
-                        <div className="rounded-xl border border-white/[0.07] bg-black/20 p-4">
-                            <label className="block text-sm font-medium text-gray-300">
+                        <div className="rounded-xl border border-white/[0.07] bg-black/20 p-4 2xl:p-6">
+                            <label className="block text-sm font-medium text-gray-300 2xl:text-base">
                                 Secret claim code
                             </label>
                             <input
-                                className={`${inputClass} mt-2 font-mono`}
+                                className={`${inputClass} mt-2 font-mono 2xl:py-4 2xl:text-base`}
                                 value={claimCode}
                                 onChange={(event) =>
                                     setClaimCode(event.target.value)
@@ -1082,12 +1086,12 @@ export default function Demo() {
                             />
                         </div>
 
-                        <div className="rounded-xl border border-white/[0.07] bg-black/20 p-4">
-                            <label className="block text-sm font-medium text-gray-300">
+                        <div className="rounded-xl border border-white/[0.07] bg-black/20 p-4 2xl:p-6">
+                            <label className="block text-sm font-medium text-gray-300 2xl:text-base">
                                 Destination address
                             </label>
                             <input
-                                className={`${inputClass} mt-2 font-mono`}
+                                className={`${inputClass} mt-2 font-mono 2xl:py-4 2xl:text-base`}
                                 value={destination}
                                 onChange={(event) =>
                                     setDestination(event.target.value)
@@ -1098,7 +1102,7 @@ export default function Demo() {
                             {suggestedAddress && destination === '' && (
                                 <button
                                     type="button"
-                                    className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-orange-400 transition hover:text-orange-300"
+                                    className="mt-3 inline-flex items-center gap-2 text-xs font-medium text-orange-400 transition hover:text-orange-300 2xl:text-sm"
                                     onClick={() =>
                                         setDestination(suggestedAddress)
                                     }
@@ -1110,19 +1114,19 @@ export default function Demo() {
                             )}
                         </div>
 
-                        <div className="flex flex-col gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex flex-col gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] p-4 sm:flex-row sm:items-center sm:justify-between 2xl:gap-6 2xl:p-6">
                             <div>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-500 2xl:text-sm">
                                     Claim network fee
                                 </p>
-                                <p className="mt-1 font-semibold text-white">
+                                <p className="mt-1 font-semibold text-white 2xl:text-lg">
                                     {CLAIM_FEE_SATOSHIS.toString()} sats
                                 </p>
                             </div>
 
                             <button
                                 type="button"
-                                className={`${primaryButton} w-full sm:w-auto`}
+                                className={`${primaryButton} w-full sm:w-auto 2xl:px-7 2xl:py-4 2xl:text-base`}
                                 disabled={
                                     !enabled ||
                                     busy ||
@@ -1215,7 +1219,7 @@ export default function Demo() {
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     viewport={{ once: true }}
-                    className="mt-10 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 sm:p-6"
+                    className="mt-10 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5 sm:p-6 2xl:mt-14 2xl:p-8"
                 >
                     <div className="flex items-start gap-3">
                         <ShieldCheck
@@ -1223,10 +1227,10 @@ export default function Demo() {
                             className="mt-0.5 shrink-0 text-orange-400"
                         />
                         <div>
-                            <p className="text-sm font-semibold text-gray-200">
+                            <p className="text-sm font-semibold text-gray-200 2xl:text-base">
                                 A few things to keep in mind
                             </p>
-                            <p className="mt-2 text-xs leading-6 text-gray-500">
+                            <p className="mt-2 text-xs leading-6 text-gray-500 2xl:text-sm 2xl:leading-7">
                                 The code becomes public when it is claimed, and
                                 a code can be raced in the mempool by anyone
                                 who sees the claim, so keep amounts small.
@@ -1238,13 +1242,13 @@ export default function Demo() {
                     </div>
 
                     <div className="mt-5 flex flex-col items-center justify-between gap-3 border-t border-white/[0.07] pt-5 sm:flex-row">
-                        <p className="text-xs text-gray-600">
+                        <p className="text-xs text-gray-600 2xl:text-sm">
                             XOGrid · Claim-Code Voucher Demo
                         </p>
 
                         <Link
                             to="/"
-                            className="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 transition hover:text-orange-400"
+                            className="inline-flex items-center gap-2 text-xs font-semibold text-gray-400 transition hover:text-orange-400 2xl:text-sm"
                         >
                             Back to XOGrid
                             <ArrowRight size={14} />

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -364,7 +363,7 @@ function Explore() {
       <div className="relative z-10">
         {/* Header */}
         <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-[#080a10]/85 backdrop-blur-2xl">
-          <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-12">
+          <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-12 2xl:max-w-[1800px] 2xl:px-14">
             {/* Back arrow and XOGrid logo */}
             <div className="flex items-center gap-3">
               <Link
@@ -448,9 +447,9 @@ function Explore() {
         </header>
 
         {/* Main content */}
-        <div className="mx-auto max-w-[1440px] px-5 pb-24 pt-12 sm:px-8 sm:pt-16 lg:px-12">
+        <div className="mx-auto max-w-[1440px] px-5 pb-24 pt-12 sm:px-8 sm:pt-16 lg:px-12 2xl:max-w-[1800px] 2xl:px-14 2xl:pb-28 2xl:pt-20">
           {/* Hero */}
-          <section className="explore-enter relative mb-12">
+          <section className="explore-enter relative mb-12 2xl:mb-16">
             <div className="absolute -right-4 top-0 hidden opacity-20 lg:block">
               <div className="explore-float flex h-40 w-40 items-center justify-center rounded-[36px] border border-violet-400/20 bg-violet-500/[0.04]">
                 <FileCode2
@@ -470,14 +469,14 @@ function Explore() {
               Discover · Explore · Build
             </p>
 
-            <h1 className="max-w-3xl text-4xl font-bold leading-[1.12] tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="max-w-3xl text-4xl font-bold leading-[1.12] tracking-tight sm:text-5xl lg:text-6xl 2xl:max-w-4xl 2xl:text-7xl">
               Explore the
               <span className="block bg-gradient-to-r from-violet-300 via-purple-300 to-orange-300 bg-clip-text text-transparent">
                 template ecosystem.
               </span>
             </h1>
 
-            <p className="mt-6 max-w-2xl text-base leading-7 text-slate-400 sm:text-lg">
+            <p className="mt-6 max-w-2xl text-base leading-7 text-slate-400 sm:text-lg 2xl:max-w-3xl 2xl:text-xl 2xl:leading-8">
               Discover reusable wallet templates, inspect their identifiers,
               and understand their trust status before integrating them into
               your workflow.
@@ -498,10 +497,10 @@ function Explore() {
 
           {/* Search and filters */}
           <section
-            className="explore-enter mb-10 rounded-3xl border border-white/[0.08] bg-[#0c0e16]/80 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-7"
+            className="explore-enter mb-10 rounded-3xl border border-white/[0.08] bg-[#0c0e16]/80 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl sm:p-7 2xl:mb-12 2xl:p-9"
             style={{ animationDelay: ".12s" }}
           >
-            <div className="flex flex-col gap-4 lg:flex-row">
+            <div className="flex flex-col gap-4 lg:flex-row 2xl:gap-6">
               <div className="relative flex-1">
                 <Search
                   size={19}
@@ -562,7 +561,7 @@ function Explore() {
 
           {/* Results heading */}
           <section
-            className="explore-enter mb-6"
+            className="explore-enter mb-6 2xl:mb-8"
             style={{ animationDelay: ".2s" }}
           >
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -600,11 +599,11 @@ function Explore() {
               Loading templates...
             </p>
           ) : filteredTemplates.length > 0 ? (
-            <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+            <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3 2xl:gap-7">
               {filteredTemplates.map((template, index) => (
                 <article
                   key={template.id}
-                  className="explore-card group relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-[#121522] to-[#0a0c13] p-6"
+                  className="explore-card group relative overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-[#121522] to-[#0a0c13] p-6 2xl:p-8"
                   style={{ animationDelay: `${index * 120}ms` }}
                 >
                   <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-violet-500/[0.07] blur-3xl transition duration-500 group-hover:bg-violet-500/[0.15]" />
@@ -628,7 +627,7 @@ function Explore() {
                       {template.category}
                     </p>
 
-                    <h3 className="text-xl font-semibold text-white transition group-hover:text-violet-200">
+                    <h3 className="text-xl font-semibold text-white transition group-hover:text-violet-200 2xl:text-2xl">
                       {template.name}
                     </h3>
 
@@ -640,7 +639,7 @@ function Explore() {
                         : "No reviews yet"}
                     </p>
 
-                    <div className="mt-7 rounded-2xl border border-white/[0.06] bg-black/20 p-4">
+                    <div className="mt-7 rounded-2xl border border-white/[0.06] bg-black/20 p-4 2xl:mt-8 2xl:p-5">
                       <p className="mb-1 text-[10px] font-semibold uppercase tracking-[.15em] text-slate-500">
                         Template identifier
                       </p>
@@ -650,7 +649,7 @@ function Explore() {
                       </p>
                     </div>
 
-                    <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/[0.07] pt-5">
+                    <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/[0.07] pt-5 2xl:mt-6 2xl:pt-6">
                       <div className="flex items-center gap-2 text-xs text-slate-500">
                         <Clock3 size={14} />
                         Added {template.updated}
@@ -697,7 +696,7 @@ function Explore() {
           )}
 
           {/* Bottom CTA */}
-          <section className="explore-bottom-cta explore-enter relative mt-16 overflow-hidden rounded-3xl border border-violet-400/15 bg-gradient-to-br from-violet-500/[0.12] via-[#111322] to-orange-500/[0.07] p-7 sm:p-10">
+          <section className="explore-bottom-cta explore-enter relative mt-16 overflow-hidden rounded-3xl border border-violet-400/15 bg-gradient-to-br from-violet-500/[0.12] via-[#111322] to-orange-500/[0.07] p-7 sm:p-10 2xl:mt-20 2xl:p-12">
             <div className="explore-glow pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-violet-500/10 blur-[80px]" />
 
             <div className="relative flex flex-col items-start justify-between gap-7 md:flex-row md:items-center">
