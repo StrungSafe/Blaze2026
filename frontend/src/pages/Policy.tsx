@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -108,8 +109,8 @@ const badges = [
     detail: "Moderator removal",
     icon: XCircle,
     color: "text-red-400",
-    background: "bg-red-500/10",
-    border: "border-red-500/20",
+    background: "bg-red-400/10",
+    border: "border-red-400/20",
   },
 ];
 
@@ -122,7 +123,7 @@ const faqs = [
   {
     question: "Can a template change after it has been reviewed?",
     answer:
-      "A template's identifier is derived from its canonical content. If its content changes, it receives a different identifier. Reviews and audit results are associated with the specific identifier they concern.",
+      "No. Once a template has been reviewed, changing its content creates a new template identifier. The previous review and audit results remain linked to the original version. The changed version needs its own review.",
   },
   {
     question: "What happens when someone flags a template?",
@@ -414,7 +415,7 @@ function Policy() {
 
             <div className="mt-8 space-y-5 2xl:mt-10 2xl:space-y-7">
               <div className="flex gap-4">
-                <div className="mt-1 flex justify-center items-center rounded-lg bg-violet-500/10 p-2 text-violet-400 2xl:p-3">
+                <div className="mt-1 flex self-start items-center justify-center rounded-lg bg-violet-500/10 p-2 text-violet-400 2xl:p-3">
                   <FileCheck2 size={19} />
                 </div>
 
@@ -430,7 +431,7 @@ function Policy() {
               </div>
 
               <div className="flex gap-4">
-                <div className="mt-1 flex justify-center items-center rounded-lg bg-orange-500/10 p-2 text-orange-400 2xl:p-3">
+                <div className="mt-1 flex self-start items-center justify-center rounded-lg bg-orange-500/10 p-2 text-orange-400 2xl:p-3">
                   <Fingerprint size={19} />
                 </div>
 
@@ -446,7 +447,7 @@ function Policy() {
               </div>
 
               <div className="flex gap-4">
-                <div className="mt-1 flex justify-center items-center rounded-lg bg-blue-500/10 p-2 text-blue-400 2xl:p-3">
+                <div className="mt-1 flex self-start items-center justify-center rounded-lg bg-blue-500/10 p-2 text-blue-400 2xl:p-3">
                   <Sparkles size={19} />
                 </div>
 
