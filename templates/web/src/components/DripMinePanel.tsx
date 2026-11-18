@@ -1,5 +1,5 @@
-import { Droplets, Hammer, Loader2, RefreshCw, Search, TriangleAlert } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { Droplets, Hammer } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import {
     TERMINATE_AT_OR_BELOW,
     buildDripMineInvitation,
@@ -11,20 +11,17 @@ import {
     type DripMineCoin,
     type DripMineInvitation,
 } from '../lib/drip-mine';
-import { listUnspentCoins, type UnspentCoin } from '../lib/electrum';
+import type { UnspentCoin } from '../lib/electrum';
 import type { Network } from '../lib/invitation';
+import { AddressBar, BuildError, CoinsGate, MainnetWarning, NetworkBar, errorText, scrollIntoViewSoon, useContractCoins } from './common';
 import { InvitationResult } from './InvitationResult';
-import { CopyButton, Pill, Section, StatusMessage, formatBch, formatSatoshis, inputClass, secondaryButton, shortHash, smallButton } from './ui';
+import { Pill, Section, formatBch, formatSatoshis, inputClass, secondaryButton, shortHash, smallButton } from './ui';
 
 const PAGE_SIZE = 25;
 
-type CoinsState = { status: 'idle' } | { status: 'loading' } | { status: 'error'; message: string } | { status: 'loaded'; coins: UnspentCoin[]; tipHeight: number };
-
-const errorText = (error: unknown): string => (error instanceof Error ? error.message : String(error));
-
 export function DripMinePanel() {
     const [network, setNetwork] = useState<Network>('chipnet');
-    const [coins, setCoins] = useState<CoinsState>({ status: 'idle' });
+    const { coins, reload } = useContractCoins(network, dripMineLockingBytecode);
     const [shown, setShown] = useState(PAGE_SIZE);
     const [result, setResult] = useState<DripMineInvitation | undefined>();
     const [buildError, setBuildError] = useState<string | undefined>();
@@ -33,31 +30,18 @@ export function DripMinePanel() {
     const resultRef = useRef<HTMLDivElement>(null);
     const address = useMemo(() => dripMineAddress(network), [network]);
 
-    const loadCoins = useCallback(async (selected: Network) => {
-        setCoins({ status: 'loading' });
-
-        try {
-            const loaded = await listUnspentCoins(selected, dripMineLockingBytecode);
-
-            setCoins({ status: 'loaded', ...loaded });
-        } catch (error) {
-            setCoins({ status: 'error', message: errorText(error) });
-        }
-    }, []);
-
     useEffect(() => {
         setResult(undefined);
         setBuildError(undefined);
         setShown(PAGE_SIZE);
-        void loadCoins(network);
-    }, [network, loadCoins]);
+    }, [network]);
 
     const build = (coin: DripMineCoin): void => {
         setBuildError(undefined);
 
         try {
             setResult(buildDripMineInvitation(network, coin));
-            window.setTimeout(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+            scrollIntoViewSoon(resultRef.current);
         } catch (error) {
             setResult(undefined);
             setBuildError(errorText(error));
@@ -93,44 +77,15 @@ export function DripMinePanel() {
                 </>
             }
         >
-            <div className="flex flex-wrap items-center gap-3">
-                <div className="inline-flex rounded-xl border border-white/10 bg-white/[0.03] p-1" role="tablist" aria-label="Network">
-                    {(['chipnet', 'mainnet'] as const).map((option) => (
-                        <button
-                            key={option}
-                            type="button"
-                            role="tab"
-                            aria-selected={network === option}
-                            onClick={() => setNetwork(option)}
-                            className={`rounded-lg px-4 py-2 text-sm font-semibold capitalize transition ${
-                                network === option ? (option === 'mainnet' ? 'bg-rose-500/20 text-rose-200' : 'bg-orange-500 text-white') : 'text-gray-400 hover:text-white'
-                            }`}
-                        >
-                            {option}
-                        </button>
-                    ))}
-                </div>
-                <button type="button" className={smallButton} onClick={() => void loadCoins(network)} disabled={coins.status === 'loading'}>
-                    <RefreshCw size={14} className={coins.status === 'loading' ? 'animate-spin' : ''} /> Refresh coins
-                </button>
-            </div>
+            <NetworkBar network={network} onChange={setNetwork} loading={coins.status === 'loading'} onRefresh={reload} />
 
-            {network === 'mainnet' && (
-                <StatusMessage type="warning">
-                    <span className="inline-flex items-center gap-2 font-semibold">
-                        <TriangleAlert size={16} /> Mainnet: real BCH.
-                    </span>{' '}
-                    This page only builds the invitation and never broadcasts. A drip costs your wallet nothing: the payout comes out of the Drip Mine coin.
-                </StatusMessage>
-            )}
+            {network === 'mainnet' && <MainnetWarning>This page only builds the invitation and never broadcasts. A drip costs your wallet nothing: the payout comes out of the Drip Mine coin.</MainnetWarning>}
 
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-sm">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Address</span>
-                <span className="min-w-0 break-all font-mono text-gray-300">{address}</span>
-                <CopyButton text={address} label="Copy" />
-            </div>
+            <AddressBar address={address} />
 
-            <CoinTable coins={coins} shown={shown} onShowMore={() => setShown((count) => count + PAGE_SIZE)} onBuild={build} />
+            <CoinsGate coins={coins} emptyText="No coins at the Drip Mine address.">
+                {(loaded) => <CoinTable coins={loaded.coins} tipHeight={loaded.tipHeight} shown={shown} onShowMore={() => setShown((count) => count + PAGE_SIZE)} onBuild={build} />}
+            </CoinsGate>
 
             <form onSubmit={buildManual} className="grid gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 sm:grid-cols-[1fr_12rem_auto] sm:items-end">
                 <label className="block text-sm">
@@ -146,45 +101,36 @@ export function DripMinePanel() {
                 </button>
             </form>
 
-            {buildError && (
-                <StatusMessage type="error">
-                    <pre className="whitespace-pre-wrap font-[inherit]">{buildError}</pre>
-                </StatusMessage>
-            )}
+            <BuildError message={buildError} />
 
-            <div ref={resultRef}>{result && <InvitationResult result={result} network={network} />}</div>
+            <div ref={resultRef}>
+                {result && (
+                    <InvitationResult
+                        result={result}
+                        network={network}
+                        action={result.action}
+                        actionTone={result.action === 'drip' ? 'orange' : 'violet'}
+                        details={[
+                            { label: 'Payout (fee to the miner)', value: formatSatoshis(result.payoutSatoshis) },
+                            { label: result.action === 'drip' ? 'Back to the Drip Mine' : 'Output', value: result.action === 'drip' ? formatSatoshis(result.remainderSatoshis) : '0-sat OP_RETURN' },
+                            { label: 'Unlocking bytecode', value: <span className="font-mono text-gray-400">{result.transaction.inputs[0]?.unlockingBytecode.length ?? 0} bytes (redeem script push)</span> },
+                        ]}
+                        note="Import this in your XO wallet and run the action. It already holds the Drip Mine coin, its unlocking bytecode and the output, so your wallet adds no coins and no signatures; the commits are signed by a throwaway key made for this invitation."
+                    />
+                )}
+            </div>
         </Section>
     );
 }
 
-function CoinTable({ coins, shown, onShowMore, onBuild }: { coins: CoinsState; shown: number; onShowMore: () => void; onBuild: (coin: DripMineCoin) => void }) {
-    if (coins.status === 'idle' || coins.status === 'loading') {
-        return (
-            <div className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-6 text-sm text-gray-400">
-                <Loader2 size={16} className="animate-spin text-orange-400" /> Looking up Drip Mine coins…
-            </div>
-        );
-    }
-
-    if (coins.status === 'error') {
-        return <StatusMessage type="error">Could not list coins: {coins.message}</StatusMessage>;
-    }
-
-    if (coins.coins.length === 0) {
-        return (
-            <div className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-6 text-sm text-gray-400">
-                <Search size={16} /> No coins at the Drip Mine address.
-            </div>
-        );
-    }
-
-    const visible = coins.coins.slice(0, shown);
+function CoinTable({ coins, tipHeight, shown, onShowMore, onBuild }: { coins: UnspentCoin[]; tipHeight: number; shown: number; onShowMore: () => void; onBuild: (coin: DripMineCoin) => void }) {
+    const visible = coins.slice(0, shown);
 
     return (
         <div className="overflow-hidden rounded-xl border border-white/[0.06]">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] bg-white/[0.02] px-4 py-3 text-xs text-gray-500">
                 <span>
-                    {coins.coins.length.toLocaleString('en-US')} coins, largest first · tip height {coins.tipHeight.toLocaleString('en-US')}
+                    {coins.length.toLocaleString('en-US')} coins, largest first · tip height {tipHeight.toLocaleString('en-US')}
                 </span>
                 <span>Showing {visible.length}</span>
             </div>
@@ -202,7 +148,7 @@ function CoinTable({ coins, shown, onShowMore, onBuild }: { coins: CoinsState; s
                     </thead>
                     <tbody>
                         {visible.map((coin) => {
-                            const confirmations = coin.height > 0 ? coins.tipHeight - coin.height + 1 : 0;
+                            const confirmations = coin.height > 0 ? tipHeight - coin.height + 1 : 0;
                             const action = dripMineActionFor(coin.valueSatoshis);
                             const blocked = coin.hasTokens ? 'Carries tokens' : confirmations < 1 ? 'Unconfirmed' : undefined;
 
@@ -237,10 +183,10 @@ function CoinTable({ coins, shown, onShowMore, onBuild }: { coins: CoinsState; s
                     </tbody>
                 </table>
             </div>
-            {visible.length < coins.coins.length && (
+            {visible.length < coins.length && (
                 <div className="border-t border-white/[0.06] p-3 text-center">
                     <button type="button" className={smallButton} onClick={onShowMore}>
-                        Show {Math.min(PAGE_SIZE, coins.coins.length - visible.length)} more
+                        Show {Math.min(PAGE_SIZE, coins.length - visible.length)} more
                     </button>
                 </div>
             )}
